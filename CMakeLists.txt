@@ -34,7 +34,11 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/app_state.c
-    APP/Inc/app_state.h)
+    APP/Src/bsp/usb_cdc_transport.c
+    APP/Src/protocol/msp_transport.c
+    APP/Src/protocol/msp_server.c
+    APP/Src/rtos/app_task.c
+)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -52,6 +56,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    APP/Inc
 )
 
 # Add project symbols (macros)
