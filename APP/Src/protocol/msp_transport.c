@@ -1,3 +1,20 @@
+/*
+ * msp_transport.c —— MSP 协议传输层实现（纯协议层，无 RTOS 依赖）
+ *
+ * 本文件实现 MSP 帧的逐字节解析与响应帧构造，是 msp_transport.h 中接口的具体逻辑。
+ *
+ * 主要内容：
+ *   - 解析状态机枚举（PARSER_IDLE -> HEADER -> DIRECTION -> ... -> CHECKSUM）：
+ *       同时支持 V1（"$M<" + size + cmd + payload + XOR 校验）
+ *       和 V2（"$X<" + flags + cmd16 + size16 + payload + CRC8-DVB-S2 校验）。
+ *   - crc8_dvb_s2()：V2 使用的 CRC8 校验（多项式 0xD5）。
+ *   - msp_parser_process_byte()：核心状态机，每次喂入一个字节；当一帧完整且校验通过时，
+ *       把请求拷贝输出并复位解析器，返回 true。任一字节不符合则复位等待下一个 '$'。
+ *   - msp_transport_build_response()：按请求的协议版本构造回包字节流（方向符 '>' 成功/
+ *       '!' 不支持），完成对应校验（V1 用 XOR，V2 用 CRC8-DVB-S2），返回帧总长度。
+ *
+ * 边界处理：V2 负载超过 MSP_MAX_PAYLOAD_SIZE 时直接丢弃该帧；构造响应时容量不足则返回 0。
+ */
 #include "protocol/msp_transport.h"
 
 #include <string.h>

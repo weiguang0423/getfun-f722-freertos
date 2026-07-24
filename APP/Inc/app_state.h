@@ -1,3 +1,23 @@
+/*
+ * app_state.h —— 全局运行态快照（应用层数据中心）接口
+ *
+ * 本头文件定义整个应用层共享的"当前状态快照"结构，以及各任务对其读/写的接口。
+ * 它是【发布者】（传感器/电池等任务）与【消费者】（MspTask 组装回包）之间的唯一数据通道。
+ *
+ * 主要内容：
+ *   - APP_STATE_AXIS_COUNT：三轴常量（3）。
+ *   - app_state_snapshot_t：状态快照结构，字段分组——
+ *       运行时：uptime / cycle_time / i2c_error / cpu_load / fault_flags；
+ *       IMU：imu_present + 加速度/陀螺/磁力三轴 + 姿态角(roll/pitch/yaw)；
+ *       电池：battery_present + 电芯数/容量/电压/电流/已耗电量/rssi；
+ *       宿主：configurator_arming_disabled + 宿主机下发的 RTC 时间。
+ *   - 读取：app_state_get_snapshot() —— 整体拷贝一份快照（多任务安全）。
+ *   - 发布/写入：app_state_publish_imu/attitude/battery、app_state_set_runtime/
+ *       set_fault_flags、app_state_set_configurator_arming_disabled、app_state_set_host_rtc。
+ *
+ * 设计说明：并发安全靠 app_state.c 内部的临界区实现（关中断+DMB，而非互斥量），
+ * 发布者只管短小地写入，消费者只读快照，互不阻塞。
+ */
 #ifndef APP_STATE_H
 #define APP_STATE_H
 

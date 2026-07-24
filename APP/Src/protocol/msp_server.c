@@ -1,3 +1,23 @@
+/*
+ * msp_server.c —— MSP 协议业务层（命令派发）实现
+ *
+ * 本文件实现 msp_server_process()：根据一帧 MSP 请求的 command，读取 app_state 快照，
+ * 把对应数据按 Betaflight Configurator 期望的格式写入响应负载；不支持的命令标记为
+ * supported=false。目标是把本板伪装成 Betaflight PID 控制器，让 Configurator 正常连接。
+ *
+ * 主要内容：
+ *   - MSP 命令号宏（MSP_API_VERSION / MSP_FC_VARIANT / MSP_BOARD_INFO / MSP_STATUS 等）。
+ *   - payload_writer_t + writer_u8/u16/u32/data/pstring：带容量检查的小端字节写入器，
+ *       超出 MSP_MAX_PAYLOAD_SIZE 时置 overflow 标志，最终令该响应判为不支持。
+ *   - 各 handle_* 静态函数：按命令逐字段填充响应（如 IMU 三轴加速度/陀螺/磁力、
+ *       电池电压/电流/电量、姿态角、板子身份信息等）。
+ *   - msp_server_process()：命令分支主体。关键策略——
+ *       MSP_FC_VARIANT 回 "BTFL"（Configurator 只对 BTFL 开放正常 UI），
+ *       而 MSP_BOARD_INFO 仍报 "GF72"/"GETFUN_F722" 保持真实板子身份。
+ *   - 写类命令：MSP_SET_ARMING_DISABLED、MSP_SET_RTC 从负载解析参数后写回 app_state。
+ *
+ * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
+ */
 #include "protocol/msp_server.h"
 
 #include <string.h>
