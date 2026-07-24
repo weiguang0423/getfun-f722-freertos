@@ -96,6 +96,14 @@ MspTask (APP/Src/rtos/app_task.c, osPriorityNormal+2, 静态分配 768 words 栈
 
 ## 添加新代码
 
+### 新文件头部说明规则
+
+每次新建文件时，必须在文件最前面写清楚文件作用和核心功能：
+
+- 新建 `.c` / `.h`：使用文件头注释说明文件作用、核心函数或类型、主要数据流和关键约束。
+- 新建 `.md`：在标题前使用 HTML 注释说明文档用途、覆盖范围、关联核心函数或模块，以及哪些结论仍需实物验证。
+- 文件头说明必须与实际实现同步更新，不能保留空泛模板或已经失效的函数描述。
+
 1. 如需 CubeMX 重新生成：编辑 `.ioc` 文件 → 在 CubeMX 中 Regenerate Code
 2. **CubeMX 管理的源文件**（`Core/`、`USB_DEVICE/`、`Drivers/`、`Middlewares/`）添加到 [cmake/stm32cubemx/CMakeLists.txt](cmake/stm32cubemx/CMakeLists.txt) 的 `MX_Application_Src` / `STM32_Drivers_Src` 等列表
 3. **APP 应用层的新源文件**添加到根 [CMakeLists.txt](CMakeLists.txt) 的 `add_executable` 列表，include 路径加到 `target_include_directories` 的 `APP/Inc` 处
