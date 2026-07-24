@@ -68,7 +68,8 @@ MspTask (APP/Src/rtos/app_task.c, osPriorityNormal+2, 静态分配 768 words 栈
 - [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) — MSP 命令派发。`MSP_FC_VARIANT` 返回 `"BTFL"`（Configurator 只对 BTFL 开正常 UI），但 `MSP_BOARD_INFO` 仍报 `GF72`/`GETFUN_F722` 保持板子身份。实现了 STATUS/STATUS_EX/RAW_IMU/ATTITUDE/ANALOG/BATTERY_STATE/UID/SET_RTC/SET_ARMING_DISABLED 等命令，全部数据来自 `app_state` 快照。
 - [APP/Inc/app_state.h](APP/Inc/app_state.h) / [APP/Src/app_state.c](APP/Src/app_state.c) — 全局运行态快照 `app_state_snapshot_t`（IMU/姿态/电池/uptime/CPU 负载/故障标志/宿主 RTC）。多任务安全靠 **PRIMASK 关中断 + DMB** 做临界区（不是 FreeRTOS mutex），`app_state_get_snapshot()` 整体拷贝后把 `uptime_ms` 替换为 `HAL_GetTick()`。发布者（传感器/电池任务）调 `app_state_publish_*`，MspTask 只读快照。
 - [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) — USB CDC 上的一层收发适配。RX 是 1024 字节环形缓冲，ISR 写入后 `vTaskNotifyGiveFromISR` 唤醒绑定任务；`usb_cdc_transport_bind_current_task()` 必须在 MspTask 启动时调用一次。TX 320 字节缓冲，`tx_idle` 标志 + 轮询等待 `CDC_Transmit_FS` 完成（`usb_cdc_transport_transmit_complete_from_isr()` 在发送完成时置位）。
-- [APP/Src/rtos/app_task.c](APP/Src/rtos/app_task.c) — `app_tasks_init()` 由 [freertos.c](Core/Src/freertos.c) 的 `MX_FREERTOS_Init()` 调用，**静态创建** MspTask 并初始化 app_state/transport。CubeMX 的 InitTask 只做 USB init + delay(1)。
+- [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) — 平台基线诊断与安全停机。UART4 输出构建时间、运行时时钟、RTOS 启动状态和 1 Hz 心跳；HardFault、FreeRTOS assert、栈溢出或内存分配失败时强制 Motor 1～8 为低电平，并把故障码保留在可通过 SWD 读取的全局变量中。
+- [APP/Src/rtos/app_task.c](APP/Src/rtos/app_task.c) — `app_tasks_init()` 由 [freertos.c](Core/Src/freertos.c) 的 `MX_FREERTOS_Init()` 调用，**静态创建** MspTask 并初始化 app_state/transport。CubeMX 的 InitTask 初始化 USB，输出 RTOS 启动信息和 1 Hz 平台心跳。
 
 关键约束：
 - MspTask 用 `xTaskCreateStatic`（栈和控制块静态分配）——新增任务若也走静态，需在 `FreeRTOSConfig.h` 保持 `configSUPPORT_STATIC_ALLOCATION=1`。
