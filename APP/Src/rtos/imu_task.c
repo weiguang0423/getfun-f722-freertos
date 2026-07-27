@@ -1,21 +1,22 @@
 /*
- * imu_task.c - 1 kHz polling owner for the board ICM42688P.
+ * imu_task.c - 板载 ICM42688P 的 1 kHz DRDY 门控 DMA 所有者任务。
  *
- * Purpose:
- *   Owns sensor initialization/recovery, fixed-period data-ready polling,
- *   SI-unit conversion, CW90 board alignment, statistics, and app_state publish.
+ * 职责:
+ *   负责传感器初始化/恢复、固定周期寄存器 DRDY 轮询、异步 SPI1 DMA 采样读取、
+ *   SI 单位转换、CW90 板级对准、统计,以及 app_state 发布。
  *
- * Core functions:
- *   - imu_task_create(): statically creates ImuTask at idle priority + 4.
- *   - imu_task(): retries initialization, samples at 1 tick, and recovers after
- *     three consecutive bus failures.
- *   - imu_task_stack_high_water_mark(): supports the 1 Hz diagnostic summary.
+ * 核心函数:
+ *   - imu_task_create(): 以 idle 优先级 + 4 静态创建 ImuTask。
+ *   - imu_task(): 重试初始化,DRDY 置位后启动 DMA,等待直接任务通知,
+ *     连续 3 次失败后进入恢复流程。
+ *   - imu_dma_completion_from_isr(): 仅在 DMA ISR 中唤醒 ImuTask。
+ *   - imu_task_stack_high_water_mark(): 供 1 Hz 诊断摘要使用。
  *
- * Data flow and constraints:
- *   ICM42688P raw sensor-frame values -> SI conversion -> CW90 body frame ->
- *   app_state_publish_imu(). This task is the only SPI/IMU writer. It performs
- *   no UART/USB output, dynamic allocation, or blocking work beyond bounded
- *   SPI transactions and initialization/retry delays.
+ * 数据流与约束:
+ *   ICM42688P 原始传感器坐标系数值 -> SI 转换 -> CW90 机体系 ->
+ *   app_state_publish_imu()。本任务是 SPI/IMU 的唯一写者,ISR 只发送
+ *   任务通知;解析、浮点运算、状态发布、超时与恢复全部留在任务上下文中。
+ *   不使用动态内存分配,也不输出日志。
  */
 #include "rtos/imu_task.h"
 
@@ -30,6 +31,7 @@
 #define IMU_TASK_STACK_WORDS 512U
 #define IMU_TASK_PRIORITY (tskIDLE_PRIORITY + 4U)
 #define IMU_TASK_PERIOD_TICKS pdMS_TO_TICKS(1U)
+#define IMU_DMA_TIMEOUT_TICKS pdMS_TO_TICKS(2U)
 #define IMU_INITIALIZATION_ATTEMPTS 3U
 #define IMU_INITIALIZATION_RETRY_DELAY_MS 10U
 #define IMU_OFFLINE_RETRY_DELAY_MS 1000U
@@ -45,6 +47,18 @@
 static StaticTask_t imu_task_control_block;
 static StackType_t imu_task_stack[IMU_TASK_STACK_WORDS];
 static TaskHandle_t imu_task_handle;
+
+static void imu_dma_completion_from_isr(void *context)
+{
+    BaseType_t higher_priority_task_woken = pdFALSE;
+
+    (void)context;
+    if (imu_task_handle != NULL) {
+        vTaskNotifyGiveFromISR(imu_task_handle,
+                               &higher_priority_task_woken);
+        portYIELD_FROM_ISR(higher_priority_task_woken);
+    }
+}
 
 static TickType_t milliseconds_to_nonzero_ticks(uint32_t delay_ms)
 {
@@ -147,6 +161,8 @@ static void imu_task(void *argument)
     (void)argument;
     memset(&sample, 0, sizeof(sample));
     configASSERT(IMU_TASK_PERIOD_TICKS > 0U);
+    configASSERT(IMU_DMA_TIMEOUT_TICKS > 0U);
+    imu_bus_set_dma_callback(imu_dma_completion_from_isr, NULL);
 
     for (;;) {
         TickType_t last_wake_time;
@@ -172,6 +188,7 @@ static void imu_task(void *argument)
                     (uint32_t)(now - last_wake_time);
             }
 
+            ++sample.drdy_poll_count;
             status = icm42688p_data_ready(&ready, &bus_status);
             if (status != ICM42688P_STATUS_OK) {
                 if (!record_read_failure(&sample, status, bus_status)) {
@@ -189,8 +206,32 @@ static void imu_task(void *argument)
                 continue;
             }
 
-            status = icm42688p_read_sample(&raw, &bus_status);
+            (void)ulTaskNotifyTake(pdTRUE, 0U);
+            status = icm42688p_start_sample_dma(&bus_status);
             if (status != ICM42688P_STATUS_OK) {
+                ++sample.dma_start_error_count;
+                if (!record_read_failure(&sample, status, bus_status)) {
+                    break;
+                }
+                continue;
+            }
+
+            if (ulTaskNotifyTake(pdTRUE, IMU_DMA_TIMEOUT_TICKS) == 0U) {
+                ++sample.dma_timeout_count;
+                (void)imu_bus_dma_abort();
+                ++sample.dma_abort_count;
+                if (!record_read_failure(
+                        &sample,
+                        ICM42688P_STATUS_BUS_ERROR,
+                        IMU_BUS_STATUS_HAL_TIMEOUT)) {
+                    break;
+                }
+                continue;
+            }
+
+            status = icm42688p_finish_sample_dma(&raw, &bus_status);
+            if (status != ICM42688P_STATUS_OK) {
+                ++sample.dma_completion_error_count;
                 if (!record_read_failure(&sample, status, bus_status)) {
                     break;
                 }
@@ -200,6 +241,7 @@ static void imu_task(void *argument)
             convert_sample(&raw, &sample);
             sample.sample_tick = now;
             ++sample.sample_count;
+            ++sample.dma_transfer_count;
             sample.consecutive_error_count = 0U;
             sample.last_error = (uint8_t)ICM42688P_STATUS_OK;
             sample.last_bus_error = (uint8_t)IMU_BUS_STATUS_OK;

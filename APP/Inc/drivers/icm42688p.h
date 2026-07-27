@@ -1,19 +1,21 @@
 /*
- * icm42688p.h - Register-level driver interface for the ICM42688P IMU.
+ * icm42688p.h —— ICM42688P IMU 寄存器级驱动接口
  *
- * Purpose:
- *   Defines the deterministic reset/configuration sequence and raw 14-byte
- *   sample interface without depending on FreeRTOS or application state.
+ * 作用:
+ *   定义确定性的复位/配置序列以及原始 14 字节采样接口,不依赖 FreeRTOS 或
+ *   应用状态。
  *
- * Core interfaces and types:
- *   - icm42688p_initialize(): reset, identify, configure, wait, and read back.
- *   - icm42688p_data_ready(): polls the Bank 0 data-ready status bit.
- *   - icm42688p_read_sample(): reads temperature, accel, and gyro atomically.
- *   - icm42688p_raw_sample_t: signed big-endian register values.
+ * 核心接口与类型:
+ *   - icm42688p_initialize(): 复位、识别、配置、等待并回读校验。
+ *   - icm42688p_data_ready(): 轮询 Bank 0 的数据就绪状态位。
+ *   - icm42688p_read_sample(): 原子地读取温度、加速度和陀螺数据。
+ *   - icm42688p_start_sample_dma()/finish_sample_dma(): 异步采样事务,字节
+ *     解码仍保留在器件层内部。
+ *   - icm42688p_raw_sample_t: 有符号大端寄存器数值。
  *
- * Constraints:
- *   The caller supplies a millisecond delay callback and is responsible for
- *   serialization. Values remain in the sensor frame and raw ADC units here.
+ * 约束:
+ *   调用方需提供毫秒级延时回调,并负责事务串行化。本接口中的数值保持传感器
+ *   坐标系和原始 ADC 单位,不做单位换算。
  */
 #ifndef ICM42688P_H
 #define ICM42688P_H
@@ -62,6 +64,11 @@ icm42688p_status_t icm42688p_initialize(
 icm42688p_status_t icm42688p_data_ready(bool *ready,
                                         imu_bus_status_t *bus_status);
 icm42688p_status_t icm42688p_read_sample(
+    icm42688p_raw_sample_t *sample,
+    imu_bus_status_t *bus_status);
+icm42688p_status_t icm42688p_start_sample_dma(
+    imu_bus_status_t *bus_status);
+icm42688p_status_t icm42688p_finish_sample_dma(
     icm42688p_raw_sample_t *sample,
     imu_bus_status_t *bus_status);
 

@@ -1,16 +1,17 @@
 /*
- * imu_task.h - Static FreeRTOS task interface for ICM42688P sampling.
+ * imu_task.h —— DMA IMU 采样的静态 FreeRTOS 任务接口
  *
- * Purpose:
- *   Exposes creation and low-rate stack diagnostics for the single IMU owner.
+ * 作用:
+ *   对外暴露唯一 IMU 所有者任务的创建接口和低频栈诊断接口。DMA 完成通知
+ *   保持为 imu_task.c 内部私有。
  *
- * Core interfaces:
- *   - imu_task_create(): creates the 1 kHz statically allocated ImuTask.
- *   - imu_task_stack_high_water_mark(): returns the minimum free stack words.
+ * 核心接口:
+ *   - imu_task_create(): 创建 1 kHz DRDY 门控的 DMA ImuTask。
+ *   - imu_task_stack_high_water_mark(): 返回最小空闲栈字数。
  *
- * Constraints:
- *   Creation occurs once from app_tasks_init() before the scheduler starts.
- *   Only the low-rate diagnostic task may call the stack query function.
+ * 约束:
+ *   任务在调度器启动前由 app_tasks_init() 一次性创建。
+ *   只有低频诊断任务可调用栈查询函数。
  */
 #ifndef IMU_TASK_H
 #define IMU_TASK_H

@@ -6,7 +6,7 @@
  *
  * 主要内容：
  *   - APP_STATE_AXIS_COUNT：三轴常量（3）。
- *   - app_imu_sample_t：IMU 在线状态、配置回读、统计量和 SI 物理量。
+ *   - app_imu_sample_t：IMU 在线状态、配置回读、DRDY/DMA统计量和 SI 物理量。
  *   - app_state_snapshot_t：状态快照结构，字段分组——
  *       运行时：uptime / cycle_time / i2c_error / cpu_load / fault_flags；
  *       IMU：完整 app_imu_sample_t + 姿态角(roll/pitch/yaw)；
@@ -49,6 +49,12 @@ typedef struct
     uint32_t consecutive_error_count;
     uint32_t data_not_ready_count;
     uint32_t missed_deadline_count;
+    uint32_t drdy_poll_count;
+    uint32_t dma_transfer_count;
+    uint32_t dma_start_error_count;
+    uint32_t dma_completion_error_count;
+    uint32_t dma_timeout_count;
+    uint32_t dma_abort_count;
     float acceleration_m_s2[APP_STATE_AXIS_COUNT];
     float angular_rate_rad_s[APP_STATE_AXIS_COUNT];
     float temperature_c;

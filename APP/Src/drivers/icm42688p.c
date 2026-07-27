@@ -1,18 +1,20 @@
 /*
- * icm42688p.c - Bank 0 register driver for the board ICM42688P.
+ * icm42688p.c —— 板载 ICM42688P 的 Bank 0 寄存器驱动
  *
- * Purpose:
- *   Implements device reset, identity validation, fixed 1 kHz configuration,
- *   configuration read-back, data-ready polling, and coherent burst sampling.
+ * 作用:
+ *   实现器件复位、身份校验、固定 1 kHz 配置、配置回读、数据就绪轮询和
+ *   连续突发采样。
  *
- * Core functions:
- *   - icm42688p_initialize(): applies the polling-baseline configuration.
- *   - icm42688p_data_ready(): reads INT_STATUS.DATA_RDY_INT.
- *   - icm42688p_read_sample(): decodes TEMP_DATA1..GYRO_DATA_Z0.
+ * 核心函数:
+ *   - icm42688p_initialize(): 应用轮询基线配置。
+ *   - icm42688p_data_ready(): 读取 INT_STATUS.DATA_RDY_INT。
+ *   - icm42688p_read_sample(): 解码 TEMP_DATA1..GYRO_DATA_Z0。
+ *   - icm42688p_start_sample_dma()/finish_sample_dma(): 把异步采样传输与同样
+ *     确定性的大端解码拆分开。
  *
- * Data flow and constraints:
- *   Register transactions pass only through imu_bus. The driver has no RTOS,
- *   logging, application-state, unit-conversion, or board-alignment behavior.
+ * 数据流与约束:
+ *   寄存器事务只通过 imu_bus 进行。本驱动不涉及 RTOS、日志、应用状态、单位
+ *   换算或板级对准。
  */
 #include "drivers/icm42688p.h"
 
@@ -39,6 +41,18 @@
 static int16_t decode_be_i16(const uint8_t *bytes)
 {
     return (int16_t)(((uint16_t)bytes[0] << 8U) | bytes[1]);
+}
+
+static void decode_sample_bytes(const uint8_t bytes[ICM42688P_BURST_SAMPLE_SIZE],
+                                icm42688p_raw_sample_t *sample)
+{
+    sample->temperature = decode_be_i16(&bytes[0]);
+    sample->acceleration[0] = decode_be_i16(&bytes[2]);
+    sample->acceleration[1] = decode_be_i16(&bytes[4]);
+    sample->acceleration[2] = decode_be_i16(&bytes[6]);
+    sample->angular_rate[0] = decode_be_i16(&bytes[8]);
+    sample->angular_rate[1] = decode_be_i16(&bytes[10]);
+    sample->angular_rate[2] = decode_be_i16(&bytes[12]);
 }
 
 static icm42688p_status_t read_register(uint8_t address,
@@ -213,12 +227,44 @@ icm42688p_status_t icm42688p_read_sample(
         return ICM42688P_STATUS_BUS_ERROR;
     }
 
-    sample->temperature = decode_be_i16(&bytes[0]);
-    sample->acceleration[0] = decode_be_i16(&bytes[2]);
-    sample->acceleration[1] = decode_be_i16(&bytes[4]);
-    sample->acceleration[2] = decode_be_i16(&bytes[6]);
-    sample->angular_rate[0] = decode_be_i16(&bytes[8]);
-    sample->angular_rate[1] = decode_be_i16(&bytes[10]);
-    sample->angular_rate[2] = decode_be_i16(&bytes[12]);
+    decode_sample_bytes(bytes, sample);
+    return ICM42688P_STATUS_OK;
+}
+
+icm42688p_status_t icm42688p_start_sample_dma(
+    imu_bus_status_t *bus_status)
+{
+    const imu_bus_status_t status =
+        imu_bus_read_dma_start(ICM42688P_REG_TEMP_DATA1,
+                               ICM42688P_BURST_SAMPLE_SIZE);
+
+    if (bus_status != NULL) {
+        *bus_status = status;
+    }
+    return status == IMU_BUS_STATUS_OK
+               ? ICM42688P_STATUS_OK
+               : ICM42688P_STATUS_BUS_ERROR;
+}
+
+icm42688p_status_t icm42688p_finish_sample_dma(
+    icm42688p_raw_sample_t *sample,
+    imu_bus_status_t *bus_status)
+{
+    uint8_t bytes[ICM42688P_BURST_SAMPLE_SIZE];
+    imu_bus_status_t status;
+
+    if (sample == NULL) {
+        return ICM42688P_STATUS_BAD_ARGUMENT;
+    }
+
+    status = imu_bus_read_dma_finish(bytes, sizeof(bytes));
+    if (bus_status != NULL) {
+        *bus_status = status;
+    }
+    if (status != IMU_BUS_STATUS_OK) {
+        return ICM42688P_STATUS_BUS_ERROR;
+    }
+
+    decode_sample_bytes(bytes, sample);
     return ICM42688P_STATUS_OK;
 }

@@ -8,7 +8,7 @@
  *   - platform_fault_code_t：可通过 SWD 读取的平台故障码。
  *   - platform_motor_outputs_force_safe()：强制 Motor 1～8 为 GPIO 低电平。
  *   - platform_diag_startup()/rtos_started()/heartbeat()：输出平台运行信息和
- *       InitTask 维护的 1 Hz IMU 摘要。
+ *       InitTask 维护的 1 Hz IMU、DRDY 与 DMA 摘要。
  *   - platform_fault_halt()：记录故障、关闭中断并停在安全循环。
  *   - platform_freertos_assert_failed()：保存断言文件和行号后安全停机。
  */
@@ -36,8 +36,7 @@ typedef enum
 } platform_fault_code_t;
 
 /*
- * These values intentionally remain globally visible so they can be inspected
- * over SWD after the CPU enters the fault halt loop.
+ * 这些值故意保持全局可见,以便 CPU 进入故障停机循环后仍可通过 SWD 读取。
  */
 extern volatile uint32_t g_platform_fault_code;
 extern volatile uint32_t g_platform_fault_line;

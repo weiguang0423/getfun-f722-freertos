@@ -10,11 +10,14 @@
  * Data flow and constraints:
  *   SPI1 clocks data on PA5/PA6/PA7. PA4 chip select is deliberately managed
  *   by imu_bus so one CS-low window covers the address and complete payload.
+ *   RX/TX DMA handles are linked by HAL_SPI_MspInit().
  *   The initial prescaler is /64: 108 MHz PCLK2 / 64 = 1.6875 MHz.
  */
 #include "spi.h"
 
 SPI_HandleTypeDef hspi1;
+DMA_HandleTypeDef hdma_spi1_rx;
+DMA_HandleTypeDef hdma_spi1_tx;
 
 void MX_SPI1_Init(void)
 {

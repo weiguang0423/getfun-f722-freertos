@@ -9,7 +9,7 @@
  *   - platform_motor_outputs_force_safe()：直接配置 GPIO 寄存器并拉低所有 Motor。
  *   - platform_diag_startup()：输出固件身份、构建时间和运行时时钟。
  *   - platform_diag_heartbeat()：输出平台心跳，以及 1 Hz IMU 在线状态、采样率、
- *       错误计数、SI 物理量和 ImuTask 栈余量。
+ *       DRDY/DMA 计数、错误计数、SI 物理量和 ImuTask 栈余量。
  *   - platform_fault_halt()：记录故障码、关闭中断、强制安全输出并停止运行。
  *   - platform_freertos_assert_failed()：记录 FreeRTOS 断言位置后进入安全停机。
  *
@@ -163,7 +163,8 @@ void platform_diag_startup(void)
     diag_write_string("MOTORS: safe GPIO low\r\n");
     length = snprintf(line,
                       sizeof(line),
-                      "IMU: SPI1 %lu Hz mode=0 polling\r\n",
+                      "IMU: SPI1 %lu Hz mode=0 dma2 rx=s0 tx=s3 "
+                      "trigger=drdy_poll\r\n",
                       (unsigned long)imu_bus_clock_hz());
     diag_write_formatted(line, sizeof(line), length);
     diag_write_string("RTOS: starting\r\n");
@@ -203,6 +204,19 @@ void platform_diag_heartbeat(void)
         (unsigned long)xPortGetFreeHeapSize(),
         (unsigned long)xPortGetMinimumEverFreeHeapSize(),
         (unsigned long)uxTaskGetStackHighWaterMark(NULL));
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "imu dma_ok=%lu drdy_poll=%lu dma_start_err=%lu "
+        "dma_cplt_err=%lu dma_timeout=%lu dma_abort=%lu\r\n",
+        (unsigned long)snapshot.imu.dma_transfer_count,
+        (unsigned long)snapshot.imu.drdy_poll_count,
+        (unsigned long)snapshot.imu.dma_start_error_count,
+        (unsigned long)snapshot.imu.dma_completion_error_count,
+        (unsigned long)snapshot.imu.dma_timeout_count,
+        (unsigned long)snapshot.imu.dma_abort_count);
     diag_write_formatted(line, sizeof(line), length);
 
     length = snprintf(
