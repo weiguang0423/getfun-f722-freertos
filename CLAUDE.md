@@ -52,8 +52,8 @@ cmake --preset Release && cmake --build build/Release
 数据流（自底向上）：
 
 ```
-SPI1 + PA4 CS
-  └─ imu_bus -> icm42688p -> ImuTask (1 kHz, idle+4, 静态 512 words)
+SPI1 + PA4 CS + DMA2 Stream 0/3
+  └─ imu_bus -> icm42688p -> ImuTask (1 kHz DRDY门控, idle+4, 静态 512 words)
        └─ SI 单位 + CW90 -> app_state_publish_imu()
                                 │
 USB CDC 接收回调 (usbd_cdc_if.c, ISR 上下文)
@@ -70,8 +70,8 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
 
 - [APP/Inc/protocol/msp_transport.h](APP/Inc/protocol/msp_transport.h) / [msp_transport.c](APP/Src/protocol/msp_transport.c) — 纯协议层，无 RTOS 依赖。`msp_parser_t` 是逐字节状态机（`$M<` V1 / `$X<` V2，V2 用 CRC8-DVB-S2）；`msp_transport_build_response()` 构造回包帧。`MSP_MAX_PAYLOAD_SIZE=256`。
 - [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) — MSP 命令派发。`MSP_FC_VARIANT` 返回 `"BTFL"`（Configurator 只对 BTFL 开正常 UI），但 `MSP_BOARD_INFO` 仍报 `GF72`/`GETFUN_F722` 保持板子身份。实现了 STATUS/STATUS_EX/RAW_IMU/ATTITUDE/ANALOG/BATTERY_STATE/UID/SET_RTC/SET_ARMING_DISABLED 等命令，全部数据来自 `app_state` 快照。
-- [APP/Src/bsp/imu_bus.c](APP/Src/bsp/imu_bus.c) / [APP/Src/drivers/icm42688p.c](APP/Src/drivers/icm42688p.c) — 阻塞式 SPI1 总线适配和 ICM42688P 寄存器驱动。CS PA4、Mode 0、1.6875 MHz、5 ms 超时；器件固定为 1 kHz、±2000 dps、±16 g。
-- [APP/Src/rtos/imu_task.c](APP/Src/rtos/imu_task.c) — ImuTask 是 IMU 单写者，静态栈 512 words、优先级 idle+4；负责初始化/重试、1 kHz Data Ready 轮询、SI 单位、CW90 和 app_state 发布。
+- [APP/Src/bsp/imu_bus.c](APP/Src/bsp/imu_bus.c) / [APP/Src/drivers/icm42688p.c](APP/Src/drivers/icm42688p.c) — SPI1 总线适配和 ICM42688P 寄存器驱动。初始化与 DRDY 状态读取使用阻塞事务，14 字节样本使用 DMA2 Stream 0/3、Channel 3 和两个 32 字节对齐静态槽位；CS PA4、Mode 0、1.6875 MHz，器件固定为 1 kHz、±2000 dps、±16 g。
+- [APP/Src/rtos/imu_task.c](APP/Src/rtos/imu_task.c) — ImuTask 是 IMU 单写者，静态栈 512 words、优先级 idle+4；负责初始化/重试、1 kHz `INT_STATUS.DATA_RDY_INT` 门控、DMA 完成任务通知、2 ms 超时恢复、SI 单位、CW90 和 app_state 发布。当前板级资料未定义 IMU INT 外部引脚，不得把 PC4/PINIO1 猜作 DRDY EXTI。
 - [APP/Inc/app_state.h](APP/Inc/app_state.h) / [APP/Src/app_state.c](APP/Src/app_state.c) — 全局运行态快照 `app_state_snapshot_t`（含 `app_imu_sample_t` SI 物理量和统计、姿态/电池/uptime/CPU 负载/故障标志/宿主 RTC）。多任务安全靠 **PRIMASK 关中断 + DMB** 做临界区（不是 FreeRTOS mutex），`app_state_get_snapshot()` 整体拷贝后把 `uptime_ms` 替换为 `HAL_GetTick()`。
 - [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) — USB CDC 上的一层收发适配。RX 是 1024 字节环形缓冲，ISR 写入后 `vTaskNotifyGiveFromISR` 唤醒绑定任务；`usb_cdc_transport_bind_current_task()` 必须在 MspTask 启动时调用一次。TX 320 字节缓冲，`tx_idle` 标志 + 轮询等待 `CDC_Transmit_FS` 完成（`usb_cdc_transport_transmit_complete_from_isr()` 在发送完成时置位）。
 - [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) — 平台基线诊断与安全停机。低优先级 InitTask 通过 UART4 输出构建/时钟、1 Hz 心跳和 IMU 摘要；致命故障时强制 Motor 1～8 为低电平并保留 SWD 故障信息。
@@ -86,7 +86,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
 ## 关键文件
 
 - [GETFUN_F722_FreeRTOS.ioc](GETFUN_F722_FreeRTOS.ioc) — STM32CubeMX 项目配置，双击用 CubeMX 编辑引脚/时钟/外设
-- [Core/Src/main.c](Core/Src/main.c) — 程序入口: MPU → Cache → HAL → 时钟 → GPIO/SPI1/UART 初始化 → FreeRTOS 调度启动
+- [Core/Src/main.c](Core/Src/main.c) — 程序入口: MPU → Cache → HAL → 时钟 → GPIO/DMA/SPI1/UART 初始化 → FreeRTOS 调度启动
 - [Core/Src/freertos.c](Core/Src/freertos.c) — FreeRTOS 任务创建: InitTask(栈 2KB, osPriorityIdle) + APP 静态任务；InitTask 初始化 USB 并每秒输出维护诊断
 - [Core/Inc/FreeRTOSConfig.h](Core/Inc/FreeRTOSConfig.h) — FreeRTOS 配置（优先级 56 级, 抢占使能, 静态/动态分配, 栈溢出检测, 软件定时器）
 - [USB_DEVICE/App/usbd_cdc_if.c](USB_DEVICE/App/usbd_cdc_if.c) — CDC 收发实现, `CDC_Transmit_FS()` 发送, `CDC_Receive_FS()` 接收回调

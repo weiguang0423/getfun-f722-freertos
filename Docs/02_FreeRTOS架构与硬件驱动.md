@@ -242,12 +242,16 @@ SPI 读取一帧
 
 如果第一版尚未接入 Data Ready，引入固定周期读取也可以，但要记录实际采样间隔。
 
-当前 `v0.2.0` 软件实现采用后者：ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
-ICM42688P 的 `INT_STATUS.DATA_RDY_INT`，再执行 14 字节阻塞式 SPI1 读取。任务静态栈
-512 words、优先级 `tskIDLE_PRIORITY+4`；InitTask 降为 `osPriorityIdle`，避免 1 Hz
-UART 诊断抢占采样。DMA、GPIO DRDY 中断、校准和软件滤波仍属于后续阶段，详细设计和
-实物验收见 `07_SPI1_ICM42688P连续采样开发计划.md` 与
-`08_v0.2.0_IMU轮询基线软件交付与实物验收.md`。
+当前 `v0.3.0` 软件实现仍由 ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
+ICM42688P 的 `INT_STATUS.DATA_RDY_INT`，但 14 字节样本事务已改为 SPI1 RX/TX
+DMA。DMA 完成 ISR 只恢复 CS、保存结果并用任务通知唤醒 ImuTask；解析、换算和发布
+均留在任务上下文。任务静态栈 512 words、优先级 `tskIDLE_PRIORITY+4`；InitTask
+保持 `osPriorityIdle`，避免 1 Hz UART 诊断抢占采样。
+
+原始板级目标没有定义 ICM42688P INT1/INT2 的 STM32 引脚，PC4 已属于 PINIO1，
+因此 v0.3.0 不启用 GPIO DRDY/EXTI。DMA/DRDY 设计见
+`09_v0.3.0_IMU_DMA与DRDY开发计划.md`，软件交付和实物验收见
+`10_v0.3.0_IMU_DMA与DRDY软件交付与实物验收.md`。
 
 ### 5.2 FlightTask
 
@@ -386,6 +390,9 @@ void motor_write_dshot(const uint16_t values[4]);
 - [x] ODR
 - [ ] 软件滤波
 - [x] 轮询连续读取
+- [x] DRDY状态门控
+- [x] SPI1 DMA双缓冲读取
+- [ ] GPIO DRDY/EXTI（硬件引脚未冻结）
 - [x] RTOS tick 时间戳
 - [x] 错误计数
 - [x] 简单重试

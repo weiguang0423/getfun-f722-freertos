@@ -84,6 +84,12 @@ ICM42688P 板级方向配置：
 #define GYRO_1_ALIGN CW90_DEG
 ```
 
+原始 GETFUNF722V3 目标没有定义 `GYRO_1_EXTI_PIN`，现有资料也没有冻结
+ICM42688P INT1/INT2 到 STM32 的连接。PC4 已定义为 `PINIO1_PIN`，不得把其他
+F722 板卡的连接套用到本板。自研固件 v0.3.0 因此使用
+`INT_STATUS.DATA_RDY_INT` 状态门控；只有取得原理图、PCB 连通性或实测证据后，
+才能增加 GPIO DRDY/EXTI。
+
 该配置来自原厂基线并已写入目标文件；实际姿态方向仍需通过机体动作验证。
 
 MAX7456 必须同时启用模拟 OSD 构建：
@@ -177,6 +183,10 @@ dma pin B01 0
 ```
 
 当前 Betaflight 的 DShot bitbang 运行资源不能直接等同于未来自研 DShot 驱动的 DMA 设计。FreeRTOS 自研实现选定 Timer/DMA 方案后，需要重新检查冲突并用无桨测试验证。
+
+自研固件 v0.3.0 为 SPI1 样本读取分配 `DMA2 Stream 0 / Channel 3`（RX）和
+`DMA2 Stream 3 / Channel 3`（TX）。这是当前独立工程的软件资源选择，不代表
+Betaflight 的归档 DMA option，也不得据此推导 Motor/DShot DMA 映射。
 
 ---
 

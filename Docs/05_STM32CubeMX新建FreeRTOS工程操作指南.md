@@ -786,7 +786,16 @@ SPI1_MOSI PA7
 GYRO_CS   PA4
 ```
 
-先轮询读取 WHO_AM_I，再设计 DMA 和 Data Ready。
+先轮询读取 WHO_AM_I，再设计 DMA 和 Data Ready。当前 v0.3.0 已完成：
+
+```text
+SPI1_RX  DMA2 Stream 0 / Channel 3 / High / Normal
+SPI1_TX  DMA2 Stream 3 / Channel 3 / High / Normal
+IRQ      抢占优先级 5
+```
+
+原始板级配置没有定义 IMU INT 外部引脚，因此 Data Ready 当前通过
+`INT_STATUS.DATA_RDY_INT` 门控，不配置 GPIO EXTI，也不得占用 PC4/PINIO1。
 
 ### 阶段 B：UART2 与 CRSF
 
