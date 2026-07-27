@@ -1,17 +1,34 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file    dma.h
+  * @brief   This file contains all the function prototypes for
+  *          the dma.c file
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2026 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 /*
- * dma.h - DMA controller initialization interface for SPI1 IMU transfers.
- *
- * Purpose:
- *   Exposes the generated-style DMA clock and NVIC initialization used before
- *   SPI1 is initialized.
+ * Project role:
+ *   CubeMX-owned declaration for DMA controller initialization.
  *
  * Core interface:
- *   - MX_DMA_Init(): enables DMA2 and configures Stream 0/3 IRQ priority 5.
+ *   MX_DMA_Init() enables the DMA2 resources selected for SPI1 RX/TX.
  *
- * Constraints:
- *   Both IRQs may call FreeRTOS FromISR APIs through the SPI completion path,
- *   so their preemption priority must not be numerically lower than 5.
+ * Boundary:
+ *   DMA stream ownership is defined in the .ioc model. Application DMA
+ *   lifecycle and buffers remain behind APP/Inc/bsp/imu_bus.h.
  */
+/* USER CODE END Header */
+/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __DMA_H__
 #define __DMA_H__
 
@@ -19,12 +36,28 @@
 extern "C" {
 #endif
 
+/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+/* DMA memory to memory transfer handles -------------------------------------*/
+
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+/* USER CODE BEGIN Private defines */
+
+/* USER CODE END Private defines */
+
 void MX_DMA_Init(void);
+
+/* USER CODE BEGIN Prototypes */
+
+/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __DMA_H__ */
+

@@ -115,8 +115,12 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
 1. 如需 CubeMX 重新生成：编辑 `.ioc` 文件 → 在 CubeMX 中 Regenerate Code
 2. **CubeMX 管理的源文件**（`Core/`、`USB_DEVICE/`、`Drivers/`、`Middlewares/`）添加到 [cmake/stm32cubemx/CMakeLists.txt](cmake/stm32cubemx/CMakeLists.txt) 的 `MX_Application_Src` / `STM32_Drivers_Src` 等列表
 3. **APP 应用层的新源文件**添加到根 [CMakeLists.txt](CMakeLists.txt) 的 `add_executable` 列表，include 路径加到 `target_include_directories` 的 `APP/Inc` 处
-4. CubeMX 生成区的用户代码放在 `/* USER CODE BEGIN */` / `/* USER CODE END */` 之间，重生成时才不会被覆盖；APP/ 完全是用户区，不受此约束
-5. 如果添加 CMake 配置，在根 [CMakeLists.txt](CMakeLists.txt) 的用户区添加
+4. `Core/`、`USB_DEVICE/`、`cmake/stm32cubemx/` 和 CubeMX 管理的驱动文件由 `.ioc` 单向生成；不得在生成段手写外设句柄、MSP、IRQ、初始化调用或业务逻辑。
+5. CubeMX 生成文件中的项目代码只能放在成对且名称匹配的 `/* USER CODE BEGIN ... */` / `/* USER CODE END ... */` 之间；生成文件的详细文件说明必须写在现有 `USER CODE BEGIN Header` 块内，不能删除这两个标记。
+6. GPIO、SPI、DMA、NVIC 等参数先在 `.ioc`/CubeMX 中固化，再由 CubeMX生成；不要手工维护一份与 `.ioc` 并行的生成代码。
+7. `APP/` 完全属于用户区，驱动策略、DMA缓冲、状态机、任务和协议实现都应放在这里；生成层只提供HAL句柄和中断入口。
+8. 每次重新生成前创建Git检查点；生成后检查`git diff`并完成Debug/Release构建。整改生成边界时应连续生成两次，第二次不得再出现功能性源码变化。
+9. 如果添加 CMake 配置，在根 [CMakeLists.txt](CMakeLists.txt) 的用户区添加；不要手工维护`cmake/stm32cubemx/CMakeLists.txt`中CubeMX能够生成的条目。
 
 ## 调试
 

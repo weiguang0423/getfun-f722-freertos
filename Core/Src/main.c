@@ -19,8 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "spi.h"
 #include "dma.h"
+#include "spi.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
@@ -121,10 +121,10 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-  platform_fault_halt(PLATFORM_FAULT_SCHEDULER_RETURNED);
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  platform_fault_halt(PLATFORM_FAULT_SCHEDULER_RETURNED);
   while (1)
   {
     /* USER CODE END WHILE */
