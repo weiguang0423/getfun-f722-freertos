@@ -9,8 +9,9 @@
  *   - MSP 命令号宏（MSP_API_VERSION / MSP_FC_VARIANT / MSP_BOARD_INFO / MSP_STATUS 等）。
  *   - payload_writer_t + writer_u8/u16/u32/data/pstring：带容量检查的小端字节写入器，
  *       超出 MSP_MAX_PAYLOAD_SIZE 时置 overflow 标志，最终令该响应判为不支持。
- *   - 各 handle_* 静态函数：按命令逐字段填充响应（如 IMU 三轴加速度/陀螺/磁力、
- *       电池电压/电流/电量、姿态角、板子身份信息等）。
+ *   - 各 handle_* 静态函数：按命令逐字段填充响应。MSP_RAW_IMU 从 app_state 的
+ *       m/s²、rad/s 转换成 Betaflight App 需要的 2048 LSB/g 和历史陀螺缩放，
+ *       磁力计在本阶段固定为 0。
  *   - msp_server_process()：命令分支主体。关键策略——
  *       MSP_FC_VARIANT 回 "BTFL"（Configurator 只对 BTFL 开放正常 UI），
  *       而 MSP_BOARD_INFO 仍报 "GF72"/"GETFUN_F722" 保持真实板子身份。
@@ -20,6 +21,8 @@
  */
 #include "protocol/msp_server.h"
 
+#include <limits.h>
+#include <math.h>
 #include <string.h>
 
 #include "app_state.h"
@@ -56,11 +59,16 @@
 #define API_VERSION_MINOR 48U
 
 #define SENSOR_ACC (1U << 0U)
-#define SENSOR_MAG (1U << 2U)
 #define SENSOR_GYRO (1U << 5U)
 
 #define TARGET_HAS_VCP (1U << 0U)
 #define MCU_TYPE_ID_PROVIDED_BY_NAME 255U
+
+#define STANDARD_GRAVITY_M_S2 9.80665f
+#define ACCEL_MSP_COUNTS_PER_G 2048.0f
+#define GYRO_SENSOR_COUNTS_PER_DPS 16.4f
+#define GYRO_CONFIGURATOR_SCALE_DIVISOR 4.0f
+#define RADIANS_TO_DEGREES 57.29577951308232088f
 
 typedef struct
 {
@@ -118,13 +126,8 @@ static uint16_t active_sensor_mask(const app_state_snapshot_t *state)
 {
     uint16_t sensors = 0U;
 
-    if (state->imu_present) {
+    if (state->imu.present) {
         sensors |= SENSOR_ACC | SENSOR_GYRO;
-        if ((state->magnetometer[0] != 0) ||
-            (state->magnetometer[1] != 0) ||
-            (state->magnetometer[2] != 0)) {
-            sensors |= SENSOR_MAG;
-        }
     }
     return sensors;
 }
@@ -189,14 +192,52 @@ static void handle_raw_imu(payload_writer_t *writer,
 {
     uint8_t axis;
 
+    if (!state->imu.present) {
+        for (axis = 0U; axis < (APP_STATE_AXIS_COUNT * 3U); ++axis) {
+            writer_u16(writer, 0U);
+        }
+        return;
+    }
+
     for (axis = 0U; axis < APP_STATE_AXIS_COUNT; ++axis) {
-        writer_u16(writer, (uint16_t)state->accelerometer[axis]);
+        const float wire_value =
+            (state->imu.acceleration_m_s2[axis] /
+             STANDARD_GRAVITY_M_S2) *
+            ACCEL_MSP_COUNTS_PER_G;
+        int16_t value;
+
+        if (!isfinite(wire_value)) {
+            value = 0;
+        } else if (wire_value >= (float)INT16_MAX) {
+            value = INT16_MAX;
+        } else if (wire_value <= (float)INT16_MIN) {
+            value = INT16_MIN;
+        } else {
+            value = (int16_t)lroundf(wire_value);
+        }
+        writer_u16(writer, (uint16_t)value);
     }
     for (axis = 0U; axis < APP_STATE_AXIS_COUNT; ++axis) {
-        writer_u16(writer, (uint16_t)state->gyroscope[axis]);
+        const float wire_value =
+            state->imu.angular_rate_rad_s[axis] *
+            RADIANS_TO_DEGREES *
+            GYRO_SENSOR_COUNTS_PER_DPS /
+            GYRO_CONFIGURATOR_SCALE_DIVISOR;
+        int16_t value;
+
+        if (!isfinite(wire_value)) {
+            value = 0;
+        } else if (wire_value >= (float)INT16_MAX) {
+            value = INT16_MAX;
+        } else if (wire_value <= (float)INT16_MIN) {
+            value = INT16_MIN;
+        } else {
+            value = (int16_t)lroundf(wire_value);
+        }
+        writer_u16(writer, (uint16_t)value);
     }
     for (axis = 0U; axis < APP_STATE_AXIS_COUNT; ++axis) {
-        writer_u16(writer, (uint16_t)state->magnetometer[axis]);
+        writer_u16(writer, 0U);
     }
 }
 

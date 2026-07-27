@@ -1,13 +1,13 @@
 /*
- * app_task.c —— 应用层 RTOS 任务（MspTask）的创建与运行
+ * app_task.c —— 应用层 RTOS 任务的统一创建与 MspTask 运行
  *
  * 本文件是应用层的数据流主轴：把 USB CDC 收到的字节流，逐字节解析成 MSP 请求，
  * 派发处理后再把响应帧通过 USB CDC 发回，对外伪装成 Betaflight PID 控制器。
  *
  * 主要内容：
  *   - app_tasks_init()：由 CubeMX 的 MX_FREERTOS_Init() 调用。先初始化 app_state 和
- *       usb_cdc_transport，再用 xTaskCreateStatic() 静态创建 MspTask（栈 768 words、
- *       优先级 tskIDLE_PRIORITY+2，栈和控制块均为静态分配）。
+ *       usb_cdc_transport，再静态创建 ImuTask 与 MspTask。ImuTask 的具体采样职责见
+ *       rtos/imu_task.c；MspTask 栈 768 words、优先级 tskIDLE_PRIORITY+2。
  *   - msp_task()：MspTask 任务体，整条 USB→解析→状态→回包链路的驱动者——
  *       1) 初始化解析器/服务端，并 usb_cdc_transport_bind_current_task() 绑定自身，
  *          以便 USB ISR 收到数据后能唤醒本任务；
@@ -28,6 +28,7 @@
 #include "bsp/usb_cdc_transport.h"
 #include "protocol/msp_server.h"
 #include "protocol/msp_transport.h"
+#include "rtos/imu_task.h"
 
 #define MSP_TASK_STACK_WORDS 768U
 #define MSP_TASK_PRIORITY (tskIDLE_PRIORITY + 2U)
@@ -83,6 +84,7 @@ void app_tasks_init(void)
 {
     app_state_init();
     usb_cdc_transport_init();
+    imu_task_create();
 
     msp_task_handle = xTaskCreateStatic(msp_task,
                                         "MspTask",

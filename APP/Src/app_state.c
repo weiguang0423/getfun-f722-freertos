@@ -15,7 +15,8 @@
  *   - app_state_get_snapshot()：临界区内整体拷贝 state，退出后把 uptime_ms 替换为
  *       HAL_GetTick()，保证每次读到的都是"当下"的运行时长。
  *   - app_state_set_runtime/set_fault_flags：写入运行时与故障标志。
- *   - app_state_publish_imu/attitude/battery：发布传感器/姿态/电池数据（含 NULL 校验）。
+ *   - app_state_publish_imu()：整体复制包含 SI 单位和统计量的 app_imu_sample_t。
+ *   - app_state_publish_attitude/battery：发布姿态和电池数据。
  *   - app_state_set_configurator_arming_disabled/set_host_rtc：回写 Configurator 下发的
  *       解锁状态与 RTC 时间。
  *
@@ -84,19 +85,13 @@ void app_state_set_fault_flags(uint32_t fault_flags)
     app_state_unlock(primask);
 }
 
-void app_state_publish_imu(const int16_t accelerometer[APP_STATE_AXIS_COUNT],
-                           const int16_t gyroscope[APP_STATE_AXIS_COUNT],
-                           const int16_t magnetometer[APP_STATE_AXIS_COUNT],
-                           bool present)
+void app_state_publish_imu(const app_imu_sample_t *sample)
 {
     const uint32_t primask = app_state_lock();
 
-    if ((accelerometer != NULL) && (gyroscope != NULL) && (magnetometer != NULL)) {
-        memcpy(state.accelerometer, accelerometer, sizeof(state.accelerometer));
-        memcpy(state.gyroscope, gyroscope, sizeof(state.gyroscope));
-        memcpy(state.magnetometer, magnetometer, sizeof(state.magnetometer));
+    if (sample != NULL) {
+        state.imu = *sample;
     }
-    state.imu_present = present;
     app_state_unlock(primask);
 }
 

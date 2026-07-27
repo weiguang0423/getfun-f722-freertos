@@ -61,7 +61,7 @@ const osThreadAttr_t InitTask_attributes = {
   .cb_size = sizeof(InitTaskControlBlock),
   .stack_mem = &InitTaskBuffer[0],
   .stack_size = sizeof(InitTaskBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityIdle,
 };
 
 /* Private function prototypes -----------------------------------------------*/

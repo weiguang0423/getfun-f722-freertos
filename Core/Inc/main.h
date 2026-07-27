@@ -73,6 +73,8 @@ void Error_Handler(void);
 #define MOTOR2_GPIO_Port GPIOA
 #define MOTOR1_Pin GPIO_PIN_15
 #define MOTOR1_GPIO_Port GPIOA
+#define IMU_CS_Pin GPIO_PIN_4
+#define IMU_CS_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
