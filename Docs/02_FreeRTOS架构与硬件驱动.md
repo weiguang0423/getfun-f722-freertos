@@ -242,6 +242,13 @@ SPI 读取一帧
 
 如果第一版尚未接入 Data Ready，引入固定周期读取也可以，但要记录实际采样间隔。
 
+当前 `v0.2.0` 软件实现采用后者：ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
+ICM42688P 的 `INT_STATUS.DATA_RDY_INT`，再执行 14 字节阻塞式 SPI1 读取。任务静态栈
+512 words、优先级 `tskIDLE_PRIORITY+4`；InitTask 降为 `osPriorityIdle`，避免 1 Hz
+UART 诊断抢占采样。DMA、GPIO DRDY 中断、校准和软件滤波仍属于后续阶段，详细设计和
+实物验收见 `07_SPI1_ICM42688P连续采样开发计划.md` 与
+`08_v0.2.0_IMU轮询基线软件交付与实物验收.md`。
+
 ### 5.2 FlightTask
 
 目标周期 1 kHz。每次执行：
@@ -373,15 +380,15 @@ void motor_write_dshot(const uint16_t values[4]);
 
 需要实现：
 
-- 复位
-- WHO_AM_I
-- Gyro/Accel 量程
-- ODR
-- 滤波
-- 连续读取
-- 时间戳
-- 错误计数
-- 简单重试
+- [x] 复位
+- [x] WHO_AM_I
+- [x] Gyro/Accel 量程
+- [x] ODR
+- [ ] 软件滤波
+- [x] 轮询连续读取
+- [x] RTOS tick 时间戳
+- [x] 错误计数
+- [x] 简单重试
 
 驱动输出使用统一物理单位：角速度建议 rad/s，加速度建议 m/s²；如果为方便对照使用 deg/s 和 g，必须在数据结构名称或注释中明确。
 
