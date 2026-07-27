@@ -26,6 +26,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "platform/platform_diag.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -102,6 +104,9 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
+  platform_motor_outputs_force_safe();
+  platform_diag_startup();
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -112,6 +117,7 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
+  platform_fault_halt(PLATFORM_FAULT_SCHEDULER_RETURNED);
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -238,11 +244,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+  platform_fault_halt(PLATFORM_FAULT_HAL_ERROR);
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
@@ -256,8 +258,7 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  platform_freertos_assert_failed((const char *)file, line);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
