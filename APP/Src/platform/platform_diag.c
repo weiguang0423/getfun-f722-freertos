@@ -9,8 +9,8 @@
  *   - platform_motor_outputs_force_safe()：直接配置 GPIO 寄存器并拉低所有 Motor。
  *   - platform_diag_startup()：输出固件身份、构建时间和运行时时钟。
  *   - platform_diag_heartbeat()：输出平台心跳，以及 1 Hz IMU 在线状态、采样率、
- *       DRDY/DMA计数、错误计数、陀螺/加速度校准、参数Flash、SI物理量和
- *       ImuTask栈余量。
+ *       DRDY/DMA计数、DWT时间/dt、低通状态、错误计数、陀螺/加速度校准、
+ *       参数Flash、SI物理量和ImuTask栈余量。
  *   - platform_fault_halt()：记录故障码、关闭中断、强制安全输出并停止运行。
  *   - platform_freertos_assert_failed()：记录 FreeRTOS 断言位置后进入安全停机。
  *
@@ -27,6 +27,7 @@
 #include "FreeRTOS.h"
 #include "algorithms/accel_calibration.h"
 #include "algorithms/gyro_calibration.h"
+#include "algorithms/imu_filter.h"
 #include "app_state.h"
 #include "bsp/imu_bus.h"
 #include "main.h"
@@ -277,6 +278,25 @@ void platform_diag_heartbeat(void)
     length = snprintf(
         line,
         sizeof(line),
+        "imu time src=%u valid=%u filter=%u us=%lu dt=%lu "
+        "min=%lu max=%lu bad=%lu reset=%lu/%lu fc=%lu/%luHz\r\n",
+        snapshot.imu.timing_source_ready ? 1U : 0U,
+        snapshot.imu.timing_valid ? 1U : 0U,
+        snapshot.imu.filter_ready ? 1U : 0U,
+        (unsigned long)snapshot.imu.sample_timestamp_us,
+        (unsigned long)snapshot.imu.sample_interval_us,
+        (unsigned long)snapshot.imu.sample_interval_min_us,
+        (unsigned long)snapshot.imu.sample_interval_max_us,
+        (unsigned long)snapshot.imu.timing_invalid_count,
+        (unsigned long)snapshot.imu.timing_reset_count,
+        (unsigned long)snapshot.imu.filter_reset_count,
+        (unsigned long)IMU_FILTER_GYRO_CUTOFF_HZ,
+        (unsigned long)IMU_FILTER_ACCEL_CUTOFF_HZ);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
         "imu cal=%u progress=%u/%u restart=%lu motion=%lu invalid=%lu "
         "inhibit=0x%08lX bias_mrad_s=[%ld,%ld,%ld]\r\n",
         (unsigned int)snapshot.imu.gyro_calibration_state,
@@ -307,6 +327,25 @@ void platform_diag_heartbeat(void)
         snapshot.imu.gyro_config0,
         snapshot.imu.accel_config0,
         snapshot.imu.pwr_mgmt0);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "imu filt_acc_mm_s2=[%ld,%ld,%ld] "
+        "filt_gyro_mrad_s=[%ld,%ld,%ld]\r\n",
+        (long)diag_float_to_milli(
+            snapshot.imu.filtered_acceleration_m_s2[0]),
+        (long)diag_float_to_milli(
+            snapshot.imu.filtered_acceleration_m_s2[1]),
+        (long)diag_float_to_milli(
+            snapshot.imu.filtered_acceleration_m_s2[2]),
+        (long)diag_float_to_milli(
+            snapshot.imu.filtered_angular_rate_rad_s[0]),
+        (long)diag_float_to_milli(
+            snapshot.imu.filtered_angular_rate_rad_s[1]),
+        (long)diag_float_to_milli(
+            snapshot.imu.filtered_angular_rate_rad_s[2]));
     diag_write_formatted(line, sizeof(line), length);
 
     previous_tick = current_tick;

@@ -12,7 +12,7 @@
  *
  * 主要内容：
  *   - app_state_init()：在临界区内 memset 清零整份快照，并默认设置 IMU、陀螺、
- *       加速度校准和参数有效性解锁抑制位。
+ *       加速度校准、参数有效性和IMU时间有效性解锁抑制位。
  *   - app_state_get_snapshot()：临界区内整体拷贝 state，退出后把 uptime_ms 替换为
  *       HAL_GetTick()，保证每次读到的都是"当下"的运行时长。
  *   - app_state_set_runtime/set_fault_flags：写入运行时与故障标志。
@@ -56,7 +56,8 @@ void app_state_init(void)
         APP_ARMING_INHIBIT_IMU_NOT_READY |
         APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED |
         APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED |
-        APP_ARMING_INHIBIT_PARAMETERS_INVALID;
+        APP_ARMING_INHIBIT_PARAMETERS_INVALID |
+        APP_ARMING_INHIBIT_IMU_TIMING_INVALID;
     app_state_unlock(primask);
 }
 
@@ -140,6 +141,19 @@ void app_state_publish_imu(const app_imu_sample_t *sample)
         } else {
             state.arming_inhibit_flags |=
                 APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED;
+        }
+
+        if (sample->present && sample->timing_valid &&
+            sample->filter_ready) {
+            state.arming_inhibit_flags &=
+                ~APP_ARMING_INHIBIT_IMU_TIMING_INVALID;
+            state.cycle_time_us =
+                sample->sample_interval_us > UINT16_MAX
+                    ? UINT16_MAX
+                    : (uint16_t)sample->sample_interval_us;
+        } else {
+            state.arming_inhibit_flags |=
+                APP_ARMING_INHIBIT_IMU_TIMING_INVALID;
         }
     }
     app_state_unlock(primask);

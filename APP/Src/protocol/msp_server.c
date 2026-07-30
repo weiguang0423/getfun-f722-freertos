@@ -18,6 +18,7 @@
  *   - 写类命令：MSP_SET_ARMING_DISABLED、MSP_SET_RTC从负载解析参数后写回
  *       app_state；标准MSP_ACC_CALIBRATION向ImuTask排队水平加速度校准。
  *   - GETFUN MSP2 0x4000：返回参数槽、保存结果、校准状态和偏置诊断。
+ *   - GETFUN MSP2 0x4001：返回DWT时间、真实dt、低通状态和重置计数。
  *
  * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
  */
@@ -27,6 +28,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "algorithms/imu_filter.h"
 #include "app_state.h"
 #include "rtos/imu_task.h"
 #include "stm32f7xx_hal.h"
@@ -54,6 +56,7 @@
 #define MSP2_GET_TEXT 0x3006U
 #define MSP2_MCU_INFO 0x300CU
 #define MSP2_GETFUN_CALIBRATION_STATUS 0x4000U
+#define MSP2_GETFUN_IMU_FILTER_STATUS 0x4001U
 
 #define MSP2TEXT_PILOT_NAME 1U
 #define MSP2TEXT_CRAFT_NAME 2U
@@ -73,6 +76,10 @@
 #define ACCEL_MSP_COUNTS_PER_G 2048.0f
 #define GYRO_SENSOR_COUNTS_PER_DPS 16.4f
 #define GYRO_CONFIGURATOR_SCALE_DIVISOR 4.0f
+
+#define GETFUN_IMU_TIME_SOURCE_READY (1U << 0U)
+#define GETFUN_IMU_TIMING_VALID (1U << 1U)
+#define GETFUN_IMU_FILTER_READY (1U << 2U)
 #define RADIANS_TO_DEGREES 57.29577951308232088f
 
 typedef struct
@@ -351,6 +358,38 @@ static void handle_getfun_calibration_status(
     }
 }
 
+static void handle_getfun_imu_filter_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint8_t flags = 0U;
+
+    if (state->imu.timing_source_ready) {
+        flags |= GETFUN_IMU_TIME_SOURCE_READY;
+    }
+    if (state->imu.timing_valid) {
+        flags |= GETFUN_IMU_TIMING_VALID;
+    }
+    if (state->imu.filter_ready) {
+        flags |= GETFUN_IMU_FILTER_READY;
+    }
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, flags);
+    writer_u16(writer, 0U);
+    writer_u32(writer, state->imu.sample_timestamp_us);
+    writer_u32(writer, state->imu.sample_interval_us);
+    writer_u32(writer, state->imu.sample_interval_min_us);
+    writer_u32(writer, state->imu.sample_interval_max_us);
+    writer_u32(writer, state->imu.timing_invalid_count);
+    writer_u32(writer, state->imu.timing_reset_count);
+    writer_u32(writer, state->imu.filter_reset_count);
+    writer_u32(writer,
+               (uint32_t)(IMU_FILTER_GYRO_CUTOFF_HZ * 1000.0f));
+    writer_u32(writer,
+               (uint32_t)(IMU_FILTER_ACCEL_CUTOFF_HZ * 1000.0f));
+}
+
 static uint32_t request_u32(const msp_request_t *request, uint16_t offset)
 {
     return (uint32_t)request->payload[offset] |
@@ -514,6 +553,10 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP2_GETFUN_CALIBRATION_STATUS:
         handle_getfun_calibration_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_IMU_FILTER_STATUS:
+        handle_getfun_imu_filter_status(&writer, &state);
         break;
 
     default:

@@ -3,8 +3,8 @@
  *
  * 职责:
  *   负责传感器初始化/恢复、固定周期寄存器 DRDY 轮询、异步 SPI1 DMA 采样读取、
- *   SI单位转换、CW90板级对准、陀螺静态零偏校准、持久化加速度校准、统计以及
- *   app_state发布。
+ *   DMA完成周期取时、SI单位转换、CW90板级对准、陀螺静态零偏校准、持久化
+ *   加速度校准、真实dt校验、Gyro/Accel低通、统计以及app_state发布。
  *
  * 核心函数:
  *   - imu_task_create(): 以 idle 优先级 + 4 静态创建 ImuTask。
@@ -16,10 +16,11 @@
  *
  * 数据流与约束:
  *   ICM42688P原始传感器坐标系数值 -> SI转换 -> CW90机体系 -> 上电陀螺
- *   静态零偏校准/扣除 -> 水平加速度校准/持久化/扣除 ->
- *   app_state_publish_imu()。本任务是SPI/IMU和参数Flash保存的唯一写者；ISR
- *   只发送DMA任务通知。解析、浮点运算、状态发布、超时与恢复全部留在任务
- *   上下文中。不使用动态内存，也不在1 kHz正常路径输出日志。
+ *   静态零偏校准/扣除 -> 水平加速度校准/持久化/扣除 -> 未滤波诊断支路 +
+ *   按真实dt更新的低通支路 -> app_state_publish_imu()。本任务是SPI/IMU、
+ *   时间扩展、滤波和参数Flash保存的唯一写者；ISR只捕获DWT周期计数并发送
+ *   DMA任务通知。解析、浮点运算、状态发布、超时与恢复全部留在任务上下文中。
+ *   不使用动态内存，也不在1 kHz正常路径输出日志。
  */
 #include "rtos/imu_task.h"
 
@@ -30,10 +31,13 @@
 
 #include "algorithms/accel_calibration.h"
 #include "algorithms/gyro_calibration.h"
+#include "algorithms/imu_filter.h"
 #include "app_state.h"
 #include "drivers/icm42688p.h"
 #include "platform/platform_diag.h"
+#include "platform/platform_time.h"
 #include "storage/parameter_store.h"
+#include "stm32f7xx.h"
 
 #define IMU_TASK_STACK_WORDS 512U
 #define IMU_TASK_PRIORITY (tskIDLE_PRIORITY + 4U)
@@ -43,6 +47,9 @@
 #define IMU_INITIALIZATION_RETRY_DELAY_MS 10U
 #define IMU_OFFLINE_RETRY_DELAY_MS 1000U
 #define IMU_MAX_CONSECUTIVE_ERRORS 3U
+#define IMU_MIN_VALID_INTERVAL_US IMU_FILTER_MIN_INTERVAL_US
+#define IMU_MAX_VALID_INTERVAL_US IMU_FILTER_MAX_INTERVAL_US
+#define MICROSECONDS_TO_SECONDS 0.000001f
 
 #define STANDARD_GRAVITY_M_S2 9.80665f
 #define ACCEL_COUNTS_PER_G 2048.0f
@@ -57,14 +64,28 @@ _Static_assert(APP_STATE_AXIS_COUNT == ACCEL_CALIBRATION_AXIS_COUNT,
                "IMU and accel calibration axis counts must match");
 _Static_assert(APP_STATE_AXIS_COUNT == PARAMETER_STORE_AXIS_COUNT,
                "IMU and parameter store axis counts must match");
+_Static_assert(APP_STATE_AXIS_COUNT == IMU_FILTER_AXIS_COUNT,
+               "IMU and filter axis counts must match");
 
 static StaticTask_t imu_task_control_block;
 static StackType_t imu_task_stack[IMU_TASK_STACK_WORDS];
 static TaskHandle_t imu_task_handle;
 static gyro_calibration_t gyro_calibration;
 static accel_calibration_t accel_calibration;
+static imu_filter_t imu_filter;
 static parameter_store_values_t parameter_values;
 static bool accel_calibration_request_pending;
+static bool have_previous_sample_timestamp;
+static uint32_t previous_sample_timestamp_us;
+static volatile uint32_t dma_completion_cycle_count;
+static volatile bool dma_completion_timestamp_captured;
+
+static void increment_saturating(uint32_t *counter)
+{
+    if (*counter != UINT32_MAX) {
+        ++(*counter);
+    }
+}
 
 static app_gyro_calibration_state_t calibration_state_for_app(
     gyro_calibration_state_t state)
@@ -128,6 +149,104 @@ static void sync_calibration_state(app_imu_sample_t *sample)
     memcpy(sample->accel_bias_m_s2,
            accel_calibration.bias_m_s2,
            sizeof(sample->accel_bias_m_s2));
+}
+
+static void reset_timing_filter_pipeline(app_imu_sample_t *sample,
+                                         bool clear_previous_timestamp)
+{
+    if (clear_previous_timestamp) {
+        have_previous_sample_timestamp = false;
+        previous_sample_timestamp_us = 0U;
+    }
+
+    sample->timing_valid = false;
+    sample->filter_ready = false;
+    imu_filter_reset(&imu_filter);
+    increment_saturating(&sample->timing_reset_count);
+    increment_saturating(&sample->filter_reset_count);
+}
+
+static void initialize_timing_filter_pipeline(app_imu_sample_t *sample)
+{
+    reset_timing_filter_pipeline(sample, true);
+    sample->sample_interval_us = 0U;
+    memset(sample->filtered_acceleration_m_s2,
+           0,
+           sizeof(sample->filtered_acceleration_m_s2));
+    memset(sample->filtered_angular_rate_rad_s,
+           0,
+           sizeof(sample->filtered_angular_rate_rad_s));
+}
+
+static void update_sample_timing(app_imu_sample_t *sample,
+                                 bool timestamp_captured,
+                                 uint32_t completion_cycles)
+{
+    uint32_t timestamp_us;
+    uint32_t interval_us;
+
+    sample->timing_source_ready = platform_time_ready();
+    sample->timing_valid = false;
+
+    if (!timestamp_captured ||
+        !platform_time_resolve_cycles(completion_cycles,
+                                      &timestamp_us)) {
+        sample->timing_source_ready = false;
+        sample->sample_interval_us = 0U;
+        increment_saturating(&sample->timing_invalid_count);
+        reset_timing_filter_pipeline(sample, true);
+        return;
+    }
+
+    sample->timing_source_ready = true;
+    sample->sample_timestamp_us = timestamp_us;
+    if (!have_previous_sample_timestamp) {
+        have_previous_sample_timestamp = true;
+        previous_sample_timestamp_us = timestamp_us;
+        sample->sample_interval_us = 0U;
+        return;
+    }
+
+    interval_us = timestamp_us - previous_sample_timestamp_us;
+    previous_sample_timestamp_us = timestamp_us;
+    sample->sample_interval_us = interval_us;
+
+    if ((interval_us < IMU_MIN_VALID_INTERVAL_US) ||
+        (interval_us > IMU_MAX_VALID_INTERVAL_US)) {
+        increment_saturating(&sample->timing_invalid_count);
+        reset_timing_filter_pipeline(sample, false);
+        return;
+    }
+
+    if ((sample->sample_interval_min_us == 0U) ||
+        (interval_us < sample->sample_interval_min_us)) {
+        sample->sample_interval_min_us = interval_us;
+    }
+    if (interval_us > sample->sample_interval_max_us) {
+        sample->sample_interval_max_us = interval_us;
+    }
+    sample->timing_valid = true;
+}
+
+static void update_filtered_sample(app_imu_sample_t *sample)
+{
+    const float dt_s =
+        sample->timing_valid
+            ? ((float)sample->sample_interval_us *
+               MICROSECONDS_TO_SECONDS)
+            : 0.0f;
+    const bool ready = imu_filter_process(
+        &imu_filter,
+        sample->acceleration_m_s2,
+        sample->angular_rate_rad_s,
+        dt_s,
+        sample->filtered_acceleration_m_s2,
+        sample->filtered_angular_rate_rad_s);
+
+    sample->filter_ready = sample->timing_valid && ready;
+    if (sample->timing_valid && !ready) {
+        increment_saturating(&sample->filter_reset_count);
+    }
 }
 
 static app_parameter_load_result_t parameter_load_result_for_app(
@@ -277,6 +396,10 @@ static void imu_dma_completion_from_isr(void *context)
     BaseType_t higher_priority_task_woken = pdFALSE;
 
     (void)context;
+    dma_completion_cycle_count = platform_time_capture_cycles();
+    __DMB();
+    dma_completion_timestamp_captured = platform_time_ready();
+    __DMB();
     if (imu_task_handle != NULL) {
         vTaskNotifyGiveFromISR(imu_task_handle,
                                &higher_priority_task_woken);
@@ -338,6 +461,8 @@ static bool initialize_sensor(app_imu_sample_t *sample)
 
     gyro_calibration_reset(&gyro_calibration);
     restore_accel_calibration_from_parameters();
+    initialize_timing_filter_pipeline(sample);
+    sample->timing_source_ready = platform_time_ready();
     sync_calibration_state(sample);
 
     for (attempt = 0U; attempt < IMU_INITIALIZATION_ATTEMPTS; ++attempt) {
@@ -376,6 +501,8 @@ static bool record_read_failure(app_imu_sample_t *sample,
     ++sample->consecutive_error_count;
     sample->last_error = (uint8_t)status;
     sample->last_bus_error = (uint8_t)bus_status;
+    sample->timing_valid = false;
+    sample->filter_ready = false;
 
     if (sample->consecutive_error_count >= IMU_MAX_CONSECUTIVE_ERRORS) {
         sample->present = false;
@@ -395,6 +522,8 @@ static void imu_task(void *argument)
     memset(&sample, 0, sizeof(sample));
     configASSERT(IMU_TASK_PERIOD_TICKS > 0U);
     configASSERT(IMU_DMA_TIMEOUT_TICKS > 0U);
+    sample.timing_source_ready = platform_time_initialize();
+    imu_filter_reset(&imu_filter);
     parameter_store_init();
     parameter_store_get_values(&parameter_values);
     restore_accel_calibration_from_parameters();
@@ -405,6 +534,10 @@ static void imu_task(void *argument)
 
     for (;;) {
         TickType_t last_wake_time;
+        uint32_t maintained_timestamp_us;
+
+        sample.timing_source_ready =
+            platform_time_maintain(&maintained_timestamp_us);
 
         if (!initialize_sensor(&sample)) {
             vTaskDelay(milliseconds_to_nonzero_ticks(
@@ -419,8 +552,12 @@ static void imu_task(void *argument)
             icm42688p_status_t status;
             TickType_t now;
             bool ready;
+            bool completion_timestamp_captured;
+            uint32_t completion_cycle_count;
 
             vTaskDelayUntil(&last_wake_time, IMU_TASK_PERIOD_TICKS);
+            sample.timing_source_ready =
+                platform_time_maintain(&maintained_timestamp_us);
             start_requested_accel_calibration(&sample);
             now = xTaskGetTickCount();
             if ((TickType_t)(now - last_wake_time) > 0U) {
@@ -442,11 +579,15 @@ static void imu_task(void *argument)
                 sample.consecutive_error_count = 0U;
                 sample.last_error = (uint8_t)ICM42688P_STATUS_OK;
                 sample.last_bus_error = (uint8_t)IMU_BUS_STATUS_OK;
+                sample.timing_valid = false;
+                sample.filter_ready = false;
                 app_state_publish_imu(&sample);
                 continue;
             }
 
             (void)ulTaskNotifyTake(pdTRUE, 0U);
+            dma_completion_timestamp_captured = false;
+            __DMB();
             status = icm42688p_start_sample_dma(&bus_status);
             if (status != ICM42688P_STATUS_OK) {
                 ++sample.dma_start_error_count;
@@ -469,6 +610,10 @@ static void imu_task(void *argument)
                 continue;
             }
 
+            completion_timestamp_captured =
+                dma_completion_timestamp_captured;
+            __DMB();
+            completion_cycle_count = dma_completion_cycle_count;
             status = icm42688p_finish_sample_dma(&raw, &bus_status);
             if (status != ICM42688P_STATUS_OK) {
                 ++sample.dma_completion_error_count;
@@ -478,6 +623,9 @@ static void imu_task(void *argument)
                 continue;
             }
 
+            update_sample_timing(&sample,
+                                 completion_timestamp_captured,
+                                 completion_cycle_count);
             convert_sample(&raw, &sample);
             (void)gyro_calibration_process(
                 &gyro_calibration,
@@ -496,8 +644,9 @@ static void imu_task(void *argument)
                 &accel_calibration,
                 sample.acceleration_m_s2,
                 sample.acceleration_m_s2);
+            update_filtered_sample(&sample);
             sync_calibration_state(&sample);
-            sample.sample_tick = now;
+            sample.sample_tick = xTaskGetTickCount();
             ++sample.sample_count;
             ++sample.dma_transfer_count;
             sample.consecutive_error_count = 0U;

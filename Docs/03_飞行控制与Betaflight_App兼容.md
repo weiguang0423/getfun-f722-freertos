@@ -106,13 +106,17 @@ ICM42688P 原始值
 
 ### 3.3 滤波
 
-第一版不复制 Betaflight 的完整滤波链。建议先使用：
+v0.6.0第一版不复制Betaflight完整滤波链，已经实现按真实 `dt` 更新的三轴PT1：
 
-- Gyro 一阶或二阶低通。
-- Accelerometer 低通。
-- 可通过 App 调整基本截止频率。
+- Gyro截止频率固定100 Hz。
+- Accelerometer截止频率固定30 Hz。
+- `alpha=(2*pi*fc*dt)/(1+2*pi*fc*dt)`。
+- DMA完成ISR捕获DWT周期计数，任务侧得到微秒时间戳；500～2000 µs为有效dt。
+- 首样本只播种；初始化、恢复、超界dt或非有限值会重置滤波并保持未READY。
+- `MSP_RAW_IMU`继续使用校准后未滤波数据；`filtered_*`字段供后续Mahony。
 
-飞行稳定后再决定是否增加动态滤波、Notch 或 RPM Filter。
+当前截止频率不可由App修改。Biquad、动态滤波、Notch或RPM Filter只有在基础飞行
+和频谱数据证明有需要后才单独立项。详细设计和验收见文档 `15`、`16`。
 
 ---
 
@@ -449,6 +453,9 @@ MSP_ANALOG
 
 v0.5.0同时支持Setup/Calibration流程使用的 `MSP_ACC_CALIBRATION`。命令只负责向
 ImuTask排队请求，MSP任务不直接采样IMU或写Flash。
+
+GETFUN MSP2 `0x4000`返回参数/校准诊断；v0.6.0新增 `0x4001`，返回DWT时间源、
+当前/min/max `dt`、异常/重置计数以及Gyro/Accel固定截止频率。
 
 ### 14.2 Receiver
 

@@ -6,8 +6,8 @@
  *
  * 主要内容：
  *   - APP_STATE_AXIS_COUNT：三轴常量（3）。
- *   - app_imu_sample_t：IMU 在线状态、配置回读、DRDY/DMA统计量、陀螺/加速度
- *       校准状态和 SI 物理量。
+ *   - app_imu_sample_t：IMU 在线状态、配置回读、DRDY/DMA统计量、微秒时间/dt、
+ *       低通状态、陀螺/加速度校准状态和 SI 物理量。
  *   - app_parameter_state_t：参数Flash加载、保存、活动槽、序号和错误状态。
  *   - app_state_snapshot_t：状态快照结构，字段分组——
  *       运行时：uptime / cycle_time / i2c_error / cpu_load / fault_flags；
@@ -38,6 +38,7 @@ extern "C" {
 #define APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED (1UL << 1U)
 #define APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED (1UL << 2U)
 #define APP_ARMING_INHIBIT_PARAMETERS_INVALID (1UL << 3U)
+#define APP_ARMING_INHIBIT_IMU_TIMING_INVALID (1UL << 4U)
 
 typedef enum
 {
@@ -118,6 +119,16 @@ typedef struct
     uint32_t accel_calibration_invalid_sample_count;
     float accel_bias_m_s2[APP_STATE_AXIS_COUNT];
     TickType_t sample_tick;
+    bool timing_source_ready;
+    bool timing_valid;
+    bool filter_ready;
+    uint32_t sample_timestamp_us;
+    uint32_t sample_interval_us;
+    uint32_t sample_interval_min_us;
+    uint32_t sample_interval_max_us;
+    uint32_t timing_invalid_count;
+    uint32_t timing_reset_count;
+    uint32_t filter_reset_count;
     uint32_t sample_count;
     uint32_t initialization_error_count;
     uint32_t read_error_count;
@@ -132,6 +143,8 @@ typedef struct
     uint32_t dma_abort_count;
     float acceleration_m_s2[APP_STATE_AXIS_COUNT];
     float angular_rate_rad_s[APP_STATE_AXIS_COUNT];
+    float filtered_acceleration_m_s2[APP_STATE_AXIS_COUNT];
+    float filtered_angular_rate_rad_s[APP_STATE_AXIS_COUNT];
     float temperature_c;
 } app_imu_sample_t;
 
