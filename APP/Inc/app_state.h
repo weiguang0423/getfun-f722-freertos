@@ -6,8 +6,9 @@
  *
  * 主要内容：
  *   - APP_STATE_AXIS_COUNT：三轴常量（3）。
- *   - app_imu_sample_t：IMU 在线状态、配置回读、DRDY/DMA统计量、陀螺校准状态
- *       和 SI 物理量。
+ *   - app_imu_sample_t：IMU 在线状态、配置回读、DRDY/DMA统计量、陀螺/加速度
+ *       校准状态和 SI 物理量。
+ *   - app_parameter_state_t：参数Flash加载、保存、活动槽、序号和错误状态。
  *   - app_state_snapshot_t：状态快照结构，字段分组——
  *       运行时：uptime / cycle_time / i2c_error / cpu_load / fault_flags；
  *       IMU：完整 app_imu_sample_t + 姿态角(roll/pitch/yaw)；
@@ -35,6 +36,8 @@ extern "C" {
 #define APP_STATE_AXIS_COUNT 3U
 #define APP_ARMING_INHIBIT_IMU_NOT_READY (1UL << 0U)
 #define APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED (1UL << 1U)
+#define APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED (1UL << 2U)
+#define APP_ARMING_INHIBIT_PARAMETERS_INVALID (1UL << 3U)
 
 typedef enum
 {
@@ -42,6 +45,55 @@ typedef enum
     APP_GYRO_CALIBRATION_CALIBRATING,
     APP_GYRO_CALIBRATION_READY
 } app_gyro_calibration_state_t;
+
+typedef enum
+{
+    APP_ACCEL_CALIBRATION_NOT_CALIBRATED = 0,
+    APP_ACCEL_CALIBRATION_READY,
+    APP_ACCEL_CALIBRATION_CALIBRATING,
+    APP_ACCEL_CALIBRATION_CANDIDATE_READY,
+    APP_ACCEL_CALIBRATION_SAVE_FAILED
+} app_accel_calibration_state_t;
+
+typedef enum
+{
+    APP_PARAMETER_LOAD_DEFAULTS_EMPTY = 0,
+    APP_PARAMETER_LOAD_SLOT_A,
+    APP_PARAMETER_LOAD_SLOT_B,
+    APP_PARAMETER_LOAD_RECOVERED_SLOT_A,
+    APP_PARAMETER_LOAD_RECOVERED_SLOT_B,
+    APP_PARAMETER_LOAD_DEFAULTS_CORRUPT
+} app_parameter_load_result_t;
+
+typedef enum
+{
+    APP_PARAMETER_SAVE_NOT_ATTEMPTED = 0,
+    APP_PARAMETER_SAVE_OK,
+    APP_PARAMETER_SAVE_BAD_ARGUMENT,
+    APP_PARAMETER_SAVE_FLASH_UNLOCK_FAILED,
+    APP_PARAMETER_SAVE_ERASE_FAILED,
+    APP_PARAMETER_SAVE_PROGRAM_FAILED,
+    APP_PARAMETER_SAVE_VERIFY_FAILED
+} app_parameter_save_result_t;
+
+typedef enum
+{
+    APP_PARAMETER_SLOT_NONE = 0,
+    APP_PARAMETER_SLOT_A,
+    APP_PARAMETER_SLOT_B
+} app_parameter_slot_t;
+
+typedef struct
+{
+    bool storage_valid;
+    app_parameter_load_result_t load_result;
+    app_parameter_save_result_t last_save_result;
+    app_parameter_slot_t active_slot;
+    uint8_t invalid_slot_mask;
+    uint32_t sequence;
+    uint32_t save_error_count;
+    uint32_t last_hal_error;
+} app_parameter_state_t;
 
 typedef struct
 {
@@ -58,6 +110,13 @@ typedef struct
     uint32_t gyro_calibration_motion_reject_count;
     uint32_t gyro_calibration_invalid_sample_count;
     float gyro_bias_rad_s[APP_STATE_AXIS_COUNT];
+    app_accel_calibration_state_t accel_calibration_state;
+    uint16_t accel_calibration_sample_count;
+    uint32_t accel_calibration_restart_count;
+    uint32_t accel_calibration_motion_reject_count;
+    uint32_t accel_calibration_level_reject_count;
+    uint32_t accel_calibration_invalid_sample_count;
+    float accel_bias_m_s2[APP_STATE_AXIS_COUNT];
     TickType_t sample_tick;
     uint32_t sample_count;
     uint32_t initialization_error_count;
@@ -85,6 +144,7 @@ typedef struct
     uint32_t fault_flags;
     uint32_t arming_inhibit_flags;
 
+    app_parameter_state_t parameters;
     app_imu_sample_t imu;
     bool attitude_valid;
     int16_t roll_deg10;
@@ -112,6 +172,8 @@ void app_state_set_runtime(uint16_t cycle_time_us,
                            uint16_t i2c_error_count);
 void app_state_set_fault_flags(uint32_t fault_flags);
 
+void app_state_publish_parameters(
+    const app_parameter_state_t *parameters);
 void app_state_publish_imu(const app_imu_sample_t *sample);
 void app_state_publish_attitude(int16_t roll_deg10,
                                 int16_t pitch_deg10,

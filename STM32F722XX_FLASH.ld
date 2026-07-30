@@ -7,7 +7,9 @@
 **  Author		: STM32CubeMX
 **
 **  Abstract    : Linker script for STM32F722RETx series
-**                512Kbytes FLASH and 256Kbytes RAM
+**                512Kbytes physical FLASH and 256Kbytes RAM.
+**                The first 256Kbytes are linkable program FLASH; sectors 6
+**                and 7 are reserved as power-loss-tolerant parameter slots.
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -56,8 +58,23 @@ ENTRY(Reset_Handler)
 MEMORY
 {
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 256K
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 512K
+FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 256K
+PARAM_A (r)    : ORIGIN = 0x08040000, LENGTH = 128K
+PARAM_B (r)    : ORIGIN = 0x08060000, LENGTH = 128K
 }
+
+/* Parameter store boundaries consumed by APP/Src/storage/parameter_store.c. */
+__parameter_slot_a_start__ = ORIGIN(PARAM_A);
+__parameter_slot_a_end__ = ORIGIN(PARAM_A) + LENGTH(PARAM_A);
+__parameter_slot_b_start__ = ORIGIN(PARAM_B);
+__parameter_slot_b_end__ = ORIGIN(PARAM_B) + LENGTH(PARAM_B);
+
+ASSERT(__parameter_slot_a_start__ == 0x08040000,
+       "parameter slot A address changed")
+ASSERT(__parameter_slot_b_start__ == 0x08060000,
+       "parameter slot B address changed")
+ASSERT(__parameter_slot_b_end__ == 0x08080000,
+       "parameter slots exceed STM32F722 512K Flash")
 
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);    /* end of RAM */

@@ -206,6 +206,17 @@ STM32F722 使用 Cortex-M7 FPU。编译器、启动代码和链接库必须使�
 
 Betaflight 基线从 `0x08000000` 启动，但独立工程的参数扇区必须单独规划，不能直接假定与 Betaflight 完全一致。
 
+当前v0.5.0已经冻结：
+
+```text
+0x08000000～0x0803FFFF  程序区，256 KB，链接器只允许使用此区域
+0x08040000～0x0805FFFF  参数槽A，Sector 6，128 KB
+0x08060000～0x0807FFFF  参数槽B，Sector 7，128 KB
+```
+
+Sector 6/7由链接脚本导出边界符号，但不承载普通输出段。程序超过256 KB时必须链接
+失败，不能依靠运行时检查阻止代码侵入参数区。
+
 ---
 
 ## 5. FreeRTOS 任务
@@ -242,11 +253,11 @@ SPI 读取一帧
 
 如果第一版尚未接入 Data Ready，引入固定周期读取也可以，但要记录实际采样间隔。
 
-当前 `v0.4.0` 软件仍由 ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
+当前 `v0.5.0` 软件仍由 ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
 ICM42688P 的 `INT_STATUS.DATA_RDY_INT`，但 14 字节样本事务已改为 SPI1 RX/TX
 DMA。DMA 完成 ISR 只恢复 CS、保存结果并用任务通知唤醒 ImuTask；解析、SI换算、
-`CW90`、陀螺静态零偏校准和发布均留在任务上下文。校准要求连续250个预热样本和
-2000个Welford统计样本，只有窗口标准差通过后才进入READY并扣除机体系零偏。
+`CW90`、陀螺静态零偏校准、加速度水平校准和发布均留在任务上下文。加速度候选
+只有写入非活动参数槽并完成CRC/提交复核后才切换为有效偏置。
 任务静态栈512 words、优先级 `tskIDLE_PRIORITY+4`；InitTask保持 `osPriorityIdle`，
 避免1 Hz UART诊断抢占采样。
 
@@ -255,7 +266,9 @@ DMA。DMA 完成 ISR 只恢复 CS、保存结果并用任务通知唤醒 ImuTask
 `09_v0.3.0_IMU_DMA与DRDY开发计划.md`，软件交付和实物验收见
 `10_v0.3.0_IMU_DMA与DRDY软件交付与实物验收.md`；陀螺校准设计和验收见
 `11_v0.4.0_陀螺静态零偏校准开发计划.md`与
-`12_v0.4.0_陀螺静态零偏校准软件交付与实物验收.md`。
+`12_v0.4.0_陀螺静态零偏校准软件交付与实物验收.md`；加速度校准和参数存储见
+`13_v0.5.0_加速度校准与参数持久化开发计划.md`与
+`14_v0.5.0_加速度校准与参数持久化软件交付与实物验收.md`。
 
 ### 5.2 FlightTask
 
@@ -439,30 +452,34 @@ void motor_write_dshot(const uint16_t values[4]);
 
 ## 10. 参数保存
 
-第一版只需要简单参数系统：
+v0.5.0已经实现第一版参数系统。当前记录不是完整Betaflight PG，而是一个固定48字节
+v1记录：
 
 ```c
 typedef struct {
     uint32_t magic;
     uint16_t version;
-    uint16_t size;
-    FlightConfig flight;
-    RcConfig rc;
-    MotorConfig motor;
-    MspConfig msp;
-    uint32_t crc;
-} PersistentConfig;
+    uint16_t length;
+    uint32_t sequence;
+    uint32_t flags;
+    float accel_bias_m_s2[3];
+    uint32_t reserved[3];
+    uint32_t crc32;
+    uint32_t commit;
+} parameter_record_v1_t;
 ```
 
-要求：
+固定策略：
 
-- 有 magic、版本、长度和 CRC。
-- 参数损坏时加载默认值。
-- Armed 时不写内部 Flash。
-- `save` 后再统一写入。
-- 参数结构变化时提升版本号。
+- Sector 6/7分别保存槽A/B，使用sequence选择较新记录。
+- 每次只擦除非活动槽，记录主体验证后最后写commit。
+- 两槽空白时加载安全默认值；有损坏但无有效槽时加载默认值并设置解锁抑制。
+- 新加速度偏置只有保存和读回成功后才应用。
+- 当前没有真实ARM输出，保存前仍强制Motor GPIO低；未来Armed状态必须拒绝写Flash。
+- 格式变化提升version；兼容扩展优先使用reserved，不能静默改变字段含义。
 
-不需要第一版就实现 Betaflight 完整 PG 参数系统。
+完整参数分组、运行时修改、统一 `save` 和版本迁移将在后续里程碑增量扩展，不需要
+为了未来字段提前引入Betaflight完整PG系统。
 
 ---
 

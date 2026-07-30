@@ -33,6 +33,7 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
+    APP/Src/algorithms/accel_calibration.c
     APP/Src/algorithms/gyro_calibration.c
     APP/Src/app_state.c
     APP/Src/bsp/imu_bus.c
@@ -43,6 +44,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/protocol/msp_server.c
     APP/Src/rtos/app_task.c
     APP/Src/rtos/imu_task.c
+    APP/Src/storage/parameter_store.c
 )
 
 # Add STM32CubeMX generated sources

@@ -7,10 +7,12 @@
  * 主要内容：
  *   - msp_server_init()         —— 业务层初始化（当前为空，预留扩展点）
  *   - msp_server_process()      —— 命令派发主入口：接收一个请求，按 command 分支
- *                                   读 app_state 快照、填充响应负载或标记为"不支持"
+ *                                   读 app_state 快照、填充响应负载、排队校准请求
+ *                                   或标记为"不支持"
  *
  * 设计说明：本层只关心"每个命令该回什么数据"，不碰帧的字节级拆/拼（那是
- * msp_transport 的职责），也不直接接触 USB 收发。详见 msp_server.c 的命令列表。
+ * msp_transport的职责），也不直接接触USB收发。标准MSP_ACC_CALIBRATION由本层
+ * 检查快照后交给ImuTask；详见msp_server.c的命令列表。
  */
 #ifndef MSP_SERVER_H
 #define MSP_SERVER_H

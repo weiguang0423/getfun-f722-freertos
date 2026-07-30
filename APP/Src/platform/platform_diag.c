@@ -9,8 +9,8 @@
  *   - platform_motor_outputs_force_safe()：直接配置 GPIO 寄存器并拉低所有 Motor。
  *   - platform_diag_startup()：输出固件身份、构建时间和运行时时钟。
  *   - platform_diag_heartbeat()：输出平台心跳，以及 1 Hz IMU 在线状态、采样率、
- *       DRDY/DMA 计数、错误计数、陀螺校准进度/零偏、SI 物理量和 ImuTask
- *       栈余量。
+ *       DRDY/DMA计数、错误计数、陀螺/加速度校准、参数Flash、SI物理量和
+ *       ImuTask栈余量。
  *   - platform_fault_halt()：记录故障码、关闭中断、强制安全输出并停止运行。
  *   - platform_freertos_assert_failed()：记录 FreeRTOS 断言位置后进入安全停机。
  *
@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "FreeRTOS.h"
+#include "algorithms/accel_calibration.h"
 #include "algorithms/gyro_calibration.h"
 #include "app_state.h"
 #include "bsp/imu_bus.h"
@@ -206,6 +207,41 @@ void platform_diag_heartbeat(void)
         (unsigned long)xPortGetFreeHeapSize(),
         (unsigned long)xPortGetMinimumEverFreeHeapSize(),
         (unsigned long)uxTaskGetStackHighWaterMark(NULL));
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "params valid=%u load=%u save=%u slot=%u invalid=0x%02X "
+        "seq=%lu save_err=%lu hal=0x%08lX\r\n",
+        snapshot.parameters.storage_valid ? 1U : 0U,
+        (unsigned int)snapshot.parameters.load_result,
+        (unsigned int)snapshot.parameters.last_save_result,
+        (unsigned int)snapshot.parameters.active_slot,
+        snapshot.parameters.invalid_slot_mask,
+        (unsigned long)snapshot.parameters.sequence,
+        (unsigned long)snapshot.parameters.save_error_count,
+        (unsigned long)snapshot.parameters.last_hal_error);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "accel cal=%u progress=%u/%u restart=%lu motion=%lu "
+        "level=%lu invalid=%lu bias_mm_s2=[%ld,%ld,%ld]\r\n",
+        (unsigned int)snapshot.imu.accel_calibration_state,
+        (unsigned int)snapshot.imu.accel_calibration_sample_count,
+        (unsigned int)ACCEL_CALIBRATION_REQUIRED_SAMPLES,
+        (unsigned long)snapshot.imu.accel_calibration_restart_count,
+        (unsigned long)
+            snapshot.imu.accel_calibration_motion_reject_count,
+        (unsigned long)
+            snapshot.imu.accel_calibration_level_reject_count,
+        (unsigned long)
+            snapshot.imu.accel_calibration_invalid_sample_count,
+        (long)diag_float_to_milli(snapshot.imu.accel_bias_m_s2[0]),
+        (long)diag_float_to_milli(snapshot.imu.accel_bias_m_s2[1]),
+        (long)diag_float_to_milli(snapshot.imu.accel_bias_m_s2[2]));
     diag_write_formatted(line, sizeof(line), length);
 
     length = snprintf(

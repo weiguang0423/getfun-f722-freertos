@@ -3,20 +3,23 @@
  *
  * 职责:
  *   负责传感器初始化/恢复、固定周期寄存器 DRDY 轮询、异步 SPI1 DMA 采样读取、
- *   SI 单位转换、CW90 板级对准、陀螺静态零偏校准、统计以及 app_state 发布。
+ *   SI单位转换、CW90板级对准、陀螺静态零偏校准、持久化加速度校准、统计以及
+ *   app_state发布。
  *
  * 核心函数:
  *   - imu_task_create(): 以 idle 优先级 + 4 静态创建 ImuTask。
  *   - imu_task(): 重试初始化,DRDY 置位后启动 DMA,等待直接任务通知,
  *     连续 3 次失败后进入恢复流程。
  *   - imu_dma_completion_from_isr(): 仅在 DMA ISR 中唤醒 ImuTask。
+ *   - imu_task_request_accel_calibration(): 由MSP任务排队一次校准请求。
  *   - imu_task_stack_high_water_mark(): 供 1 Hz 诊断摘要使用。
  *
  * 数据流与约束:
- *   ICM42688P 原始传感器坐标系数值 -> SI 转换 -> CW90 机体系 -> 上电陀螺
- *   静态零偏校准/扣除 -> app_state_publish_imu()。本任务是 SPI/IMU 的唯一
- *   写者,ISR 只发送任务通知;解析、浮点运算、状态发布、超时与恢复全部留在
- *   任务上下文中。不使用动态内存分配,也不输出日志。
+ *   ICM42688P原始传感器坐标系数值 -> SI转换 -> CW90机体系 -> 上电陀螺
+ *   静态零偏校准/扣除 -> 水平加速度校准/持久化/扣除 ->
+ *   app_state_publish_imu()。本任务是SPI/IMU和参数Flash保存的唯一写者；ISR
+ *   只发送DMA任务通知。解析、浮点运算、状态发布、超时与恢复全部留在任务
+ *   上下文中。不使用动态内存，也不在1 kHz正常路径输出日志。
  */
 #include "rtos/imu_task.h"
 
@@ -25,9 +28,12 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "algorithms/accel_calibration.h"
 #include "algorithms/gyro_calibration.h"
 #include "app_state.h"
 #include "drivers/icm42688p.h"
+#include "platform/platform_diag.h"
+#include "storage/parameter_store.h"
 
 #define IMU_TASK_STACK_WORDS 512U
 #define IMU_TASK_PRIORITY (tskIDLE_PRIORITY + 4U)
@@ -47,11 +53,18 @@
 
 _Static_assert(APP_STATE_AXIS_COUNT == GYRO_CALIBRATION_AXIS_COUNT,
                "IMU and gyro calibration axis counts must match");
+_Static_assert(APP_STATE_AXIS_COUNT == ACCEL_CALIBRATION_AXIS_COUNT,
+               "IMU and accel calibration axis counts must match");
+_Static_assert(APP_STATE_AXIS_COUNT == PARAMETER_STORE_AXIS_COUNT,
+               "IMU and parameter store axis counts must match");
 
 static StaticTask_t imu_task_control_block;
 static StackType_t imu_task_stack[IMU_TASK_STACK_WORDS];
 static TaskHandle_t imu_task_handle;
 static gyro_calibration_t gyro_calibration;
+static accel_calibration_t accel_calibration;
+static parameter_store_values_t parameter_values;
+static bool accel_calibration_request_pending;
 
 static app_gyro_calibration_state_t calibration_state_for_app(
     gyro_calibration_state_t state)
@@ -64,6 +77,24 @@ static app_gyro_calibration_state_t calibration_state_for_app(
     case GYRO_CALIBRATION_NOT_STARTED:
     default:
         return APP_GYRO_CALIBRATION_NOT_STARTED;
+    }
+}
+
+static app_accel_calibration_state_t accel_calibration_state_for_app(
+    accel_calibration_state_t state)
+{
+    switch (state) {
+    case ACCEL_CALIBRATION_READY:
+        return APP_ACCEL_CALIBRATION_READY;
+    case ACCEL_CALIBRATION_CALIBRATING:
+        return APP_ACCEL_CALIBRATION_CALIBRATING;
+    case ACCEL_CALIBRATION_CANDIDATE_READY:
+        return APP_ACCEL_CALIBRATION_CANDIDATE_READY;
+    case ACCEL_CALIBRATION_SAVE_FAILED:
+        return APP_ACCEL_CALIBRATION_SAVE_FAILED;
+    case ACCEL_CALIBRATION_NOT_CALIBRATED:
+    default:
+        return APP_ACCEL_CALIBRATION_NOT_CALIBRATED;
     }
 }
 
@@ -82,6 +113,163 @@ static void sync_calibration_state(app_imu_sample_t *sample)
     memcpy(sample->gyro_bias_rad_s,
            gyro_calibration.bias_rad_s,
            sizeof(sample->gyro_bias_rad_s));
+    sample->accel_calibration_state =
+        accel_calibration_state_for_app(accel_calibration.state);
+    sample->accel_calibration_sample_count =
+        accel_calibration.stable_sample_count;
+    sample->accel_calibration_restart_count =
+        accel_calibration.restart_count;
+    sample->accel_calibration_motion_reject_count =
+        accel_calibration.motion_reject_count;
+    sample->accel_calibration_level_reject_count =
+        accel_calibration.level_reject_count;
+    sample->accel_calibration_invalid_sample_count =
+        accel_calibration.invalid_sample_count;
+    memcpy(sample->accel_bias_m_s2,
+           accel_calibration.bias_m_s2,
+           sizeof(sample->accel_bias_m_s2));
+}
+
+static app_parameter_load_result_t parameter_load_result_for_app(
+    parameter_store_load_result_t result)
+{
+    switch (result) {
+    case PARAMETER_STORE_LOAD_SLOT_A:
+        return APP_PARAMETER_LOAD_SLOT_A;
+    case PARAMETER_STORE_LOAD_SLOT_B:
+        return APP_PARAMETER_LOAD_SLOT_B;
+    case PARAMETER_STORE_LOAD_RECOVERED_SLOT_A:
+        return APP_PARAMETER_LOAD_RECOVERED_SLOT_A;
+    case PARAMETER_STORE_LOAD_RECOVERED_SLOT_B:
+        return APP_PARAMETER_LOAD_RECOVERED_SLOT_B;
+    case PARAMETER_STORE_LOAD_DEFAULTS_CORRUPT:
+        return APP_PARAMETER_LOAD_DEFAULTS_CORRUPT;
+    case PARAMETER_STORE_LOAD_DEFAULTS_EMPTY:
+    default:
+        return APP_PARAMETER_LOAD_DEFAULTS_EMPTY;
+    }
+}
+
+static app_parameter_save_result_t parameter_save_result_for_app(
+    parameter_store_save_result_t result)
+{
+    switch (result) {
+    case PARAMETER_STORE_SAVE_OK:
+        return APP_PARAMETER_SAVE_OK;
+    case PARAMETER_STORE_SAVE_BAD_ARGUMENT:
+        return APP_PARAMETER_SAVE_BAD_ARGUMENT;
+    case PARAMETER_STORE_SAVE_FLASH_UNLOCK_FAILED:
+        return APP_PARAMETER_SAVE_FLASH_UNLOCK_FAILED;
+    case PARAMETER_STORE_SAVE_ERASE_FAILED:
+        return APP_PARAMETER_SAVE_ERASE_FAILED;
+    case PARAMETER_STORE_SAVE_PROGRAM_FAILED:
+        return APP_PARAMETER_SAVE_PROGRAM_FAILED;
+    case PARAMETER_STORE_SAVE_VERIFY_FAILED:
+        return APP_PARAMETER_SAVE_VERIFY_FAILED;
+    case PARAMETER_STORE_SAVE_NOT_ATTEMPTED:
+    default:
+        return APP_PARAMETER_SAVE_NOT_ATTEMPTED;
+    }
+}
+
+static app_parameter_slot_t parameter_slot_for_app(
+    parameter_store_slot_t slot)
+{
+    switch (slot) {
+    case PARAMETER_STORE_SLOT_A:
+        return APP_PARAMETER_SLOT_A;
+    case PARAMETER_STORE_SLOT_B:
+        return APP_PARAMETER_SLOT_B;
+    case PARAMETER_STORE_SLOT_NONE:
+    default:
+        return APP_PARAMETER_SLOT_NONE;
+    }
+}
+
+static void publish_parameter_state(void)
+{
+    parameter_store_status_t source;
+    app_parameter_state_t destination;
+
+    parameter_store_get_status(&source);
+    memset(&destination, 0, sizeof(destination));
+    destination.storage_valid = source.storage_valid;
+    destination.load_result =
+        parameter_load_result_for_app(source.load_result);
+    destination.last_save_result =
+        parameter_save_result_for_app(source.last_save_result);
+    destination.active_slot =
+        parameter_slot_for_app(source.active_slot);
+    destination.invalid_slot_mask = source.invalid_slot_mask;
+    destination.sequence = source.sequence;
+    destination.save_error_count = source.save_error_count;
+    destination.last_hal_error = source.last_hal_error;
+    app_state_publish_parameters(&destination);
+}
+
+static void restore_accel_calibration_from_parameters(void)
+{
+    accel_calibration_initialize(
+        &accel_calibration,
+        parameter_values.accel_bias_m_s2,
+        parameter_values.accel_calibration_valid);
+}
+
+static bool take_accel_calibration_request(void)
+{
+    bool pending;
+
+    taskENTER_CRITICAL();
+    pending = accel_calibration_request_pending;
+    accel_calibration_request_pending = false;
+    taskEXIT_CRITICAL();
+    return pending;
+}
+
+static void start_requested_accel_calibration(
+    app_imu_sample_t *sample)
+{
+    if (!take_accel_calibration_request()) {
+        return;
+    }
+
+    if (sample->present &&
+        (gyro_calibration.state == GYRO_CALIBRATION_READY)) {
+        (void)accel_calibration_start(&accel_calibration);
+        sync_calibration_state(sample);
+        app_state_publish_imu(sample);
+    }
+}
+
+static void persist_accel_calibration_candidate(void)
+{
+    parameter_store_values_t candidate_values = parameter_values;
+    float candidate_bias[APP_STATE_AXIS_COUNT];
+
+    if (!accel_calibration_get_candidate(&accel_calibration,
+                                         candidate_bias)) {
+        return;
+    }
+
+    candidate_values.accel_calibration_valid = true;
+    memcpy(candidate_values.accel_bias_m_s2,
+           candidate_bias,
+           sizeof(candidate_values.accel_bias_m_s2));
+
+    /*
+     * v0.5.0 still has no armed state or timer motor output. Force every motor
+     * GPIO low immediately before the blocking internal-Flash transaction.
+     * The future ARM state machine must additionally reject save while armed.
+     */
+    platform_motor_outputs_force_safe();
+    if (parameter_store_save(&candidate_values) ==
+        PARAMETER_STORE_SAVE_OK) {
+        parameter_values = candidate_values;
+        accel_calibration_mark_persisted(&accel_calibration);
+    } else {
+        accel_calibration_mark_save_failed(&accel_calibration);
+    }
+    publish_parameter_state();
 }
 
 static void imu_dma_completion_from_isr(void *context)
@@ -149,6 +337,7 @@ static bool initialize_sensor(app_imu_sample_t *sample)
     uint32_t attempt;
 
     gyro_calibration_reset(&gyro_calibration);
+    restore_accel_calibration_from_parameters();
     sync_calibration_state(sample);
 
     for (attempt = 0U; attempt < IMU_INITIALIZATION_ATTEMPTS; ++attempt) {
@@ -191,6 +380,7 @@ static bool record_read_failure(app_imu_sample_t *sample,
     if (sample->consecutive_error_count >= IMU_MAX_CONSECUTIVE_ERRORS) {
         sample->present = false;
         gyro_calibration_reset(&gyro_calibration);
+        restore_accel_calibration_from_parameters();
         sync_calibration_state(sample);
     }
     app_state_publish_imu(sample);
@@ -205,6 +395,12 @@ static void imu_task(void *argument)
     memset(&sample, 0, sizeof(sample));
     configASSERT(IMU_TASK_PERIOD_TICKS > 0U);
     configASSERT(IMU_DMA_TIMEOUT_TICKS > 0U);
+    parameter_store_init();
+    parameter_store_get_values(&parameter_values);
+    restore_accel_calibration_from_parameters();
+    publish_parameter_state();
+    sync_calibration_state(&sample);
+    app_state_publish_imu(&sample);
     imu_bus_set_dma_callback(imu_dma_completion_from_isr, NULL);
 
     for (;;) {
@@ -225,6 +421,7 @@ static void imu_task(void *argument)
             bool ready;
 
             vTaskDelayUntil(&last_wake_time, IMU_TASK_PERIOD_TICKS);
+            start_requested_accel_calibration(&sample);
             now = xTaskGetTickCount();
             if ((TickType_t)(now - last_wake_time) > 0U) {
                 sample.missed_deadline_count +=
@@ -290,6 +487,15 @@ static void imu_task(void *argument)
                 &gyro_calibration,
                 sample.angular_rate_rad_s,
                 sample.angular_rate_rad_s);
+            (void)accel_calibration_process(
+                &accel_calibration,
+                sample.acceleration_m_s2,
+                sample.angular_rate_rad_s);
+            persist_accel_calibration_candidate();
+            accel_calibration_apply(
+                &accel_calibration,
+                sample.acceleration_m_s2,
+                sample.acceleration_m_s2);
             sync_calibration_state(&sample);
             sample.sample_tick = now;
             ++sample.sample_count;
@@ -312,6 +518,20 @@ void imu_task_create(void)
                                         imu_task_stack,
                                         &imu_task_control_block);
     configASSERT(imu_task_handle != NULL);
+}
+
+bool imu_task_request_accel_calibration(void)
+{
+    bool accepted = false;
+
+    taskENTER_CRITICAL();
+    if ((imu_task_handle != NULL) &&
+        !accel_calibration_request_pending) {
+        accel_calibration_request_pending = true;
+        accepted = true;
+    }
+    taskEXIT_CRITICAL();
+    return accepted;
 }
 
 uint32_t imu_task_stack_high_water_mark(void)

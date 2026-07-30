@@ -15,7 +15,9 @@
  *   - msp_server_process()：命令分支主体。关键策略——
  *       MSP_FC_VARIANT 回 "BTFL"（Configurator 只对 BTFL 开放正常 UI），
  *       而 MSP_BOARD_INFO 仍报 "GF72"/"GETFUN_F722" 保持真实板子身份。
- *   - 写类命令：MSP_SET_ARMING_DISABLED、MSP_SET_RTC 从负载解析参数后写回 app_state。
+ *   - 写类命令：MSP_SET_ARMING_DISABLED、MSP_SET_RTC从负载解析参数后写回
+ *       app_state；标准MSP_ACC_CALIBRATION向ImuTask排队水平加速度校准。
+ *   - GETFUN MSP2 0x4000：返回参数槽、保存结果、校准状态和偏置诊断。
  *
  * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
  */
@@ -26,6 +28,7 @@
 #include <string.h>
 
 #include "app_state.h"
+#include "rtos/imu_task.h"
 #include "stm32f7xx_hal.h"
 
 #define MSP_API_VERSION 1U
@@ -45,10 +48,12 @@
 #define MSP_BATTERY_STATE 130U
 #define MSP_STATUS_EX 150U
 #define MSP_UID 160U
+#define MSP_ACC_CALIBRATION 205U
 #define MSP_SET_RTC 246U
 
 #define MSP2_GET_TEXT 0x3006U
 #define MSP2_MCU_INFO 0x300CU
+#define MSP2_GETFUN_CALIBRATION_STATUS 0x4000U
 
 #define MSP2TEXT_PILOT_NAME 1U
 #define MSP2TEXT_CRAFT_NAME 2U
@@ -97,6 +102,11 @@ static void writer_u32(payload_writer_t *writer, uint32_t value)
 {
     writer_u16(writer, (uint16_t)value);
     writer_u16(writer, (uint16_t)(value >> 16U));
+}
+
+static void writer_i32(payload_writer_t *writer, int32_t value)
+{
+    writer_u32(writer, (uint32_t)value);
 }
 
 static void writer_data(payload_writer_t *writer,
@@ -295,6 +305,52 @@ static void handle_get_text(const msp_request_t *request,
     }
 }
 
+static void handle_getfun_calibration_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint32_t axis;
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, state->parameters.storage_valid ? 1U : 0U);
+    writer_u8(writer, (uint8_t)state->parameters.load_result);
+    writer_u8(writer, (uint8_t)state->parameters.last_save_result);
+    writer_u8(writer, (uint8_t)state->parameters.active_slot);
+    writer_u8(writer, state->parameters.invalid_slot_mask);
+    writer_u8(writer, (uint8_t)state->imu.accel_calibration_state);
+    writer_u8(writer, 0U);
+    writer_u32(writer, state->parameters.sequence);
+    writer_u32(writer, state->parameters.save_error_count);
+    writer_u32(writer, state->parameters.last_hal_error);
+    writer_u32(writer, state->arming_inhibit_flags);
+    writer_u16(writer, state->imu.accel_calibration_sample_count);
+    writer_u16(writer, 0U);
+    writer_u32(writer, state->imu.accel_calibration_restart_count);
+    writer_u32(writer,
+               state->imu.accel_calibration_motion_reject_count);
+    writer_u32(writer,
+               state->imu.accel_calibration_level_reject_count);
+    writer_u32(writer,
+               state->imu.accel_calibration_invalid_sample_count);
+
+    for (axis = 0U; axis < APP_STATE_AXIS_COUNT; ++axis) {
+        const float milli_m_s2 =
+            state->imu.accel_bias_m_s2[axis] * 1000.0f;
+        int32_t value;
+
+        if (!isfinite(milli_m_s2)) {
+            value = 0;
+        } else if (milli_m_s2 >= (float)INT32_MAX) {
+            value = INT32_MAX;
+        } else if (milli_m_s2 <= (float)INT32_MIN) {
+            value = INT32_MIN;
+        } else {
+            value = (int32_t)lroundf(milli_m_s2);
+        }
+        writer_i32(writer, value);
+    }
+}
+
 static uint32_t request_u32(const msp_request_t *request, uint16_t offset)
 {
     return (uint32_t)request->payload[offset] |
@@ -415,6 +471,20 @@ void msp_server_process(const msp_request_t *request,
         writer_u32(&writer, *(const uint32_t *)(UID_BASE + 8U));
         break;
 
+    case MSP_ACC_CALIBRATION:
+        if ((request->payload_length != 0U) ||
+            !state.imu.present ||
+            (state.imu.gyro_calibration_state !=
+             APP_GYRO_CALIBRATION_READY) ||
+            (state.imu.accel_calibration_state ==
+             APP_ACCEL_CALIBRATION_CALIBRATING) ||
+            (state.imu.accel_calibration_state ==
+             APP_ACCEL_CALIBRATION_CANDIDATE_READY) ||
+            !imu_task_request_accel_calibration()) {
+            response->supported = false;
+        }
+        break;
+
     case MSP_SET_ARMING_DISABLED:
         if (request->payload_length < 1U) {
             response->supported = false;
@@ -440,6 +510,10 @@ void msp_server_process(const msp_request_t *request,
     case MSP2_MCU_INFO:
         writer_u8(&writer, MCU_TYPE_ID_PROVIDED_BY_NAME);
         writer_pstring(&writer, "STM32F722");
+        break;
+
+    case MSP2_GETFUN_CALIBRATION_STATUS:
+        handle_getfun_calibration_status(&writer, &state);
         break;
 
     default:

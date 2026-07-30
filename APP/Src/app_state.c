@@ -11,13 +11,13 @@
  *   这样做既能保护 32 位整体拷贝/多字段写入的原子性，又不会让发布者进入阻塞态。
  *
  * 主要内容：
- *   - app_state_init()：在临界区内 memset 清零整份快照，并默认设置 IMU/陀螺
- *       校准解锁抑制位。
+ *   - app_state_init()：在临界区内 memset 清零整份快照，并默认设置 IMU、陀螺、
+ *       加速度校准和参数有效性解锁抑制位。
  *   - app_state_get_snapshot()：临界区内整体拷贝 state，退出后把 uptime_ms 替换为
  *       HAL_GetTick()，保证每次读到的都是"当下"的运行时长。
  *   - app_state_set_runtime/set_fault_flags：写入运行时与故障标志。
- *   - app_state_publish_imu()：整体复制包含 SI 单位、校准状态和统计量的
- *       app_imu_sample_t，并原子更新对应解锁抑制位。
+ *   - app_state_publish_parameters()/publish_imu()：整体复制参数/IMU状态，并原子
+ *       更新参数有效性和传感器校准解锁抑制位。
  *   - app_state_publish_attitude/battery：发布姿态和电池数据。
  *   - app_state_set_configurator_arming_disabled/set_host_rtc：回写 Configurator 下发的
  *       解锁状态与 RTC 时间。
@@ -54,7 +54,9 @@ void app_state_init(void)
     memset(&state, 0, sizeof(state));
     state.arming_inhibit_flags =
         APP_ARMING_INHIBIT_IMU_NOT_READY |
-        APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED;
+        APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED |
+        APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED |
+        APP_ARMING_INHIBIT_PARAMETERS_INVALID;
     app_state_unlock(primask);
 }
 
@@ -90,6 +92,24 @@ void app_state_set_fault_flags(uint32_t fault_flags)
     app_state_unlock(primask);
 }
 
+void app_state_publish_parameters(
+    const app_parameter_state_t *parameters)
+{
+    const uint32_t primask = app_state_lock();
+
+    if (parameters != NULL) {
+        state.parameters = *parameters;
+        if (parameters->storage_valid) {
+            state.arming_inhibit_flags &=
+                ~APP_ARMING_INHIBIT_PARAMETERS_INVALID;
+        } else {
+            state.arming_inhibit_flags |=
+                APP_ARMING_INHIBIT_PARAMETERS_INVALID;
+        }
+    }
+    app_state_unlock(primask);
+}
+
 void app_state_publish_imu(const app_imu_sample_t *sample)
 {
     const uint32_t primask = app_state_lock();
@@ -111,6 +131,15 @@ void app_state_publish_imu(const app_imu_sample_t *sample)
         } else {
             state.arming_inhibit_flags |=
                 APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED;
+        }
+
+        if (sample->accel_calibration_state ==
+            APP_ACCEL_CALIBRATION_READY) {
+            state.arming_inhibit_flags &=
+                ~APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED;
+        } else {
+            state.arming_inhibit_flags |=
+                APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED;
         }
     }
     app_state_unlock(primask);
