@@ -2,8 +2,8 @@
  * imu_task.h —— DMA IMU 采样的静态 FreeRTOS 任务接口
  *
  * 作用:
- *   对外暴露唯一 IMU 所有者任务的创建接口和低频栈诊断接口。DMA 完成通知
- *   保持为 imu_task.c 内部私有。
+ *   对外暴露唯一 IMU 所有者任务的创建接口和低频栈诊断接口。DMA 完成通知与
+ *   陀螺静态零偏校准上下文保持为 imu_task.c 内部私有。
  *
  * 核心接口:
  *   - imu_task_create(): 创建 1 kHz DRDY 门控的 DMA ImuTask。

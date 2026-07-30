@@ -797,6 +797,13 @@ IRQ      抢占优先级 5
 原始板级配置没有定义 IMU INT 外部引脚，因此 Data Ready 当前通过
 `INT_STATUS.DATA_RDY_INT` 门控，不配置 GPIO EXTI，也不得占用 PC4/PINIO1。
 
+v0.4.0在APP层增加陀螺静态零偏校准，不修改CubeMX外设配置，并已通过实物验收。
+校准软件和验收见
+`11_v0.4.0_陀螺静态零偏校准开发计划.md`与
+`12_v0.4.0_陀螺静态零偏校准软件交付与实物验收.md`。下一算法里程碑是
+`v0.5.0-accel-calibration-params-baseline`；阶段B仍表示下一个需要CubeMX接入的
+外设，但应在IMU校准、滤波和姿态基础链完成后实施。
+
 ### 阶段 B：UART2 与 CRSF
 
 ```text

@@ -3,7 +3,7 @@
  *
  * 职责:
  *   负责传感器初始化/恢复、固定周期寄存器 DRDY 轮询、异步 SPI1 DMA 采样读取、
- *   SI 单位转换、CW90 板级对准、统计,以及 app_state 发布。
+ *   SI 单位转换、CW90 板级对准、陀螺静态零偏校准、统计以及 app_state 发布。
  *
  * 核心函数:
  *   - imu_task_create(): 以 idle 优先级 + 4 静态创建 ImuTask。
@@ -13,10 +13,10 @@
  *   - imu_task_stack_high_water_mark(): 供 1 Hz 诊断摘要使用。
  *
  * 数据流与约束:
- *   ICM42688P 原始传感器坐标系数值 -> SI 转换 -> CW90 机体系 ->
- *   app_state_publish_imu()。本任务是 SPI/IMU 的唯一写者,ISR 只发送
- *   任务通知;解析、浮点运算、状态发布、超时与恢复全部留在任务上下文中。
- *   不使用动态内存分配,也不输出日志。
+ *   ICM42688P 原始传感器坐标系数值 -> SI 转换 -> CW90 机体系 -> 上电陀螺
+ *   静态零偏校准/扣除 -> app_state_publish_imu()。本任务是 SPI/IMU 的唯一
+ *   写者,ISR 只发送任务通知;解析、浮点运算、状态发布、超时与恢复全部留在
+ *   任务上下文中。不使用动态内存分配,也不输出日志。
  */
 #include "rtos/imu_task.h"
 
@@ -25,6 +25,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "algorithms/gyro_calibration.h"
 #include "app_state.h"
 #include "drivers/icm42688p.h"
 
@@ -44,9 +45,44 @@
 #define TEMPERATURE_COUNTS_PER_C 132.48f
 #define TEMPERATURE_OFFSET_C 25.0f
 
+_Static_assert(APP_STATE_AXIS_COUNT == GYRO_CALIBRATION_AXIS_COUNT,
+               "IMU and gyro calibration axis counts must match");
+
 static StaticTask_t imu_task_control_block;
 static StackType_t imu_task_stack[IMU_TASK_STACK_WORDS];
 static TaskHandle_t imu_task_handle;
+static gyro_calibration_t gyro_calibration;
+
+static app_gyro_calibration_state_t calibration_state_for_app(
+    gyro_calibration_state_t state)
+{
+    switch (state) {
+    case GYRO_CALIBRATION_CALIBRATING:
+        return APP_GYRO_CALIBRATION_CALIBRATING;
+    case GYRO_CALIBRATION_READY:
+        return APP_GYRO_CALIBRATION_READY;
+    case GYRO_CALIBRATION_NOT_STARTED:
+    default:
+        return APP_GYRO_CALIBRATION_NOT_STARTED;
+    }
+}
+
+static void sync_calibration_state(app_imu_sample_t *sample)
+{
+    sample->gyro_calibration_state =
+        calibration_state_for_app(gyro_calibration.state);
+    sample->gyro_calibration_sample_count =
+        gyro_calibration.stable_sample_count;
+    sample->gyro_calibration_restart_count =
+        gyro_calibration.restart_count;
+    sample->gyro_calibration_motion_reject_count =
+        gyro_calibration.motion_reject_count;
+    sample->gyro_calibration_invalid_sample_count =
+        gyro_calibration.invalid_sample_count;
+    memcpy(sample->gyro_bias_rad_s,
+           gyro_calibration.bias_rad_s,
+           sizeof(sample->gyro_bias_rad_s));
+}
 
 static void imu_dma_completion_from_isr(void *context)
 {
@@ -112,6 +148,9 @@ static bool initialize_sensor(app_imu_sample_t *sample)
     icm42688p_status_t status = ICM42688P_STATUS_BUS_ERROR;
     uint32_t attempt;
 
+    gyro_calibration_reset(&gyro_calibration);
+    sync_calibration_state(sample);
+
     for (attempt = 0U; attempt < IMU_INITIALIZATION_ATTEMPTS; ++attempt) {
         status = icm42688p_initialize(imu_delay_ms, &diagnostics);
         sample->who_am_i = diagnostics.who_am_i;
@@ -124,6 +163,8 @@ static bool initialize_sensor(app_imu_sample_t *sample)
         if (status == ICM42688P_STATUS_OK) {
             sample->present = true;
             sample->consecutive_error_count = 0U;
+            gyro_calibration_start(&gyro_calibration);
+            sync_calibration_state(sample);
             app_state_publish_imu(sample);
             return true;
         }
@@ -149,6 +190,8 @@ static bool record_read_failure(app_imu_sample_t *sample,
 
     if (sample->consecutive_error_count >= IMU_MAX_CONSECUTIVE_ERRORS) {
         sample->present = false;
+        gyro_calibration_reset(&gyro_calibration);
+        sync_calibration_state(sample);
     }
     app_state_publish_imu(sample);
     return sample->present;
@@ -239,6 +282,15 @@ static void imu_task(void *argument)
             }
 
             convert_sample(&raw, &sample);
+            (void)gyro_calibration_process(
+                &gyro_calibration,
+                sample.angular_rate_rad_s,
+                sample.acceleration_m_s2);
+            gyro_calibration_apply(
+                &gyro_calibration,
+                sample.angular_rate_rad_s,
+                sample.angular_rate_rad_s);
+            sync_calibration_state(&sample);
             sample.sample_tick = now;
             ++sample.sample_count;
             ++sample.dma_transfer_count;

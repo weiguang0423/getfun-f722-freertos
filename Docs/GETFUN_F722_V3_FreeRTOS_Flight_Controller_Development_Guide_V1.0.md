@@ -5,7 +5,7 @@
 > MCU：STM32F722RET6  
 > 飞行器类型：四旋翼 Quad-X  
 > 项目性质：个人学习与开发项目  
-> 当前阶段：Betaflight 硬件基线基本建立完成  
+> 当前阶段：独立FreeRTOS固件阶段3——IMU校准、姿态和接收机<br>
 > 基本安全要求：所有新固件和电机测试默认拆除螺旋桨
 
 ---
@@ -458,6 +458,8 @@ dfu
 - 可以查看版本和状态
 - 可以重新进入 DFU
 
+当前状态：平台、USB/MSP、ICM42688P轮询和DMA基线均已冻结。
+
 ### 阶段 3：IMU、姿态和接收机
 
 实现：
@@ -555,13 +557,18 @@ dfu
 - Timer 和 DMA 归档
 - UART 和 ADC 映射
 - 原厂 4.5.1 HEX 完整性校验
+- 独立FreeRTOS平台基线 `v0.1.0-platform-baseline`
+- ICM42688P 1 kHz轮询基线 `v0.2.0-imu-polling-baseline`
+- ICM42688P DMA/DRDY门控基线 `v0.3.0-imu-dma-drdy-baseline`
+- 陀螺静态零偏校准基线 `v0.4.0-gyro-calibration-baseline`
 
 当前下一步：
 
-1. 完成剩余 Betaflight 硬件实测。
-2. 建立独立 FreeRTOS 工程。
-3. 先跑通启动、UART、FreeRTOS 和 USB/MSP。
-4. 再迁移 IMU、CRSF、姿态估计和 DShot。
+1. `v0.5.0-accel-calibration-params-baseline`：冻结参数Flash分区和记录格式。
+2. 实现加速度水平单面校准、运动/非水平拒绝和校准状态。
+3. 实现带magic、版本、长度和CRC的参数保存、加载及损坏回退。
+4. 验证重启后校准保持、无效参数安全拒绝和Betaflight水平姿态基线。
+5. v0.5.0冻结后实现软件低通、精确 `dt` 和Mahony姿态解算。
 
 ---
 
@@ -574,6 +581,8 @@ dfu
 02_FreeRTOS架构与硬件驱动.md
 03_飞行控制与Betaflight_App兼容.md
 04_调试步骤_飞行测试与开发记录.md
+11_v0.4.0_陀螺静态零偏校准开发计划.md
+12_v0.4.0_陀螺静态零偏校准软件交付与实物验收.md
 ```
 
 各专题职责：
@@ -582,6 +591,8 @@ dfu
 - `02`：FreeRTOS、任务、BSP 和设备驱动。
 - `03`：姿态、PID、Mixer、DShot、MSP 和 App 页面。
 - `04`：实际调试步骤、测试结果和问题记录。
+- `11`：v0.4.0陀螺静态零偏校准的固定算法、接口和安全边界。
+- `12`：v0.4.0软件交付、构建结果和真实硬件验收表。
 
 ---
 

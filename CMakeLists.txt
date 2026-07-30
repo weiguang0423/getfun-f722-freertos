@@ -33,6 +33,7 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
+    APP/Src/algorithms/gyro_calibration.c
     APP/Src/app_state.c
     APP/Src/bsp/imu_bus.c
     APP/Src/bsp/usb_cdc_transport.c

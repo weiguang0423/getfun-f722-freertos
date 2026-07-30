@@ -242,16 +242,20 @@ SPI 读取一帧
 
 如果第一版尚未接入 Data Ready，引入固定周期读取也可以，但要记录实际采样间隔。
 
-当前 `v0.3.0` 软件实现仍由 ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
+当前 `v0.4.0` 软件仍由 ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
 ICM42688P 的 `INT_STATUS.DATA_RDY_INT`，但 14 字节样本事务已改为 SPI1 RX/TX
-DMA。DMA 完成 ISR 只恢复 CS、保存结果并用任务通知唤醒 ImuTask；解析、换算和发布
-均留在任务上下文。任务静态栈 512 words、优先级 `tskIDLE_PRIORITY+4`；InitTask
-保持 `osPriorityIdle`，避免 1 Hz UART 诊断抢占采样。
+DMA。DMA 完成 ISR 只恢复 CS、保存结果并用任务通知唤醒 ImuTask；解析、SI换算、
+`CW90`、陀螺静态零偏校准和发布均留在任务上下文。校准要求连续250个预热样本和
+2000个Welford统计样本，只有窗口标准差通过后才进入READY并扣除机体系零偏。
+任务静态栈512 words、优先级 `tskIDLE_PRIORITY+4`；InitTask保持 `osPriorityIdle`，
+避免1 Hz UART诊断抢占采样。
 
 原始板级目标没有定义 ICM42688P INT1/INT2 的 STM32 引脚，PC4 已属于 PINIO1，
-因此 v0.3.0 不启用 GPIO DRDY/EXTI。DMA/DRDY 设计见
+因此当前版本仍不启用 GPIO DRDY/EXTI。DMA/DRDY 设计见
 `09_v0.3.0_IMU_DMA与DRDY开发计划.md`，软件交付和实物验收见
-`10_v0.3.0_IMU_DMA与DRDY软件交付与实物验收.md`。
+`10_v0.3.0_IMU_DMA与DRDY软件交付与实物验收.md`；陀螺校准设计和验收见
+`11_v0.4.0_陀螺静态零偏校准开发计划.md`与
+`12_v0.4.0_陀螺静态零偏校准软件交付与实物验收.md`。
 
 ### 5.2 FlightTask
 

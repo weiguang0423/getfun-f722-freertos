@@ -9,7 +9,8 @@
  *   - platform_motor_outputs_force_safe()：直接配置 GPIO 寄存器并拉低所有 Motor。
  *   - platform_diag_startup()：输出固件身份、构建时间和运行时时钟。
  *   - platform_diag_heartbeat()：输出平台心跳，以及 1 Hz IMU 在线状态、采样率、
- *       DRDY/DMA 计数、错误计数、SI 物理量和 ImuTask 栈余量。
+ *       DRDY/DMA 计数、错误计数、陀螺校准进度/零偏、SI 物理量和 ImuTask
+ *       栈余量。
  *   - platform_fault_halt()：记录故障码、关闭中断、强制安全输出并停止运行。
  *   - platform_freertos_assert_failed()：记录 FreeRTOS 断言位置后进入安全停机。
  *
@@ -24,6 +25,7 @@
 #include <string.h>
 
 #include "FreeRTOS.h"
+#include "algorithms/gyro_calibration.h"
 #include "app_state.h"
 #include "bsp/imu_bus.h"
 #include "main.h"
@@ -234,6 +236,23 @@ void platform_diag_heartbeat(void)
         (unsigned long)snapshot.imu.read_error_count,
         (unsigned long)snapshot.imu.data_not_ready_count,
         (unsigned long)snapshot.imu.missed_deadline_count);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "imu cal=%u progress=%u/%u restart=%lu motion=%lu invalid=%lu "
+        "inhibit=0x%08lX bias_mrad_s=[%ld,%ld,%ld]\r\n",
+        (unsigned int)snapshot.imu.gyro_calibration_state,
+        (unsigned int)snapshot.imu.gyro_calibration_sample_count,
+        (unsigned int)GYRO_CALIBRATION_REQUIRED_SAMPLES,
+        (unsigned long)snapshot.imu.gyro_calibration_restart_count,
+        (unsigned long)snapshot.imu.gyro_calibration_motion_reject_count,
+        (unsigned long)snapshot.imu.gyro_calibration_invalid_sample_count,
+        (unsigned long)snapshot.arming_inhibit_flags,
+        (long)diag_float_to_milli(snapshot.imu.gyro_bias_rad_s[0]),
+        (long)diag_float_to_milli(snapshot.imu.gyro_bias_rad_s[1]),
+        (long)diag_float_to_milli(snapshot.imu.gyro_bias_rad_s[2]));
     diag_write_formatted(line, sizeof(line), length);
 
     length = snprintf(
