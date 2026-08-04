@@ -4,7 +4,8 @@
  * 职责:
  *   负责传感器初始化/恢复、固定周期寄存器 DRDY 轮询、异步 SPI1 DMA 采样读取、
  *   DMA完成周期取时、SI单位转换、CW90板级对准、陀螺静态零偏校准、持久化
- *   加速度校准、真实dt校验、Gyro/Accel低通、统计以及app_state发布。
+ *   加速度校准、真实dt校验、Gyro/Accel低通、Mahony姿态、统计以及
+ *   app_state发布。
  *
  * 核心函数:
  *   - imu_task_create(): 以 idle 优先级 + 4 静态创建 ImuTask。
@@ -17,10 +18,10 @@
  * 数据流与约束:
  *   ICM42688P原始传感器坐标系数值 -> SI转换 -> CW90机体系 -> 上电陀螺
  *   静态零偏校准/扣除 -> 水平加速度校准/持久化/扣除 -> 未滤波诊断支路 +
- *   按真实dt更新的低通支路 -> app_state_publish_imu()。本任务是SPI/IMU、
- *   时间扩展、滤波和参数Flash保存的唯一写者；ISR只捕获DWT周期计数并发送
- *   DMA任务通知。解析、浮点运算、状态发布、超时与恢复全部留在任务上下文中。
- *   不使用动态内存，也不在1 kHz正常路径输出日志。
+ *   按真实dt更新的低通支路 -> Mahony六轴姿态 -> app_state发布。本任务是
+ *   SPI/IMU、时间扩展、滤波、姿态和参数Flash保存的唯一写者；ISR只捕获DWT
+ *   周期计数并发送DMA任务通知。解析、浮点运算、状态发布、超时与恢复全部
+ *   留在任务上下文中。不使用动态内存，也不在1 kHz正常路径输出日志。
  */
 #include "rtos/imu_task.h"
 
@@ -30,6 +31,7 @@
 #include "task.h"
 
 #include "algorithms/accel_calibration.h"
+#include "algorithms/attitude_estimator.h"
 #include "algorithms/gyro_calibration.h"
 #include "algorithms/imu_filter.h"
 #include "app_state.h"
@@ -66,6 +68,12 @@ _Static_assert(APP_STATE_AXIS_COUNT == PARAMETER_STORE_AXIS_COUNT,
                "IMU and parameter store axis counts must match");
 _Static_assert(APP_STATE_AXIS_COUNT == IMU_FILTER_AXIS_COUNT,
                "IMU and filter axis counts must match");
+_Static_assert(APP_STATE_AXIS_COUNT == ATTITUDE_ESTIMATOR_AXIS_COUNT,
+               "IMU and attitude axis counts must match");
+_Static_assert(
+    APP_STATE_QUATERNION_COUNT ==
+        ATTITUDE_ESTIMATOR_QUATERNION_COUNT,
+    "App state and attitude quaternion sizes must match");
 
 static StaticTask_t imu_task_control_block;
 static StackType_t imu_task_stack[IMU_TASK_STACK_WORDS];
@@ -73,8 +81,10 @@ static TaskHandle_t imu_task_handle;
 static gyro_calibration_t gyro_calibration;
 static accel_calibration_t accel_calibration;
 static imu_filter_t imu_filter;
+static attitude_estimator_t attitude_estimator;
 static parameter_store_values_t parameter_values;
 static bool accel_calibration_request_pending;
+static bool attitude_input_was_valid;
 static bool have_previous_sample_timestamp;
 static uint32_t previous_sample_timestamp_us;
 static volatile uint32_t dma_completion_cycle_count;
@@ -249,6 +259,72 @@ static void update_filtered_sample(app_imu_sample_t *sample)
     }
 }
 
+static bool attitude_input_is_valid(const app_imu_sample_t *sample)
+{
+    return sample->present &&
+           sample->timing_valid &&
+           sample->filter_ready &&
+           (sample->gyro_calibration_state ==
+            APP_GYRO_CALIBRATION_READY) &&
+           (sample->accel_calibration_state ==
+            APP_ACCEL_CALIBRATION_READY);
+}
+
+static void publish_attitude_state(bool valid)
+{
+    app_attitude_state_t destination;
+
+    memset(&destination, 0, sizeof(destination));
+    destination.valid = valid && attitude_estimator.ready;
+    memcpy(destination.quaternion,
+           attitude_estimator.quaternion,
+           sizeof(destination.quaternion));
+    destination.roll_deg = attitude_estimator.roll_deg;
+    destination.pitch_deg = attitude_estimator.pitch_deg;
+    destination.yaw_deg = attitude_estimator.yaw_deg;
+    destination.update_count = attitude_estimator.update_count;
+    destination.reset_count = attitude_estimator.reset_count;
+    destination.invalid_input_count =
+        attitude_estimator.invalid_input_count;
+    destination.accel_rejection_count =
+        attitude_estimator.accel_rejection_count;
+    destination.gyro_only_update_count =
+        attitude_estimator.gyro_only_update_count;
+    app_state_publish_attitude(&destination);
+}
+
+static void update_and_publish_attitude(
+    const app_imu_sample_t *sample)
+{
+    bool ready;
+    float dt_s;
+
+    if (!attitude_input_is_valid(sample)) {
+        if (attitude_input_was_valid || attitude_estimator.ready) {
+            attitude_estimator_reset(&attitude_estimator);
+        }
+        attitude_input_was_valid = false;
+        publish_attitude_state(false);
+        return;
+    }
+
+    dt_s =
+        (float)sample->sample_interval_us * MICROSECONDS_TO_SECONDS;
+    ready = attitude_estimator_update(
+        &attitude_estimator,
+        sample->filtered_acceleration_m_s2,
+        sample->filtered_angular_rate_rad_s,
+        dt_s);
+    attitude_input_was_valid = ready;
+    publish_attitude_state(ready);
+}
+
+static void publish_imu_and_attitude(app_imu_sample_t *sample)
+{
+    app_state_publish_imu(sample);
+    update_and_publish_attitude(sample);
+}
+
 static app_parameter_load_result_t parameter_load_result_for_app(
     parameter_store_load_result_t result)
 {
@@ -356,7 +432,7 @@ static void start_requested_accel_calibration(
         (gyro_calibration.state == GYRO_CALIBRATION_READY)) {
         (void)accel_calibration_start(&accel_calibration);
         sync_calibration_state(sample);
-        app_state_publish_imu(sample);
+        publish_imu_and_attitude(sample);
     }
 }
 
@@ -479,13 +555,13 @@ static bool initialize_sensor(app_imu_sample_t *sample)
             sample->consecutive_error_count = 0U;
             gyro_calibration_start(&gyro_calibration);
             sync_calibration_state(sample);
-            app_state_publish_imu(sample);
+            publish_imu_and_attitude(sample);
             return true;
         }
 
         ++sample->initialization_error_count;
         sample->present = false;
-        app_state_publish_imu(sample);
+        publish_imu_and_attitude(sample);
         if ((attempt + 1U) < IMU_INITIALIZATION_ATTEMPTS) {
             imu_delay_ms(IMU_INITIALIZATION_RETRY_DELAY_MS);
         }
@@ -510,7 +586,7 @@ static bool record_read_failure(app_imu_sample_t *sample,
         restore_accel_calibration_from_parameters();
         sync_calibration_state(sample);
     }
-    app_state_publish_imu(sample);
+    publish_imu_and_attitude(sample);
     return sample->present;
 }
 
@@ -524,12 +600,14 @@ static void imu_task(void *argument)
     configASSERT(IMU_DMA_TIMEOUT_TICKS > 0U);
     sample.timing_source_ready = platform_time_initialize();
     imu_filter_reset(&imu_filter);
+    attitude_estimator_initialize(&attitude_estimator);
+    attitude_input_was_valid = false;
     parameter_store_init();
     parameter_store_get_values(&parameter_values);
     restore_accel_calibration_from_parameters();
     publish_parameter_state();
     sync_calibration_state(&sample);
-    app_state_publish_imu(&sample);
+    publish_imu_and_attitude(&sample);
     imu_bus_set_dma_callback(imu_dma_completion_from_isr, NULL);
 
     for (;;) {
@@ -581,7 +659,7 @@ static void imu_task(void *argument)
                 sample.last_bus_error = (uint8_t)IMU_BUS_STATUS_OK;
                 sample.timing_valid = false;
                 sample.filter_ready = false;
-                app_state_publish_imu(&sample);
+                publish_imu_and_attitude(&sample);
                 continue;
             }
 
@@ -652,7 +730,7 @@ static void imu_task(void *argument)
             sample.consecutive_error_count = 0U;
             sample.last_error = (uint8_t)ICM42688P_STATUS_OK;
             sample.last_bus_error = (uint8_t)IMU_BUS_STATUS_OK;
-            app_state_publish_imu(&sample);
+            publish_imu_and_attitude(&sample);
         }
     }
 }

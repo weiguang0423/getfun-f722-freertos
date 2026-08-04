@@ -18,7 +18,8 @@
  *   - app_state_set_runtime/set_fault_flags：写入运行时与故障标志。
  *   - app_state_publish_parameters()/publish_imu()：整体复制参数/IMU状态，并原子
  *       更新参数有效性和传感器校准解锁抑制位。
- *   - app_state_publish_attitude/battery：发布姿态和电池数据。
+ *   - app_state_publish_attitude/battery：发布姿态和电池数据；IMU输入边界
+ *       失效时同步撤销姿态READY，禁止消费者继续使用陈旧姿态。
  *   - app_state_set_configurator_arming_disabled/set_host_rtc：回写 Configurator 下发的
  *       解锁状态与 RTC 时间。
  *
@@ -52,12 +53,14 @@ void app_state_init(void)
 {
     const uint32_t primask = app_state_lock();
     memset(&state, 0, sizeof(state));
+    state.attitude.quaternion[0] = 1.0f;
     state.arming_inhibit_flags =
         APP_ARMING_INHIBIT_IMU_NOT_READY |
         APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED |
         APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED |
         APP_ARMING_INHIBIT_PARAMETERS_INVALID |
-        APP_ARMING_INHIBIT_IMU_TIMING_INVALID;
+        APP_ARMING_INHIBIT_IMU_TIMING_INVALID |
+        APP_ARMING_INHIBIT_ATTITUDE_NOT_READY;
     app_state_unlock(primask);
 }
 
@@ -155,20 +158,36 @@ void app_state_publish_imu(const app_imu_sample_t *sample)
             state.arming_inhibit_flags |=
                 APP_ARMING_INHIBIT_IMU_TIMING_INVALID;
         }
+
+        if (!sample->present || !sample->timing_valid ||
+            !sample->filter_ready ||
+            (sample->gyro_calibration_state !=
+             APP_GYRO_CALIBRATION_READY) ||
+            (sample->accel_calibration_state !=
+             APP_ACCEL_CALIBRATION_READY)) {
+            state.attitude.valid = false;
+            state.arming_inhibit_flags |=
+                APP_ARMING_INHIBIT_ATTITUDE_NOT_READY;
+        }
     }
     app_state_unlock(primask);
 }
 
-void app_state_publish_attitude(int16_t roll_deg10,
-                                int16_t pitch_deg10,
-                                int16_t yaw_deg,
-                                bool valid)
+void app_state_publish_attitude(
+    const app_attitude_state_t *attitude)
 {
     const uint32_t primask = app_state_lock();
-    state.roll_deg10 = roll_deg10;
-    state.pitch_deg10 = pitch_deg10;
-    state.yaw_deg = yaw_deg;
-    state.attitude_valid = valid;
+
+    if (attitude != NULL) {
+        state.attitude = *attitude;
+        if (attitude->valid) {
+            state.arming_inhibit_flags &=
+                ~APP_ARMING_INHIBIT_ATTITUDE_NOT_READY;
+        } else {
+            state.arming_inhibit_flags |=
+                APP_ARMING_INHIBIT_ATTITUDE_NOT_READY;
+        }
+    }
     app_state_unlock(primask);
 }
 

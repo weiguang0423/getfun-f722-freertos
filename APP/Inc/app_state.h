@@ -11,7 +11,8 @@
  *   - app_parameter_state_t：参数Flash加载、保存、活动槽、序号和错误状态。
  *   - app_state_snapshot_t：状态快照结构，字段分组——
  *       运行时：uptime / cycle_time / i2c_error / cpu_load / fault_flags；
- *       IMU：完整 app_imu_sample_t + 姿态角(roll/pitch/yaw)；
+ *       IMU：完整 app_imu_sample_t；
+ *       姿态：四元数、欧拉角、READY和Mahony诊断计数；
  *       电池：battery_present + 电芯数/容量/电压/电流/已耗电量/rssi；
  *       宿主：configurator_arming_disabled + 宿主机下发的 RTC 时间。
  *   - 读取：app_state_get_snapshot() —— 整体拷贝一份快照（多任务安全）。
@@ -34,11 +35,13 @@ extern "C" {
 #endif
 
 #define APP_STATE_AXIS_COUNT 3U
+#define APP_STATE_QUATERNION_COUNT 4U
 #define APP_ARMING_INHIBIT_IMU_NOT_READY (1UL << 0U)
 #define APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED (1UL << 1U)
 #define APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED (1UL << 2U)
 #define APP_ARMING_INHIBIT_PARAMETERS_INVALID (1UL << 3U)
 #define APP_ARMING_INHIBIT_IMU_TIMING_INVALID (1UL << 4U)
+#define APP_ARMING_INHIBIT_ATTITUDE_NOT_READY (1UL << 5U)
 
 typedef enum
 {
@@ -150,6 +153,20 @@ typedef struct
 
 typedef struct
 {
+    bool valid;
+    float quaternion[APP_STATE_QUATERNION_COUNT];
+    float roll_deg;
+    float pitch_deg;
+    float yaw_deg;
+    uint32_t update_count;
+    uint32_t reset_count;
+    uint32_t invalid_input_count;
+    uint32_t accel_rejection_count;
+    uint32_t gyro_only_update_count;
+} app_attitude_state_t;
+
+typedef struct
+{
     uint32_t uptime_ms;
     uint16_t cycle_time_us;
     uint16_t i2c_error_count;
@@ -159,10 +176,7 @@ typedef struct
 
     app_parameter_state_t parameters;
     app_imu_sample_t imu;
-    bool attitude_valid;
-    int16_t roll_deg10;
-    int16_t pitch_deg10;
-    int16_t yaw_deg;
+    app_attitude_state_t attitude;
 
     bool battery_present;
     uint8_t battery_cell_count;
@@ -188,10 +202,8 @@ void app_state_set_fault_flags(uint32_t fault_flags);
 void app_state_publish_parameters(
     const app_parameter_state_t *parameters);
 void app_state_publish_imu(const app_imu_sample_t *sample);
-void app_state_publish_attitude(int16_t roll_deg10,
-                                int16_t pitch_deg10,
-                                int16_t yaw_deg,
-                                bool valid);
+void app_state_publish_attitude(
+    const app_attitude_state_t *attitude);
 void app_state_publish_battery(uint8_t cell_count,
                                uint16_t capacity_mah,
                                uint16_t voltage_cv,

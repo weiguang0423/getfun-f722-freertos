@@ -12,8 +12,8 @@
  *
  * 设计说明：本层只关心"每个命令该回什么数据"，不碰帧的字节级拆/拼（那是
  * msp_transport的职责），也不直接接触USB收发。标准MSP_ACC_CALIBRATION由本层
- * 检查快照后交给ImuTask；GETFUN MSP2 0x4000/0x4001分别提供校准参数和
- * IMU时间/低通诊断，详见msp_server.c的命令列表。
+ * 检查快照后交给ImuTask；GETFUN MSP2 0x4000/0x4001/0x4002分别提供校准
+ * 参数、IMU时间/低通和Mahony姿态诊断，详见msp_server.c的命令列表。
  */
 #ifndef MSP_SERVER_H
 #define MSP_SERVER_H

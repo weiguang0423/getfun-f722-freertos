@@ -225,8 +225,8 @@ Sector 6/7由链接脚本导出边界符号，但不承载普通输出段。程�
 
 | 任务 | 优先级关系 | 触发方式 | 职责 |
 |---|---|---|---|
-| `ImuTask` | 最高或与 Flight 接近 | 数据就绪/定时通知 | SPI 读取、校准、滤波、发布 IMU 数据 |
-| `FlightTask` | 高 | 1 kHz 通知 | 姿态估计、控制器、Mixer、安全输出请求 |
+| `ImuTask` | 最高或与 Flight 接近 | 数据就绪/定时通知 | SPI读取、校准、滤波、Mahony姿态、发布一致传感器状态 |
+| `FlightTask` | 高 | 1 kHz 通知 | 消费IMU/姿态快照、控制器、Mixer、安全输出请求 |
 | `RcTask` | 中高 | UART/DMA 事件 | CRSF 解包、通道和失联状态 |
 | `MspTask` | 中 | USB RX 事件 | MSP/CLI、App 参数读写 |
 | `BlackboxTask` | 低 | 队列/周期 | Flash 日志写入 |
@@ -246,25 +246,27 @@ SPI 读取一帧
         ↓
 单位换算、校准、滤波
         ↓
-更新 IMU 快照和时间戳
+Mahony姿态（只接受有效真实dt）
         ↓
-通知 FlightTask
+更新 IMU / 四元数 / Euler 快照
 ```
 
 如果第一版尚未接入 Data Ready，引入固定周期读取也可以，但要记录实际采样间隔。
 
-当前 `v0.6.0` 软件仍由 ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
+当前 `v0.7.0` 软件仍由 ImuTask 以 1 tick 的 `vTaskDelayUntil()` 周期轮询
 ICM42688P 的 `INT_STATUS.DATA_RDY_INT`，但 14 字节样本事务已改为 SPI1 RX/TX
 DMA。DMA 完成 ISR 只恢复CS、捕获DWT `CYCCNT`、保存结果并用任务通知唤醒
 ImuTask；周期扩展、真实 `dt`、解析、SI换算、`CW90`、陀螺静态零偏校准、
-加速度水平校准、PT1低通和发布均留在任务上下文。加速度候选只有写入非活动参数槽
-并完成CRC/提交复核后才切换为有效偏置。
+加速度水平校准、PT1低通、Mahony姿态和发布均留在任务上下文。加速度候选只有
+写入非活动参数槽并完成CRC/提交复核后才切换为有效偏置。
 
 DWT在216 MHz下约19.88秒回绕，ImuTask在线时按样本扩展，离线或DRDY未就绪时
 至少每1秒维护一次。DMA完成时间戳相邻间隔只有在500～2000 µs内才有效；首样本、
 超界间隔和恢复都会保持时间抑制并重置滤波。校准后未滤波数据继续供
 `MSP_RAW_IMU`和校准诊断，Gyro 100 Hz / Accel 30 Hz PT1输出写入独立
-`filtered_*`字段，供后续Mahony使用。
+`filtered_*`字段；校准、时间和滤波全部READY时，Mahony使用这些字段更新
+Body→NED四元数和Euler。任何输入边界失效都会撤销姿态READY并重置，恢复后由
+当前重力方向重新播种。
 任务静态栈512 words、优先级 `tskIDLE_PRIORITY+4`；InitTask保持 `osPriorityIdle`，
 避免1 Hz UART诊断抢占采样。
 
@@ -277,19 +279,22 @@ DWT在216 MHz下约19.88秒回绕，ImuTask在线时按样本扩展，离线或D
 `13_v0.5.0_加速度校准与参数持久化开发计划.md`与
 `14_v0.5.0_加速度校准与参数持久化软件交付与实物验收.md`；时间和低通见
 `15_v0.6.0_IMU低通与精确采样时间开发计划.md`与
-`16_v0.6.0_IMU低通与精确采样时间软件交付与实物验收.md`。
+`16_v0.6.0_IMU低通与精确采样时间软件交付与实物验收.md`；姿态见
+`17_v0.7.0_Mahony四元数姿态开发计划.md`与
+`18_v0.7.0_Mahony四元数姿态软件交付与实物验收.md`。
 
 ### 5.2 FlightTask
 
 目标周期 1 kHz。每次执行：
 
-1. 取得最新 IMU 快照。
-2. 检查数据是否过期。
-3. 更新姿态估计。
-4. 读取 RC 快照和飞行模式。
-5. 计算 Rate/Angle 控制。
-6. 执行 Quad-X Mixer。
-7. 经过安全检查后提交 DShot 值。
+1. 取得同一发布链的最新IMU和姿态快照。
+2. 检查数据是否READY及是否过期。
+3. 读取 RC 快照和飞行模式。
+4. 计算 Rate/Angle 控制。
+5. 执行 Quad-X Mixer。
+6. 经过安全检查后提交 DShot 值。
+
+姿态随新IMU样本在ImuTask中更新，未来FlightTask只消费，不在另一周期重复积分。
 
 ### 5.3 RcTask
 

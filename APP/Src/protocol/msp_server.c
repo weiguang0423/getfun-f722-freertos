@@ -19,6 +19,7 @@
  *       app_state；标准MSP_ACC_CALIBRATION向ImuTask排队水平加速度校准。
  *   - GETFUN MSP2 0x4000：返回参数槽、保存结果、校准状态和偏置诊断。
  *   - GETFUN MSP2 0x4001：返回DWT时间、真实dt、低通状态和重置计数。
+ *   - GETFUN MSP2 0x4002：返回Mahony READY、四元数、欧拉角和重置诊断。
  *
  * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
  */
@@ -41,6 +42,7 @@
 #define MSP_NAME 10U
 #define MSP_BATTERY_CONFIG 32U
 #define MSP_FEATURE_CONFIG 36U
+#define MSP_MIXER_CONFIG 42U
 #define MSP_SET_ARMING_DISABLED 99U
 #define MSP_STATUS 101U
 #define MSP_RAW_IMU 102U
@@ -57,6 +59,7 @@
 #define MSP2_MCU_INFO 0x300CU
 #define MSP2_GETFUN_CALIBRATION_STATUS 0x4000U
 #define MSP2_GETFUN_IMU_FILTER_STATUS 0x4001U
+#define MSP2_GETFUN_ATTITUDE_STATUS 0x4002U
 
 #define MSP2TEXT_PILOT_NAME 1U
 #define MSP2TEXT_CRAFT_NAME 2U
@@ -80,6 +83,7 @@
 #define GETFUN_IMU_TIME_SOURCE_READY (1U << 0U)
 #define GETFUN_IMU_TIMING_VALID (1U << 1U)
 #define GETFUN_IMU_FILTER_READY (1U << 2U)
+#define GETFUN_ATTITUDE_READY (1U << 0U)
 #define RADIANS_TO_DEGREES 57.29577951308232088f
 
 typedef struct
@@ -114,6 +118,38 @@ static void writer_u32(payload_writer_t *writer, uint32_t value)
 static void writer_i32(payload_writer_t *writer, int32_t value)
 {
     writer_u32(writer, (uint32_t)value);
+}
+
+static int16_t scaled_float_to_i16(float value, float scale)
+{
+    const float scaled = value * scale;
+
+    if (!isfinite(scaled)) {
+        return 0;
+    }
+    if (scaled >= (float)INT16_MAX) {
+        return INT16_MAX;
+    }
+    if (scaled <= (float)INT16_MIN) {
+        return INT16_MIN;
+    }
+    return (int16_t)lroundf(scaled);
+}
+
+static int32_t scaled_float_to_i32(float value, float scale)
+{
+    const float scaled = value * scale;
+
+    if (!isfinite(scaled)) {
+        return 0;
+    }
+    if (scaled >= (float)INT32_MAX) {
+        return INT32_MAX;
+    }
+    if (scaled <= (float)INT32_MIN) {
+        return INT32_MIN;
+    }
+    return (int32_t)lroundf(scaled);
 }
 
 static void writer_data(payload_writer_t *writer,
@@ -258,6 +294,30 @@ static void handle_raw_imu(payload_writer_t *writer,
     }
 }
 
+static void handle_attitude(payload_writer_t *writer,
+                            const app_state_snapshot_t *state)
+{
+    int16_t roll_deg10 = 0;
+    int16_t pitch_deg10 = 0;
+    int16_t yaw_deg = 0;
+
+    if (state->attitude.valid) {
+        roll_deg10 =
+            scaled_float_to_i16(state->attitude.roll_deg, 10.0f);
+        pitch_deg10 =
+            scaled_float_to_i16(state->attitude.pitch_deg, 10.0f);
+        if (isfinite(state->attitude.yaw_deg) &&
+            (state->attitude.yaw_deg >= 0.0f) &&
+            (state->attitude.yaw_deg < 360.0f)) {
+            yaw_deg = (int16_t)state->attitude.yaw_deg;
+        }
+    }
+
+    writer_u16(writer, (uint16_t)roll_deg10);
+    writer_u16(writer, (uint16_t)pitch_deg10);
+    writer_u16(writer, (uint16_t)yaw_deg);
+}
+
 static void handle_analog(payload_writer_t *writer,
                           const app_state_snapshot_t *state)
 {
@@ -390,6 +450,46 @@ static void handle_getfun_imu_filter_status(
                (uint32_t)(IMU_FILTER_ACCEL_CUTOFF_HZ * 1000.0f));
 }
 
+static void handle_getfun_attitude_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint8_t flags = 0U;
+    uint32_t element;
+
+    if (state->attitude.valid) {
+        flags |= GETFUN_ATTITUDE_READY;
+    }
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, flags);
+    writer_u16(writer, 0U);
+    writer_u32(writer, state->attitude.update_count);
+    writer_u32(writer, state->attitude.reset_count);
+    writer_u32(writer, state->attitude.invalid_input_count);
+    writer_u32(writer, state->attitude.accel_rejection_count);
+    writer_u32(writer, state->attitude.gyro_only_update_count);
+
+    for (element = 0U;
+         element < APP_STATE_QUATERNION_COUNT;
+         ++element) {
+        writer_i32(
+            writer,
+            scaled_float_to_i32(
+                state->attitude.quaternion[element],
+                1000000000.0f));
+    }
+    writer_i32(
+        writer,
+        scaled_float_to_i32(state->attitude.roll_deg, 1000.0f));
+    writer_i32(
+        writer,
+        scaled_float_to_i32(state->attitude.pitch_deg, 1000.0f));
+    writer_i32(
+        writer,
+        scaled_float_to_i32(state->attitude.yaw_deg, 1000.0f));
+}
+
 static uint32_t request_u32(const msp_request_t *request, uint16_t offset)
 {
     return (uint32_t)request->payload[offset] |
@@ -472,9 +572,7 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP_ATTITUDE:
-        writer_u16(&writer, (uint16_t)state.roll_deg10);
-        writer_u16(&writer, (uint16_t)state.pitch_deg10);
-        writer_u16(&writer, (uint16_t)state.yaw_deg);
+        handle_attitude(&writer, &state);
         break;
 
     case MSP_ANALOG:
@@ -490,6 +588,12 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP_FEATURE_CONFIG:
         writer_u32(&writer, 0U);
+        break;
+
+    case MSP_MIXER_CONFIG:
+        /* Betaflight mixerMode_e: 3 = Quad X; reverseMotorDir = false. */
+        writer_u8(&writer, 3U);
+        writer_u8(&writer, 0U);
         break;
 
     case MSP_BATTERY_CONFIG:
@@ -557,6 +661,10 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP2_GETFUN_IMU_FILTER_STATUS:
         handle_getfun_imu_filter_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_ATTITUDE_STATUS:
+        handle_getfun_attitude_status(&writer, &state);
         break;
 
     default:

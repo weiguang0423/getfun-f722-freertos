@@ -348,6 +348,37 @@ void platform_diag_heartbeat(void)
             snapshot.imu.filtered_angular_rate_rad_s[2]));
     diag_write_formatted(line, sizeof(line), length);
 
+    length = snprintf(
+        line,
+        sizeof(line),
+        "att ready=%u updates=%lu reset=%lu invalid=%lu "
+        "accel_reject=%lu gyro_only=%lu\r\n",
+        snapshot.attitude.valid ? 1U : 0U,
+        (unsigned long)snapshot.attitude.update_count,
+        (unsigned long)snapshot.attitude.reset_count,
+        (unsigned long)snapshot.attitude.invalid_input_count,
+        (unsigned long)snapshot.attitude.accel_rejection_count,
+        (unsigned long)snapshot.attitude.gyro_only_update_count);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "att q_milli=[%ld,%ld,%ld,%ld] "
+        "rpy_mdeg=[%ld,%ld,%ld]\r\n",
+        (long)diag_float_to_milli(
+            snapshot.attitude.quaternion[0]),
+        (long)diag_float_to_milli(
+            snapshot.attitude.quaternion[1]),
+        (long)diag_float_to_milli(
+            snapshot.attitude.quaternion[2]),
+        (long)diag_float_to_milli(
+            snapshot.attitude.quaternion[3]),
+        (long)diag_float_to_milli(snapshot.attitude.roll_deg),
+        (long)diag_float_to_milli(snapshot.attitude.pitch_deg),
+        (long)diag_float_to_milli(snapshot.attitude.yaw_deg));
+    diag_write_formatted(line, sizeof(line), length);
+
     previous_tick = current_tick;
     previous_sample_count = snapshot.imu.sample_count;
     have_previous_sample = true;
