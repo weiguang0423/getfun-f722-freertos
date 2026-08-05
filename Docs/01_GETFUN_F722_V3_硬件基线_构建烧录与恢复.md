@@ -188,6 +188,10 @@ dma pin B01 0
 `DMA2 Stream 3 / Channel 3`（TX）。这是当前独立工程的软件资源选择，不代表
 Betaflight 的归档 DMA option，也不得据此推导 Motor/DShot DMA 映射。
 
+自研固件 v0.8.0 为USART2 CRSF接收分配 `DMA1 Stream 5 / Channel 4`（RX），使用
+128字节循环DMA和UART IDLE事件；PA2/PA3继续保持既有CR8双线接法。通道、LQ、
+断链与恢复仍必须按文档20完成真实硬件验收，软件构建不能关闭S1.5关口。
+
 ---
 
 ## 6. ADC、GPIO 与默认值

@@ -18,12 +18,13 @@
   */
 /*
  * Project role:
- *   CubeMX-owned DMA2 clock and interrupt initialization for SPI1 IMU traffic.
+ *   CubeMX-owned DMA1/DMA2 clock and interrupt initialization for USART2 CRSF
+ *   RX and SPI1 IMU traffic.
  *
  * Core behavior:
- *   MX_DMA_Init() enables DMA2 and configures Stream 0/3 interrupts at
- *   preemption priority 5. Stream request parameters and SPI handle linkage
- *   are generated with SPI1 from the .ioc model.
+ *   MX_DMA_Init() enables DMA1/DMA2 and configures DMA1 Stream 5 plus DMA2
+ *   Stream 0/3 interrupts at preemption priority 5. Request parameters and
+ *   handle linkage are generated with USART2/SPI1 from the .ioc model.
  *
  * Boundary:
  *   Priority 5 is required because the completion path calls a FreeRTOS
@@ -53,9 +54,13 @@ void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);

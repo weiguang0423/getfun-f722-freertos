@@ -32,12 +32,15 @@ extern "C" {
 
 /* USER CODE END Includes */
 
+extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart4;
+extern DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
+void MX_USART2_UART_Init(void);
 void MX_UART4_Init(void);
 
 /* USER CODE BEGIN Prototypes */

@@ -182,6 +182,11 @@ Throttle：0.0 ～ 1.0
 AUX：按开关范围判定
 ```
 
+当前S3.7只完成CRSF线序输入层：0x16的16路11-bit原始值同时换算为微秒值，连同
+接收tick、序号和0x14 Link Statistics发布到 `app_state.rc`。AETR/TAER映射、端点、
+Deadband、归一化、App Receiver页面和超时Failsafe均未在本阶段实现，留给S3.8/S4.4。
+因此任何消费者都不能只看 `channels_valid`，还必须在S3.8以后按冻结阈值检查数据年龄。
+
 处理顺序：
 
 ```text

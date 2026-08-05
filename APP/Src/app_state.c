@@ -18,7 +18,7 @@
  *   - app_state_set_runtime/set_fault_flags：写入运行时与故障标志。
  *   - app_state_publish_parameters()/publish_imu()：整体复制参数/IMU状态，并原子
  *       更新参数有效性和传感器校准解锁抑制位。
- *   - app_state_publish_attitude/battery：发布姿态和电池数据；IMU输入边界
+ *   - app_state_publish_attitude/rc/battery：发布姿态、RC和电池数据；IMU输入边界
  *       失效时同步撤销姿态READY，禁止消费者继续使用陈旧姿态。
  *   - app_state_set_configurator_arming_disabled/set_host_rtc：回写 Configurator 下发的
  *       解锁状态与 RTC 时间。
@@ -187,6 +187,16 @@ void app_state_publish_attitude(
             state.arming_inhibit_flags |=
                 APP_ARMING_INHIBIT_ATTITUDE_NOT_READY;
         }
+    }
+    app_state_unlock(primask);
+}
+
+void app_state_publish_rc(const app_rc_state_t *rc)
+{
+    const uint32_t primask = app_state_lock();
+
+    if (rc != NULL) {
+        state.rc = *rc;
     }
     app_state_unlock(primask);
 }

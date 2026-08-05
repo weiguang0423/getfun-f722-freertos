@@ -18,10 +18,10 @@
   */
 /*
  * Project role:
- *   CubeMX-owned declaration for DMA controller initialization.
+ *   CubeMX-owned declaration for DMA1/DMA2 controller initialization.
  *
  * Core interface:
- *   MX_DMA_Init() enables the DMA2 resources selected for SPI1 RX/TX.
+ *   MX_DMA_Init() enables USART2 RX and SPI1 RX/TX DMA interrupt resources.
  *
  * Boundary:
  *   DMA stream ownership is defined in the .ioc model. Application DMA

@@ -13,13 +13,14 @@
  *       运行时：uptime / cycle_time / i2c_error / cpu_load / fault_flags；
  *       IMU：完整 app_imu_sample_t；
  *       姿态：四元数、欧拉角、READY和Mahony诊断计数；
+ *       RC：16路CRSF原始/微秒通道、接收时间、Link Statistics和接收诊断；
  *       电池：battery_present + 电芯数/容量/电压/电流/已耗电量/rssi；
  *       宿主：configurator_arming_disabled + 宿主机下发的 RTC 时间。
  *   - 读取：app_state_get_snapshot() —— 整体拷贝一份快照（多任务安全）。
- *   - 发布/写入：app_state_publish_imu/attitude/battery、app_state_set_runtime/
+ *   - 发布/写入：app_state_publish_imu/attitude/rc/battery、app_state_set_runtime/
  *       set_fault_flags、app_state_set_configurator_arming_disabled、app_state_set_host_rtc。
  *
- * 设计说明：ImuTask 是 IMU 单写者；并发安全靠 app_state.c 内部的短临界区实现
+ * 设计说明：ImuTask是IMU/姿态单写者，RcTask是RC单写者；并发安全靠app_state.c内部的短临界区实现
  * （关中断+DMB，而非互斥量），发布者整体复制，消费者只读快照，互不阻塞。
  */
 #ifndef APP_STATE_H
@@ -36,6 +37,7 @@ extern "C" {
 
 #define APP_STATE_AXIS_COUNT 3U
 #define APP_STATE_QUATERNION_COUNT 4U
+#define APP_STATE_RC_CHANNEL_COUNT 16U
 #define APP_ARMING_INHIBIT_IMU_NOT_READY (1UL << 0U)
 #define APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED (1UL << 1U)
 #define APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED (1UL << 2U)
@@ -167,6 +169,42 @@ typedef struct
 
 typedef struct
 {
+    bool uart_running;
+    bool channels_valid;
+    bool link_statistics_valid;
+    TickType_t last_channel_tick;
+    TickType_t last_link_statistics_tick;
+    uint32_t channel_sequence;
+    uint32_t channel_frame_count;
+    uint32_t link_frame_count;
+    uint32_t unsupported_frame_count;
+    uint32_t payload_error_count;
+    uint32_t parser_valid_frame_count;
+    uint32_t parser_crc_error_count;
+    uint32_t parser_length_error_count;
+    uint32_t parser_sync_drop_count;
+    uint32_t uart_start_error_count;
+    uint32_t uart_rx_event_count;
+    uint32_t uart_idle_event_count;
+    uint32_t uart_ring_overflow_count;
+    uint32_t uart_error_count;
+    uint32_t uart_recovery_count;
+    uint32_t last_uart_error;
+    uint16_t channel_raw[APP_STATE_RC_CHANNEL_COUNT];
+    uint16_t channel_us[APP_STATE_RC_CHANNEL_COUNT];
+    int16_t uplink_rssi_dbm[2];
+    uint8_t uplink_link_quality;
+    int8_t uplink_snr_db;
+    uint8_t active_antenna;
+    uint8_t rf_mode;
+    uint8_t uplink_tx_power;
+    int16_t downlink_rssi_dbm;
+    uint8_t downlink_link_quality;
+    int8_t downlink_snr_db;
+} app_rc_state_t;
+
+typedef struct
+{
     uint32_t uptime_ms;
     uint16_t cycle_time_us;
     uint16_t i2c_error_count;
@@ -177,6 +215,7 @@ typedef struct
     app_parameter_state_t parameters;
     app_imu_sample_t imu;
     app_attitude_state_t attitude;
+    app_rc_state_t rc;
 
     bool battery_present;
     uint8_t battery_cell_count;
@@ -204,6 +243,7 @@ void app_state_publish_parameters(
 void app_state_publish_imu(const app_imu_sample_t *sample);
 void app_state_publish_attitude(
     const app_attitude_state_t *attitude);
+void app_state_publish_rc(const app_rc_state_t *rc);
 void app_state_publish_battery(uint8_t cell_count,
                                uint16_t capacity_mah,
                                uint16_t voltage_cv,

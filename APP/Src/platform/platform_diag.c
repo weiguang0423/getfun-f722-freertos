@@ -32,6 +32,7 @@
 #include "bsp/imu_bus.h"
 #include "main.h"
 #include "rtos/imu_task.h"
+#include "rtos/rc_task.h"
 #include "task.h"
 #include "usart.h"
 
@@ -171,6 +172,7 @@ void platform_diag_startup(void)
                       "trigger=drdy_poll\r\n",
                       (unsigned long)imu_bus_clock_hz());
     diag_write_formatted(line, sizeof(line), length);
+    diag_write_string("RC: USART2 420000 8N1 dma1 rx=s5 circular+idle\r\n");
     diag_write_string("RTOS: starting\r\n");
 }
 
@@ -377,6 +379,81 @@ void platform_diag_heartbeat(void)
         (long)diag_float_to_milli(snapshot.attitude.roll_deg),
         (long)diag_float_to_milli(snapshot.attitude.pitch_deg),
         (long)diag_float_to_milli(snapshot.attitude.yaw_deg));
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "rc uart=%u events=%lu idle=%lu overflow=%lu err=%lu "
+        "recover=%lu last=0x%08lX stack_min=%lu\r\n",
+        snapshot.rc.uart_running ? 1U : 0U,
+        (unsigned long)snapshot.rc.uart_rx_event_count,
+        (unsigned long)snapshot.rc.uart_idle_event_count,
+        (unsigned long)snapshot.rc.uart_ring_overflow_count,
+        (unsigned long)snapshot.rc.uart_error_count,
+        (unsigned long)snapshot.rc.uart_recovery_count,
+        (unsigned long)snapshot.rc.last_uart_error,
+        (unsigned long)rc_task_stack_high_water_mark());
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "rc valid=%u seq=%lu age_ticks=%lu frames=%lu link_frames=%lu "
+        "crc=%lu len=%lu payload=%lu unsupported=%lu\r\n",
+        snapshot.rc.channels_valid ? 1U : 0U,
+        (unsigned long)snapshot.rc.channel_sequence,
+        snapshot.rc.channels_valid
+            ? (unsigned long)(current_tick -
+                              snapshot.rc.last_channel_tick)
+            : 0UL,
+        (unsigned long)snapshot.rc.channel_frame_count,
+        (unsigned long)snapshot.rc.link_frame_count,
+        (unsigned long)snapshot.rc.parser_crc_error_count,
+        (unsigned long)snapshot.rc.parser_length_error_count,
+        (unsigned long)snapshot.rc.payload_error_count,
+        (unsigned long)snapshot.rc.unsupported_frame_count);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "rc ch_us=[%u,%u,%u,%u,%u,%u,%u,%u] "
+        "raw=[%u,%u,%u,%u]\r\n",
+        snapshot.rc.channel_us[0],
+        snapshot.rc.channel_us[1],
+        snapshot.rc.channel_us[2],
+        snapshot.rc.channel_us[3],
+        snapshot.rc.channel_us[4],
+        snapshot.rc.channel_us[5],
+        snapshot.rc.channel_us[6],
+        snapshot.rc.channel_us[7],
+        snapshot.rc.channel_raw[0],
+        snapshot.rc.channel_raw[1],
+        snapshot.rc.channel_raw[2],
+        snapshot.rc.channel_raw[3]);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "rc link=%u age_ticks=%lu up_rssi=[%d,%d] lq=%u snr=%d "
+        "ant=%u mode=%u pwr=%u down_rssi=%d lq=%u snr=%d\r\n",
+        snapshot.rc.link_statistics_valid ? 1U : 0U,
+        snapshot.rc.link_statistics_valid
+            ? (unsigned long)(current_tick -
+                              snapshot.rc.last_link_statistics_tick)
+            : 0UL,
+        (int)snapshot.rc.uplink_rssi_dbm[0],
+        (int)snapshot.rc.uplink_rssi_dbm[1],
+        snapshot.rc.uplink_link_quality,
+        (int)snapshot.rc.uplink_snr_db,
+        snapshot.rc.active_antenna,
+        snapshot.rc.rf_mode,
+        snapshot.rc.uplink_tx_power,
+        (int)snapshot.rc.downlink_rssi_dbm,
+        snapshot.rc.downlink_link_quality,
+        (int)snapshot.rc.downlink_snr_db);
     diag_write_formatted(line, sizeof(line), length);
 
     previous_tick = current_tick;

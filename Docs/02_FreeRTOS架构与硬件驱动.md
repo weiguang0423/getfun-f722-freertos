@@ -298,7 +298,14 @@ Body→NED四元数和Euler。任何输入边界失效都会撤销姿态READY并
 
 ### 5.3 RcTask
 
-RcTask 负责 UART 接收缓冲、CRSF 帧校验和状态更新。FlightTask 不直接读取 UART 缓冲区。
+当前v0.8.0软件已创建静态RcTask：优先级 `tskIDLE_PRIORITY+3`、栈512 words。USART2
+在PA2/PA3以420000 8N1运行，DMA1 Stream 5循环写入128字节缓冲；IDLE/HT/TC ISR
+只把新增字节搬入512字节软件环缓冲并通知任务。RcTask执行长度/CRC校验，解码0x16
+的16路通道和0x14 Link Statistics，再整体发布 `app_state.rc`。UART阻塞错误由任务
+上下文Abort并重启DMA。FlightTask不得直接读取UART或DMA缓冲区。
+
+S3.7快照保留最后合法帧和接收tick，但不按超时撤销valid；S3.8负责冻结超时与Failsafe。
+详细设计和实物验收见文档 `19`、`20`。
 
 ### 5.4 MspTask
 

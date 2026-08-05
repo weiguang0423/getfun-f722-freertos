@@ -38,15 +38,18 @@ add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/algorithms/gyro_calibration.c
     APP/Src/algorithms/imu_filter.c
     APP/Src/app_state.c
+    APP/Src/bsp/crsf_uart.c
     APP/Src/bsp/imu_bus.c
     APP/Src/bsp/usb_cdc_transport.c
     APP/Src/drivers/icm42688p.c
     APP/Src/platform/platform_diag.c
     APP/Src/platform/platform_time.c
+    APP/Src/protocol/crsf.c
     APP/Src/protocol/msp_transport.c
     APP/Src/protocol/msp_server.c
     APP/Src/rtos/app_task.c
     APP/Src/rtos/imu_task.c
+    APP/Src/rtos/rc_task.c
     APP/Src/storage/parameter_store.c
 )
 
