@@ -6,8 +6,8 @@
  *
  * 主要内容：
  *   - app_tasks_init()：由 CubeMX 的 MX_FREERTOS_Init() 调用。先初始化 app_state 和
- *       usb_cdc_transport，再静态创建ImuTask、RcTask与MspTask。ImuTask的具体采样职责见
- *       rtos/imu_task.c，RcTask见rtos/rc_task.c；MspTask栈768 words、优先级tskIDLE_PRIORITY+2。
+ *       usb_cdc_transport，再静态创建ImuTask、RcTask、BatteryTask与MspTask。各采样
+ *       职责见对应rtos源文件；MspTask栈768 words、优先级tskIDLE_PRIORITY+2。
  *   - msp_task()：MspTask 任务体，整条 USB→解析→状态→回包链路的驱动者——
  *       1) 初始化解析器/服务端，并 usb_cdc_transport_bind_current_task() 绑定自身，
  *          以便 USB ISR 收到数据后能唤醒本任务；
@@ -28,6 +28,7 @@
 #include "bsp/usb_cdc_transport.h"
 #include "protocol/msp_server.h"
 #include "protocol/msp_transport.h"
+#include "rtos/battery_task.h"
 #include "rtos/imu_task.h"
 #include "rtos/rc_task.h"
 
@@ -87,6 +88,7 @@ void app_tasks_init(void)
     usb_cdc_transport_init();
     imu_task_create();
     rc_task_create();
+    battery_task_create();
 
     msp_task_handle = xTaskCreateStatic(msp_task,
                                         "MspTask",

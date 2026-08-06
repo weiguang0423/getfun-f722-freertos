@@ -20,6 +20,11 @@
  *   - GETFUN MSP2 0x4000：返回参数槽、保存结果、校准状态和偏置诊断。
  *   - GETFUN MSP2 0x4001：返回DWT时间、真实dt、低通状态和重置计数。
  *   - GETFUN MSP2 0x4002：返回Mahony READY、四元数、欧拉角和重置诊断。
+ *   - Receiver页面：返回Serial RX/CRSF、AETR映射、16通道与只读RX配置；
+ *       RC无效时MSP_RC输出安全值，MSP_STATUS_EX报告RXLOSS。
+ *   - GETFUN MSP2 0x4003：返回RC年龄、Failsafe阶段/计数和映射通道。
+ *   - Power页面：返回ADC电压/电流表、Battery State和只读标定配置；
+ *       GETFUN MSP2 0x4004返回ADC3原始值、换算结果和DMA诊断。
  *
  * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
  */
@@ -42,13 +47,24 @@
 #define MSP_NAME 10U
 #define MSP_BATTERY_CONFIG 32U
 #define MSP_FEATURE_CONFIG 36U
+#define MSP_CURRENT_METER_CONFIG 40U
 #define MSP_MIXER_CONFIG 42U
+#define MSP_RX_CONFIG 44U
+#define MSP_RSSI_CONFIG 50U
+#define MSP_VOLTAGE_METER_CONFIG 56U
+#define MSP_RX_MAP 64U
+#define MSP_FAILSAFE_CONFIG 75U
 #define MSP_SET_ARMING_DISABLED 99U
 #define MSP_STATUS 101U
 #define MSP_RAW_IMU 102U
+#define MSP_RC 105U
 #define MSP_ATTITUDE 108U
 #define MSP_ANALOG 110U
+#define MSP_RC_TUNING 111U
 #define MSP_BOXNAMES 116U
+#define MSP_RC_DEADBAND 125U
+#define MSP_VOLTAGE_METERS 128U
+#define MSP_CURRENT_METERS 129U
 #define MSP_BATTERY_STATE 130U
 #define MSP_STATUS_EX 150U
 #define MSP_UID 160U
@@ -60,6 +76,8 @@
 #define MSP2_GETFUN_CALIBRATION_STATUS 0x4000U
 #define MSP2_GETFUN_IMU_FILTER_STATUS 0x4001U
 #define MSP2_GETFUN_ATTITUDE_STATUS 0x4002U
+#define MSP2_GETFUN_RC_STATUS 0x4003U
+#define MSP2_GETFUN_POWER_STATUS 0x4004U
 
 #define MSP2TEXT_PILOT_NAME 1U
 #define MSP2TEXT_CRAFT_NAME 2U
@@ -71,6 +89,10 @@
 
 #define SENSOR_ACC (1U << 0U)
 #define SENSOR_GYRO (1U << 5U)
+#define FEATURE_RX_SERIAL (1UL << 3U)
+#define BETAFLIGHT_ARMING_DISABLED_RX_FAILSAFE (1UL << 2U)
+#define BETAFLIGHT_ARMING_DISABLED_MSP (1UL << 16U)
+#define BETAFLIGHT_ARMING_DISABLE_FLAGS_COUNT 30U
 
 #define TARGET_HAS_VCP (1U << 0U)
 #define MCU_TYPE_ID_PROVIDED_BY_NAME 255U
@@ -85,6 +107,13 @@
 #define GETFUN_IMU_FILTER_READY (1U << 2U)
 #define GETFUN_ATTITUDE_READY (1U << 0U)
 #define RADIANS_TO_DEGREES 57.29577951308232088f
+#define BETAFLIGHT_SERIALRX_CRSF 9U
+#define BETAFLIGHT_RATES_TYPE_ACTUAL 3U
+#define BETAFLIGHT_RATE_LIMIT_DPS 1998U
+#define BETAFLIGHT_VOLTAGE_METER_ADC 1U
+#define BETAFLIGHT_CURRENT_METER_ADC 1U
+#define BETAFLIGHT_BATTERY_METER_ID 10U
+#define BETAFLIGHT_ADC_SENSOR_TYPE 0U
 
 typedef struct
 {
@@ -226,13 +255,23 @@ static void handle_build_info(payload_writer_t *writer)
 static void handle_status_ex(payload_writer_t *writer,
                              const app_state_snapshot_t *state)
 {
+    uint32_t arming_disable_flags = 0U;
+
+    if (!state->rc.channels_valid || state->rc.failsafe_active) {
+        arming_disable_flags |=
+            BETAFLIGHT_ARMING_DISABLED_RX_FAILSAFE;
+    }
+    if (state->configurator_arming_disabled) {
+        arming_disable_flags |= BETAFLIGHT_ARMING_DISABLED_MSP;
+    }
+
     write_status_base(writer, state);
     writer_u16(writer, state->cpu_load_permille);
     writer_u8(writer, 1U);
     writer_u8(writer, 0U);
     writer_u8(writer, 0U);
-    writer_u8(writer, 0U);
-    writer_u32(writer, 0U);
+    writer_u8(writer, BETAFLIGHT_ARMING_DISABLE_FLAGS_COUNT);
+    writer_u32(writer, arming_disable_flags);
     writer_u8(writer, 0U);
     writer_u16(writer, 0U);
     writer_u8(writer, 1U);
@@ -318,20 +357,142 @@ static void handle_attitude(payload_writer_t *writer,
     writer_u16(writer, (uint16_t)yaw_deg);
 }
 
+static void handle_rc(payload_writer_t *writer,
+                      const app_state_snapshot_t *state)
+{
+    uint16_t safe_channels[APP_STATE_RC_CHANNEL_COUNT];
+    const uint16_t *channels = state->rc.mapped_channel_us;
+    uint8_t channel;
+
+    if (!state->rc.channels_valid || state->rc.failsafe_active) {
+        rc_input_set_safe_channels(safe_channels);
+        channels = safe_channels;
+    }
+
+    for (channel = 0U;
+         channel < APP_STATE_RC_CHANNEL_COUNT;
+         ++channel) {
+        writer_u16(writer, channels[channel]);
+    }
+}
+
+static void handle_rc_tuning(payload_writer_t *writer)
+{
+    writer_u8(writer, 7U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 67U);
+    writer_u8(writer, 67U);
+    writer_u8(writer, 67U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 50U);
+    writer_u8(writer, 0U);
+    writer_u16(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 7U);
+    writer_u8(writer, 7U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 100U);
+    writer_u16(writer, BETAFLIGHT_RATE_LIMIT_DPS);
+    writer_u16(writer, BETAFLIGHT_RATE_LIMIT_DPS);
+    writer_u16(writer, BETAFLIGHT_RATE_LIMIT_DPS);
+    writer_u8(writer, BETAFLIGHT_RATES_TYPE_ACTUAL);
+    writer_u8(writer, 50U);
+}
+
+static void handle_rx_config(payload_writer_t *writer)
+{
+    writer_u8(writer, BETAFLIGHT_SERIALRX_CRSF);
+    writer_u16(writer, 1900U);
+    writer_u16(writer, 1500U);
+    writer_u16(writer, 1050U);
+    writer_u8(writer, 0U);
+    writer_u16(writer, 885U);
+    writer_u16(writer, 2115U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u16(writer, 1250U);
+    writer_u8(writer, 0U);
+    writer_u32(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 30U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 30U);
+    writer_u8(writer, 1U);
+    writer_u32(writer, 0U);
+    writer_u16(writer, 0U);
+    writer_u8(writer, 0U);
+}
+
+static void handle_getfun_rc_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint8_t flags = 0U;
+    uint32_t age_ms = UINT32_MAX;
+    uint8_t channel;
+
+    if (state->rc.channel_frame_count != 0U) {
+        flags |= (1U << 0U);
+        age_ms = state->uptime_ms -
+                 (uint32_t)state->rc.last_channel_tick;
+    }
+    if (state->rc.channels_valid) {
+        flags |= (1U << 1U);
+    }
+    if (state->rc.failsafe_active) {
+        flags |= (1U << 2U);
+    }
+    if (state->rc.failsafe_phase == RC_INPUT_PHASE_RECOVERING) {
+        flags |= (1U << 3U);
+    }
+    if (state->rc.link_statistics_valid) {
+        flags |= (1U << 4U);
+    }
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, flags);
+    writer_u8(writer, (uint8_t)state->rc.failsafe_phase);
+    writer_u8(writer, 0U);
+    writer_u16(writer, RC_INPUT_TIMEOUT_MS);
+    writer_u16(writer, RC_INPUT_RECOVERY_MS);
+    writer_u16(writer, RC_INPUT_RECOVERY_MIN_FRAMES);
+    writer_u16(writer, 0U);
+    writer_u32(writer, state->rc.channel_sequence);
+    writer_u32(writer, age_ms);
+    writer_u32(writer, state->rc.failsafe_count);
+    writer_u32(writer, state->rc.failsafe_recovery_count);
+    writer_u16(writer, state->rc.failsafe_recovery_frame_count);
+    writer_u16(writer, 0U);
+
+    for (channel = 0U;
+         channel < APP_STATE_RC_CHANNEL_COUNT;
+         ++channel) {
+        writer_u16(writer, state->rc.mapped_channel_us[channel]);
+    }
+}
+
 static void handle_analog(payload_writer_t *writer,
                           const app_state_snapshot_t *state)
 {
-    uint16_t voltage = state->battery_present ? state->battery_voltage_cv : 0U;
+    const bool present = state->battery.present;
+    const uint16_t voltage = present ? state->battery.voltage_cv : 0U;
 
     writer_u8(writer, (uint8_t)((voltage / 10U) > 255U
                                     ? 255U
                                     : (voltage / 10U)));
-    writer_u16(writer, state->battery_present
-                           ? state->battery_consumed_mah
+    writer_u16(writer, present
+                           ? state->battery.consumed_mah
                            : 0U);
     writer_u16(writer, state->rssi);
-    writer_u16(writer, state->battery_present
-                           ? (uint16_t)state->battery_current_ca
+    writer_u16(writer, present
+                           ? (uint16_t)state->battery.current_ca
                            : 0U);
     writer_u16(writer, voltage);
 }
@@ -339,18 +500,137 @@ static void handle_analog(payload_writer_t *writer,
 static void handle_battery_state(payload_writer_t *writer,
                                  const app_state_snapshot_t *state)
 {
-    const bool present = state->battery_present;
-    const uint16_t voltage = present ? state->battery_voltage_cv : 0U;
+    const bool present = state->battery.present;
+    const uint16_t voltage = present ? state->battery.voltage_cv : 0U;
 
-    writer_u8(writer, present ? state->battery_cell_count : 0U);
-    writer_u16(writer, present ? state->battery_capacity_mah : 0U);
+    writer_u8(writer, present ? state->battery.cell_count : 0U);
+    writer_u16(writer, present ? state->battery.capacity_mah : 0U);
     writer_u8(writer, (uint8_t)((voltage / 10U) > 255U
                                     ? 255U
                                     : (voltage / 10U)));
-    writer_u16(writer, present ? state->battery_consumed_mah : 0U);
-    writer_u16(writer, present ? (uint16_t)state->battery_current_ca : 0U);
-    writer_u8(writer, 0U);
+    writer_u16(writer, present ? state->battery.consumed_mah : 0U);
+    writer_u16(writer, present ? (uint16_t)state->battery.current_ca : 0U);
+    writer_u8(writer, (uint8_t)state->battery.state);
     writer_u16(writer, voltage);
+}
+
+static void handle_voltage_meters(payload_writer_t *writer,
+                                  const app_state_snapshot_t *state)
+{
+    const uint16_t voltage = state->battery.present
+                                 ? state->battery.voltage_cv
+                                 : 0U;
+
+    writer_u8(writer, BETAFLIGHT_BATTERY_METER_ID);
+    writer_u8(writer, (uint8_t)((voltage / 10U) > 255U
+                                    ? 255U
+                                    : (voltage / 10U)));
+}
+
+static void handle_current_meters(payload_writer_t *writer,
+                                  const app_state_snapshot_t *state)
+{
+    int32_t current_ma = state->battery.present
+                             ? (int32_t)state->battery.current_ca * 10
+                             : 0;
+
+    if (current_ma < 0) {
+        current_ma = 0;
+    } else if (current_ma > UINT16_MAX) {
+        current_ma = UINT16_MAX;
+    }
+
+    writer_u8(writer, BETAFLIGHT_BATTERY_METER_ID);
+    writer_u16(writer, state->battery.present
+                           ? state->battery.consumed_mah
+                           : 0U);
+    writer_u16(writer, (uint16_t)current_ma);
+}
+
+static void handle_voltage_meter_config(payload_writer_t *writer)
+{
+    writer_u8(writer, 1U);
+    writer_u8(writer, 5U);
+    writer_u8(writer, BETAFLIGHT_BATTERY_METER_ID);
+    writer_u8(writer, BETAFLIGHT_ADC_SENSOR_TYPE);
+    writer_u8(writer, POWER_MONITOR_VOLTAGE_SCALE);
+    writer_u8(writer, POWER_MONITOR_VOLTAGE_DIVIDER);
+    writer_u8(writer, POWER_MONITOR_VOLTAGE_MULTIPLIER);
+}
+
+static void handle_current_meter_config(payload_writer_t *writer)
+{
+    writer_u8(writer, 1U);
+    writer_u8(writer, 6U);
+    writer_u8(writer, BETAFLIGHT_BATTERY_METER_ID);
+    writer_u8(writer, BETAFLIGHT_ADC_SENSOR_TYPE);
+    writer_u16(writer, POWER_MONITOR_CURRENT_SCALE);
+    writer_u16(writer, (uint16_t)POWER_MONITOR_CURRENT_OFFSET_MA);
+}
+
+static void handle_battery_config(payload_writer_t *writer)
+{
+    writer_u8(writer,
+              (POWER_MONITOR_CRITICAL_CELL_CV + 5U) / 10U);
+    writer_u8(writer,
+              (POWER_MONITOR_MAX_CELL_CV + 5U) / 10U);
+    writer_u8(writer,
+              (POWER_MONITOR_WARNING_CELL_CV + 5U) / 10U);
+    writer_u16(writer, 0U);
+    writer_u8(writer, BETAFLIGHT_VOLTAGE_METER_ADC);
+    writer_u8(writer, BETAFLIGHT_CURRENT_METER_ADC);
+    writer_u16(writer, POWER_MONITOR_CRITICAL_CELL_CV);
+    writer_u16(writer, POWER_MONITOR_MAX_CELL_CV);
+    writer_u16(writer, POWER_MONITOR_WARNING_CELL_CV);
+}
+
+static void handle_getfun_power_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint8_t flags = 0U;
+    uint8_t channel;
+
+    if (state->battery.adc_running) {
+        flags |= (1U << 0U);
+    }
+    if (state->battery.present) {
+        flags |= (1U << 1U);
+    }
+    if (state->battery.state == POWER_BATTERY_WARNING) {
+        flags |= (1U << 2U);
+    }
+    if (state->battery.state == POWER_BATTERY_CRITICAL) {
+        flags |= (1U << 3U);
+    }
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, flags);
+    writer_u8(writer, (uint8_t)state->battery.state);
+    writer_u8(writer, state->battery.cell_count);
+    writer_u16(writer, state->battery.voltage_cv);
+    writer_u16(writer, (uint16_t)state->battery.current_ca);
+    writer_u16(writer, state->battery.consumed_mah);
+    writer_u16(writer, state->battery.capacity_mah);
+    for (channel = 0U;
+         channel < POWER_MONITOR_ADC_CHANNEL_COUNT;
+         ++channel) {
+        writer_u16(writer, state->battery.raw[channel]);
+    }
+    for (channel = 0U;
+         channel < POWER_MONITOR_ADC_CHANNEL_COUNT;
+         ++channel) {
+        writer_u16(writer, state->battery.filtered_raw[channel]);
+    }
+    writer_u32(writer, state->battery.sample_sequence);
+    writer_u32(writer, state->battery.sample_count);
+    writer_u32(writer, state->battery.invalid_sample_count);
+    writer_u32(writer, state->battery.adc_start_count);
+    writer_u32(writer, state->battery.adc_busy_count);
+    writer_u32(writer, state->battery.adc_recovery_count);
+    writer_u32(writer, state->battery.adc_dma_error_count);
+    writer_u32(writer, state->battery.adc_overrun_count);
+    writer_u32(writer, state->battery.adc_last_dma_flags);
 }
 
 static void handle_get_text(const msp_request_t *request,
@@ -571,6 +851,10 @@ void msp_server_process(const msp_request_t *request,
         handle_raw_imu(&writer, &state);
         break;
 
+    case MSP_RC:
+        handle_rc(&writer, &state);
+        break;
+
     case MSP_ATTITUDE:
         handle_attitude(&writer, &state);
         break;
@@ -583,11 +867,19 @@ void msp_server_process(const msp_request_t *request,
         handle_battery_state(&writer, &state);
         break;
 
+    case MSP_VOLTAGE_METERS:
+        handle_voltage_meters(&writer, &state);
+        break;
+
+    case MSP_CURRENT_METERS:
+        handle_current_meters(&writer, &state);
+        break;
+
     case MSP_BOXNAMES:
         break;
 
     case MSP_FEATURE_CONFIG:
-        writer_u32(&writer, 0U);
+        writer_u32(&writer, FEATURE_RX_SERIAL);
         break;
 
     case MSP_MIXER_CONFIG:
@@ -596,16 +888,50 @@ void msp_server_process(const msp_request_t *request,
         writer_u8(&writer, 0U);
         break;
 
+    case MSP_RX_CONFIG:
+        handle_rx_config(&writer);
+        break;
+
+    case MSP_RSSI_CONFIG:
+        writer_u8(&writer, 0U);
+        break;
+
+    case MSP_RX_MAP:
+        writer_data(&writer,
+                    rc_input_aetr_map,
+                    RC_INPUT_MAPPABLE_CHANNEL_COUNT);
+        break;
+
+    case MSP_FAILSAFE_CONFIG:
+        writer_u8(&writer, RC_INPUT_TIMEOUT_MS / 100U);
+        writer_u8(&writer, 0U);
+        writer_u16(&writer, 1000U);
+        writer_u8(&writer, 0U);
+        writer_u16(&writer, 0U);
+        writer_u8(&writer, 1U);
+        break;
+
+    case MSP_RC_TUNING:
+        handle_rc_tuning(&writer);
+        break;
+
+    case MSP_RC_DEADBAND:
+        writer_u8(&writer, 0U);
+        writer_u8(&writer, 0U);
+        writer_u8(&writer, 0U);
+        writer_u16(&writer, 50U);
+        break;
+
     case MSP_BATTERY_CONFIG:
-        writer_u8(&writer, 0U);
-        writer_u8(&writer, 0U);
-        writer_u8(&writer, 0U);
-        writer_u16(&writer, 0U);
-        writer_u8(&writer, 0U);
-        writer_u8(&writer, 0U);
-        writer_u16(&writer, 0U);
-        writer_u16(&writer, 0U);
-        writer_u16(&writer, 0U);
+        handle_battery_config(&writer);
+        break;
+
+    case MSP_VOLTAGE_METER_CONFIG:
+        handle_voltage_meter_config(&writer);
+        break;
+
+    case MSP_CURRENT_METER_CONFIG:
+        handle_current_meter_config(&writer);
         break;
 
     case MSP_UID:
@@ -665,6 +991,14 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP2_GETFUN_ATTITUDE_STATUS:
         handle_getfun_attitude_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_RC_STATUS:
+        handle_getfun_rc_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_POWER_STATUS:
+        handle_getfun_power_status(&writer, &state);
         break;
 
     default:

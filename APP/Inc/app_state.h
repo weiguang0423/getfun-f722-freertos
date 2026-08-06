@@ -13,8 +13,9 @@
  *       运行时：uptime / cycle_time / i2c_error / cpu_load / fault_flags；
  *       IMU：完整 app_imu_sample_t；
  *       姿态：四元数、欧拉角、READY和Mahony诊断计数；
- *       RC：16路CRSF原始/微秒通道、接收时间、Link Statistics和接收诊断；
- *       电池：battery_present + 电芯数/容量/电压/电流/已耗电量/rssi；
+ *       RC：16路CRSF原始/微秒/映射通道、接收时间、Failsafe、
+ *       Link Statistics和接收诊断；
+ *       电池：ADC运行状态、原始/滤波值、电芯数、电压、电流、已耗电量和低压状态；
  *       宿主：configurator_arming_disabled + 宿主机下发的 RTC 时间。
  *   - 读取：app_state_get_snapshot() —— 整体拷贝一份快照（多任务安全）。
  *   - 发布/写入：app_state_publish_imu/attitude/rc/battery、app_state_set_runtime/
@@ -30,6 +31,8 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
+#include "algorithms/power_monitor.h"
+#include "algorithms/rc_input.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,13 +40,15 @@ extern "C" {
 
 #define APP_STATE_AXIS_COUNT 3U
 #define APP_STATE_QUATERNION_COUNT 4U
-#define APP_STATE_RC_CHANNEL_COUNT 16U
+#define APP_STATE_RC_CHANNEL_COUNT RC_INPUT_CHANNEL_COUNT
 #define APP_ARMING_INHIBIT_IMU_NOT_READY (1UL << 0U)
 #define APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED (1UL << 1U)
 #define APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED (1UL << 2U)
 #define APP_ARMING_INHIBIT_PARAMETERS_INVALID (1UL << 3U)
 #define APP_ARMING_INHIBIT_IMU_TIMING_INVALID (1UL << 4U)
 #define APP_ARMING_INHIBIT_ATTITUDE_NOT_READY (1UL << 5U)
+#define APP_ARMING_INHIBIT_RC_NOT_READY (1UL << 6U)
+#define APP_ARMING_INHIBIT_BATTERY_NOT_READY (1UL << 7U)
 
 typedef enum
 {
@@ -171,9 +176,13 @@ typedef struct
 {
     bool uart_running;
     bool channels_valid;
+    bool failsafe_active;
     bool link_statistics_valid;
+    rc_input_phase_t failsafe_phase;
     TickType_t last_channel_tick;
     TickType_t last_link_statistics_tick;
+    TickType_t recovery_started_tick;
+    TickType_t last_failsafe_tick;
     uint32_t channel_sequence;
     uint32_t channel_frame_count;
     uint32_t link_frame_count;
@@ -190,8 +199,12 @@ typedef struct
     uint32_t uart_error_count;
     uint32_t uart_recovery_count;
     uint32_t last_uart_error;
+    uint32_t failsafe_count;
+    uint32_t failsafe_recovery_count;
+    uint16_t failsafe_recovery_frame_count;
     uint16_t channel_raw[APP_STATE_RC_CHANNEL_COUNT];
     uint16_t channel_us[APP_STATE_RC_CHANNEL_COUNT];
+    uint16_t mapped_channel_us[APP_STATE_RC_CHANNEL_COUNT];
     int16_t uplink_rssi_dbm[2];
     uint8_t uplink_link_quality;
     int8_t uplink_snr_db;
@@ -202,6 +215,30 @@ typedef struct
     uint8_t downlink_link_quality;
     int8_t downlink_snr_db;
 } app_rc_state_t;
+
+typedef struct
+{
+    bool adc_running;
+    bool present;
+    power_battery_state_t state;
+    uint8_t cell_count;
+    TickType_t last_sample_tick;
+    uint16_t capacity_mah;
+    uint16_t voltage_cv;
+    int16_t current_ca;
+    uint16_t consumed_mah;
+    uint16_t raw[POWER_MONITOR_ADC_CHANNEL_COUNT];
+    uint16_t filtered_raw[POWER_MONITOR_ADC_CHANNEL_COUNT];
+    uint32_t sample_sequence;
+    uint32_t sample_count;
+    uint32_t invalid_sample_count;
+    uint32_t adc_start_count;
+    uint32_t adc_busy_count;
+    uint32_t adc_recovery_count;
+    uint32_t adc_dma_error_count;
+    uint32_t adc_overrun_count;
+    uint32_t adc_last_dma_flags;
+} app_battery_state_t;
 
 typedef struct
 {
@@ -216,13 +253,7 @@ typedef struct
     app_imu_sample_t imu;
     app_attitude_state_t attitude;
     app_rc_state_t rc;
-
-    bool battery_present;
-    uint8_t battery_cell_count;
-    uint16_t battery_capacity_mah;
-    uint16_t battery_voltage_cv;
-    int16_t battery_current_ca;
-    uint16_t battery_consumed_mah;
+    app_battery_state_t battery;
     uint16_t rssi;
 
     bool configurator_arming_disabled;
@@ -244,13 +275,7 @@ void app_state_publish_imu(const app_imu_sample_t *sample);
 void app_state_publish_attitude(
     const app_attitude_state_t *attitude);
 void app_state_publish_rc(const app_rc_state_t *rc);
-void app_state_publish_battery(uint8_t cell_count,
-                               uint16_t capacity_mah,
-                               uint16_t voltage_cv,
-                               int16_t current_ca,
-                               uint16_t consumed_mah,
-                               uint16_t rssi,
-                               bool present);
+void app_state_publish_battery(const app_battery_state_t *battery);
 
 void app_state_set_configurator_arming_disabled(bool disabled);
 void app_state_set_host_rtc(uint32_t seconds, uint16_t millis);

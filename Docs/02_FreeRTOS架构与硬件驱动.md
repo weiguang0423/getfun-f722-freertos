@@ -364,8 +364,8 @@ bool spi_transfer(uint8_t bus, uint8_t cs, const uint8_t *tx, uint8_t *rx, size_
 bool uart_write(uint8_t port, const uint8_t *data, size_t len);
 size_t uart_read(uint8_t port, uint8_t *data, size_t max_len);
 
-uint16_t adc_read_vbat_raw(void);
-uint16_t adc_read_current_raw(void);
+bool power_adc_start_conversion(void);
+void power_adc_get_snapshot(power_adc_snapshot_t *snapshot);
 
 void motor_output_enable(bool enable);
 void motor_write_dshot(const uint16_t values[4]);
@@ -397,6 +397,10 @@ void motor_write_dshot(const uint16_t values[4]);
 5. ADC3
 
 完成结果：App 可以显示姿态原始数据、RC 通道和电池信息。
+
+S3.9的实际实现由静态 `BatteryTask` 每20 ms触发ADC3一次四通道DMA扫描；
+DMA2 Stream1 ISR只发布完整PC0～PC3原始序列，滤波、物理换算、电芯锁存、低压状态和
+mAh积分全部留在任务上下文。100 ms没有新序列时撤销ADC/电池有效性。详细契约见文档23。
 
 ### 8.3 第三批：电机
 

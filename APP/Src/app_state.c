@@ -19,7 +19,7 @@
  *   - app_state_publish_parameters()/publish_imu()：整体复制参数/IMU状态，并原子
  *       更新参数有效性和传感器校准解锁抑制位。
  *   - app_state_publish_attitude/rc/battery：发布姿态、RC和电池数据；IMU输入边界
- *       失效时同步撤销姿态READY，禁止消费者继续使用陈旧姿态。
+ *       失效时撤销姿态READY，RC失效时增加RC解锁抑制。
  *   - app_state_set_configurator_arming_disabled/set_host_rtc：回写 Configurator 下发的
  *       解锁状态与 RTC 时间。
  *
@@ -54,13 +54,16 @@ void app_state_init(void)
     const uint32_t primask = app_state_lock();
     memset(&state, 0, sizeof(state));
     state.attitude.quaternion[0] = 1.0f;
+    state.battery.state = POWER_BATTERY_INIT;
     state.arming_inhibit_flags =
         APP_ARMING_INHIBIT_IMU_NOT_READY |
         APP_ARMING_INHIBIT_GYRO_NOT_CALIBRATED |
         APP_ARMING_INHIBIT_ACCEL_NOT_CALIBRATED |
         APP_ARMING_INHIBIT_PARAMETERS_INVALID |
         APP_ARMING_INHIBIT_IMU_TIMING_INVALID |
-        APP_ARMING_INHIBIT_ATTITUDE_NOT_READY;
+        APP_ARMING_INHIBIT_ATTITUDE_NOT_READY |
+        APP_ARMING_INHIBIT_RC_NOT_READY |
+        APP_ARMING_INHIBIT_BATTERY_NOT_READY;
     app_state_unlock(primask);
 }
 
@@ -197,26 +200,32 @@ void app_state_publish_rc(const app_rc_state_t *rc)
 
     if (rc != NULL) {
         state.rc = *rc;
+        if (rc->channels_valid && !rc->failsafe_active) {
+            state.arming_inhibit_flags &=
+                ~APP_ARMING_INHIBIT_RC_NOT_READY;
+        } else {
+            state.arming_inhibit_flags |=
+                APP_ARMING_INHIBIT_RC_NOT_READY;
+        }
     }
     app_state_unlock(primask);
 }
 
-void app_state_publish_battery(uint8_t cell_count,
-                               uint16_t capacity_mah,
-                               uint16_t voltage_cv,
-                               int16_t current_ca,
-                               uint16_t consumed_mah,
-                               uint16_t rssi,
-                               bool present)
+void app_state_publish_battery(const app_battery_state_t *battery)
 {
     const uint32_t primask = app_state_lock();
-    state.battery_cell_count = cell_count;
-    state.battery_capacity_mah = capacity_mah;
-    state.battery_voltage_cv = voltage_cv;
-    state.battery_current_ca = current_ca;
-    state.battery_consumed_mah = consumed_mah;
-    state.rssi = rssi;
-    state.battery_present = present;
+
+    if (battery != NULL) {
+        state.battery = *battery;
+        if (battery->adc_running && battery->present &&
+            (battery->state != POWER_BATTERY_CRITICAL)) {
+            state.arming_inhibit_flags &=
+                ~APP_ARMING_INHIBIT_BATTERY_NOT_READY;
+        } else {
+            state.arming_inhibit_flags |=
+                APP_ARMING_INHIBIT_BATTERY_NOT_READY;
+        }
+    }
     app_state_unlock(primask);
 }
 

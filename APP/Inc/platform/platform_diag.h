@@ -8,7 +8,7 @@
  *   - platform_fault_code_t：可通过 SWD 读取的平台故障码。
  *   - platform_motor_outputs_force_safe()：强制 Motor 1～8 为 GPIO 低电平。
  *   - platform_diag_startup()/rtos_started()/heartbeat()：输出平台运行信息和
- *       InitTask 维护的 1 Hz IMU、DRDY 与 DMA 摘要。
+ *       InitTask 维护的 1 Hz IMU、RC、ADC电源与 DMA 摘要。
  *   - platform_fault_halt()：记录故障、关闭中断并停在安全循环。
  *   - platform_freertos_assert_failed()：保存断言文件和行号后安全停机。
  */

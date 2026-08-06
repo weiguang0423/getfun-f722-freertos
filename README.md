@@ -18,8 +18,8 @@
 > 通过 USB CDC 虚拟串口正常连接——而 PID、Mixer、ARM/Failsafe、电机安全链等核心
 > 逻辑由本项目自主实现并完全掌握。
 
-> **当前状态（2026-08-06）**：主线位于 `S3 IMU、姿态与飞行输入`，小目标 `S3.8 /
-> v0.9.0-rc-failsafe-app-baseline`，**软件已完成，待真实硬件与 App 验收**。
+> **当前状态（2026-08-06）**：主线位于 `S3 IMU、姿态与飞行输入`，小目标
+> `S3.8 + S3.9 / v0.9.0-flight-input-baseline`，**合并软件已完成，待RC/App与ADC仪表标定实物验收**。
 > 最新冻结基线：[`v0.8.0-crsf-rc-baseline`](#-已冻结版本历史)。
 > 本固件**尚未飞行**，电机闭环、DShot、ARM 状态机均未实现，请勿接桨。
 
@@ -119,7 +119,11 @@ SPI1 + PA4 CS + DMA2 Stream 0/3
 UART2 + DMA1 Stream5 循环接收 (IDLE/HT/TC)
   └─ crsf_uart -> crsf 解析 (CRC-8/DVB-S2) -> rc_input (AETR映射) -> RcTask
        └─ app_state.rc (300ms Failsafe / 100ms+5帧恢复)
-                                                    │
+                                                     │
+ADC3 PC0..PC3 + DMA2 Stream1/Channel2 单次扫描
+  └─ power_adc -> BatteryTask (50 Hz) -> power_monitor (滤波/换算/低压/mAh)
+       └─ app_state.battery (100ms停更失效 / bit 7解锁抑制)
+                                                     │
 USB CDC 接收回调 (usbd_cdc_if.c, ISR 上下文)
   └─ usb_cdc_transport_receive_from_isr()        环形缓冲 + 任务通知
        │
@@ -140,7 +144,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
 | 模块 | 路径 | 职责 |
 |---|---|---|
 | MSP 协议层 | [APP/Src/protocol/msp_transport.c](APP/Src/protocol/msp_transport.c) | 纯协议，无 RTOS 依赖。逐字节状态机解析 `$M<` V1 / `$X<` V2（V2 用 CRC8-DVB-S2），构造回包帧 |
-| MSP 命令派发 | [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) | `MSP_FC_VARIANT` 返回 `"BTFL"`、`MSP_BOARD_INFO` 报 `GF72`；状态命令 + 校准 + Receiver 页面依赖 + GETFUN MSP2 `0x4000` 系列 |
+| MSP 命令派发 | [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) | `MSP_FC_VARIANT` 返回 `"BTFL"`、`MSP_BOARD_INFO` 报 `GF72`；状态命令 + 校准 + Receiver/Power 页面依赖 + GETFUN MSP2 `0x4000` 系列 |
 | IMU 总线 | [APP/Src/bsp/imu_bus.c](APP/Src/bsp/imu_bus.c) | SPI1 适配，阻塞初始化 + 14 字节 DMA 采样 |
 | ICM42688P 驱动 | [APP/Src/drivers/icm42688p.c](APP/Src/drivers/icm42688p.c) | 寄存器级驱动，固定 1 kHz / ±2000 dps / ±16 g |
 | 陀螺校准 | [APP/Src/algorithms/gyro_calibration.c](APP/Src/algorithms/gyro_calibration.c) | 上电静态零偏 Welford 状态机，250 预热 + 2000 样本，不持久化 |
@@ -150,12 +154,14 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
 | CRSF 解析 | [APP/Src/protocol/crsf.c](APP/Src/protocol/crsf.c) | 长度 2～62 + CRC-8/DVB-S2 `0xD5`，解码 16 路 11-bit 通道与 Link Statistics |
 | RC 输入 | [APP/Src/algorithms/rc_input.c](APP/Src/algorithms/rc_input.c) | AETR→App 逻辑顺序映射 + Failsafe 超时/恢复状态机 |
 | CRSF UART | [APP/Src/bsp/crsf_uart.c](APP/Src/bsp/crsf_uart.c) | UART2 420000 baud DMA 循环接收 |
+| 电源ADC | [APP/Src/bsp/power_adc.c](APP/Src/bsp/power_adc.c) | ADC3 PC0～PC3单次扫描，DMA2 Stream1/Channel2一致发布 |
+| 电源监测 | [APP/Src/algorithms/power_monitor.c](APP/Src/algorithms/power_monitor.c) | 固定点滤波、VBAT/Current换算、电芯锁存、低压状态与mAh积分 |
 | 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7 双槽，48 字节 v1 记录 + magic/version/CRC32/commit，序号选择 |
 | 平台时基 | [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) | DWT 微秒时基，ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展 |
 | 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
 | USB CDC 传输 | [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) | RX 1024 环缓冲 + 任务通知；TX 320 字节轮询 |
 | 应用状态 | [APP/Src/app_state.c](APP/Src/app_state.c) | 全局快照 `app_state_snapshot_t`，关中断临界区 |
-| RTOS 任务 | [APP/Src/rtos/](APP/Src/rtos/) | `app_task.c`（静态创建任务）、`imu_task.c`、`msp` 任务、`rc_task.c` |
+| RTOS 任务 | [APP/Src/rtos/](APP/Src/rtos/) | `app_task.c`（静态创建任务）、`imu_task.c`、`msp`任务、`rc_task.c`、`battery_task.c` |
 
 ---
 
@@ -239,7 +245,7 @@ cmake --build build/Release
 ```text
 S1 硬件基线            🟠 主体完成，并行实测项按依赖补齐
 S2 最小FreeRTOS平台    🟠 v0.1.0 已冻结；App/CLI 软件 DFU 未实现
-S3 IMU、姿态与飞行输入 🟠 当前阶段（S3.8 软件完成，待实物/App 验收）
+S3 IMU、姿态与飞行输入 🟠 当前阶段（S3.8/S3.9 合并软件完成，待实物验收）
 S4 控制与电机          ⬜ 已规划（FlightTask / PID / Mixer / DShot / ARM）
 S5 基础飞行            ⬜ 已规划
 S6 功能完善            ⬜ 已规划（OSD / Blackbox / 气压计 / CLI）
@@ -247,7 +253,8 @@ S7 后续扩展            ⏸ 条件式（GPS / 双向 DShot / 伴随计算）
 ```
 
 S3 细分里程碑：S3.1～S3.7 已全部冻结（IMU 轮询 → SPI DMA → 陀螺校准 → 加速度校准 →
-低通+精确 dt → Mahony 姿态 → CRSF RC），当前推进 **S3.8 RC Failsafe 与 App Receiver 页面**。
+低通+精确 dt → Mahony 姿态 → CRSF RC）；当前合并验收 **S3.8 RC Failsafe/Receiver** 与
+**S3.9 ADC3电源监测/标定**。
 
 ### 🏷 已冻结版本历史
 

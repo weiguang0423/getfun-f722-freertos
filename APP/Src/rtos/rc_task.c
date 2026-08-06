@@ -3,7 +3,8 @@
  *
  * UART/DMA callbacks only enqueue bytes. RcTask verifies frames, decodes RC
  * channels and link statistics, then atomically publishes app_state.rc.
- * Timeout/failsafe invalidation is deliberately deferred to S3.8.
+ * S3.8 adds AETR mapping plus bounded loss and recovery handling. Consumers
+ * may use mapped channels only while channels_valid is true.
  */
 #include "rtos/rc_task.h"
 
@@ -19,10 +20,30 @@
 #define RC_TASK_STACK_WORDS 512U
 #define RC_TASK_PRIORITY (tskIDLE_PRIORITY + 3U)
 #define RC_TASK_WAIT_MS 20U
+#define RC_LINK_STATISTICS_TIMEOUT_MS 1000U
+
+_Static_assert(configTICK_RATE_HZ == 1000U,
+               "RcTask timestamps require a 1 kHz FreeRTOS tick");
 
 static StaticTask_t rc_task_control_block;
 static StackType_t rc_task_stack[RC_TASK_STACK_WORDS];
 static TaskHandle_t rc_task_handle;
+
+static void rc_task_copy_failsafe(app_rc_state_t *rc,
+                                  const rc_input_failsafe_t *failsafe)
+{
+    rc->channels_valid = rc_input_control_valid(failsafe);
+    rc->failsafe_active = failsafe->failsafe_active;
+    rc->failsafe_phase = failsafe->phase;
+    rc->recovery_started_tick =
+        (TickType_t)failsafe->recovery_started_ms;
+    rc->last_failsafe_tick =
+        (TickType_t)failsafe->last_failsafe_ms;
+    rc->failsafe_count = failsafe->failsafe_count;
+    rc->failsafe_recovery_count = failsafe->recovery_count;
+    rc->failsafe_recovery_frame_count =
+        failsafe->recovery_frame_count;
+}
 
 static void rc_task_update_diagnostics(app_rc_state_t *rc,
                                        const crsf_parser_t *parser)
@@ -45,7 +66,9 @@ static void rc_task_update_diagnostics(app_rc_state_t *rc,
 }
 
 static void rc_task_handle_frame(app_rc_state_t *rc,
-                                 const crsf_frame_t *frame)
+                                 rc_input_failsafe_t *failsafe,
+                                 const crsf_frame_t *frame,
+                                 TickType_t now_tick)
 {
     if (frame->type == CRSF_FRAME_TYPE_RC_CHANNELS_PACKED) {
         crsf_channels_t channels;
@@ -57,10 +80,13 @@ static void rc_task_handle_frame(app_rc_state_t *rc,
             memcpy(rc->channel_us,
                    channels.pulse_us,
                    sizeof(rc->channel_us));
-            rc->channels_valid = true;
-            rc->last_channel_tick = xTaskGetTickCount();
+            rc_input_map_aetr(rc->channel_us,
+                              rc->mapped_channel_us);
+            rc->last_channel_tick = now_tick;
             rc->channel_sequence++;
             rc->channel_frame_count++;
+            rc_input_failsafe_on_frame(failsafe,
+                                       (uint32_t)now_tick);
         } else {
             rc->payload_error_count++;
         }
@@ -98,11 +124,16 @@ static void rc_task(void *argument)
 {
     crsf_parser_t parser;
     crsf_frame_t frame;
+    rc_input_failsafe_t failsafe;
     app_rc_state_t rc;
     uint8_t input[64];
 
     (void)argument;
     memset(&rc, 0, sizeof(rc));
+    rc_input_set_safe_channels(rc.channel_us);
+    rc_input_set_safe_channels(rc.mapped_channel_us);
+    rc_input_failsafe_init(&failsafe);
+    rc_task_copy_failsafe(&rc, &failsafe);
     crsf_parser_init(&parser);
     crsf_uart_init();
     crsf_uart_bind_current_task();
@@ -112,6 +143,7 @@ static void rc_task(void *argument)
 
     for (;;) {
         size_t count;
+        TickType_t now_tick;
 
         crsf_uart_service();
         while ((count = crsf_uart_read(input, sizeof(input))) != 0U) {
@@ -121,11 +153,25 @@ static void rc_task(void *argument)
                 if (crsf_parser_process_byte(&parser,
                                              input[index],
                                              &frame)) {
-                    rc_task_handle_frame(&rc, &frame);
+                    now_tick = xTaskGetTickCount();
+                    rc_task_handle_frame(&rc,
+                                         &failsafe,
+                                         &frame,
+                                         now_tick);
                 }
             }
         }
 
+        now_tick = xTaskGetTickCount();
+        rc_input_failsafe_update(&failsafe,
+                                 (uint32_t)now_tick);
+        rc_task_copy_failsafe(&rc, &failsafe);
+        if (rc.link_statistics_valid &&
+            ((TickType_t)(now_tick -
+                          rc.last_link_statistics_tick) >=
+             pdMS_TO_TICKS(RC_LINK_STATISTICS_TIMEOUT_MS))) {
+            rc.link_statistics_valid = false;
+        }
         rc_task_update_diagnostics(&rc, &parser);
         app_state_publish_rc(&rc);
         (void)ulTaskNotifyTake(pdTRUE,

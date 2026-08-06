@@ -182,10 +182,16 @@ Throttle：0.0 ～ 1.0
 AUX：按开关范围判定
 ```
 
-当前S3.7只完成CRSF线序输入层：0x16的16路11-bit原始值同时换算为微秒值，连同
-接收tick、序号和0x14 Link Statistics发布到 `app_state.rc`。AETR/TAER映射、端点、
-Deadband、归一化、App Receiver页面和超时Failsafe均未在本阶段实现，留给S3.8/S4.4。
-因此任何消费者都不能只看 `channels_valid`，还必须在S3.8以后按冻结阈值检查数据年龄。
+S3.8保留CRSF `channel_us[]`原始线序，另外按Betaflight默认 `AETR1234`发布
+`mapped_channel_us[]`：Roll/Pitch/Yaw/Throttle分别来自线序CH1/CH2/CH4/CH3，
+AUX1～AUX12保持CH5～CH16。Betaflight App Receiver页面通过 `MSP_RC`读取16路映射值，
+并通过 `MSP_RX_MAP`显示 `AETR1234`。端点标定、Deadband、Rates、Expo和归一化
+仍留给S4.4；S3.8对这些App字段只做API 1.48可解析的只读投影。
+
+最后合法通道帧超过300 ms时，S3.8撤销 `channels_valid`、置
+`failsafe_active`并增加 `APP_ARMING_INHIBIT_RC_NOT_READY`；恢复必须同时满足
+100 ms观察窗口和至少5帧。任何后续消费者都必须同时检查
+`channels_valid=true`和 `failsafe_active=false`。详细契约和验收分别见文档21、22。
 
 处理顺序：
 
@@ -491,7 +497,14 @@ GETFUN MSP2 `0x4000`返回参数/校准诊断；v0.6.0新增 `0x4001`，返回DW
 
 目标：Receiver 页面可完成 CRSF 调试。
 
-### 14.3 Modes
+### 14.3 Power
+
+S3.9以只读方式实现 `MSP_BATTERY_CONFIG`、`MSP_VOLTAGE_METER_CONFIG`、
+`MSP_CURRENT_METER_CONFIG`、`MSP_VOLTAGE_METERS`、`MSP_CURRENT_METERS`、
+`MSP_BATTERY_STATE`和 `MSP_ANALOG`。App显示0.01 V、0.01 A、mAh、电芯数和
+OK/WARNING/CRITICAL状态；比例、偏置、容量和阈值写入留给后续参数系统。
+
+### 14.4 Modes
 
 实现 AUX Range 的读取和写入，至少支持：
 
@@ -500,7 +513,7 @@ GETFUN MSP2 `0x4000`返回参数/校准诊断；v0.6.0新增 `0x4001`，返回DW
 - BEEPER
 - PREARM（如果实际启用）
 
-### 14.4 Configuration 与 Ports
+### 14.5 Configuration 与 Ports
 
 实现本项目实际使用的：
 
@@ -513,7 +526,7 @@ GETFUN MSP2 `0x4000`返回参数/校准诊断；v0.6.0新增 `0x4001`，返回DW
 - ADC meter
 - 传感器和功能开关
 
-### 14.5 PID Tuning
+### 14.6 PID Tuning
 
 实现：
 
@@ -525,7 +538,7 @@ GETFUN MSP2 `0x4000`返回参数/校准诊断；v0.6.0新增 `0x4001`，返回DW
 
 Betaflight 参数与内部算法不完全一致时，在 MSP 适配层做明确换算。
 
-### 14.6 Motors
+### 14.7 Motors
 
 实现：
 
@@ -535,7 +548,7 @@ Betaflight 参数与内部算法不完全一致时，在 MSP 适配层做明确�
 
 Armed 时拒绝 App 电机测试；App 命令超时或断开后立即归零。
 
-### 14.7 OSD 与 Blackbox
+### 14.8 OSD 与 Blackbox
 
 基础飞行完成后实现：
 

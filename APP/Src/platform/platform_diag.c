@@ -10,7 +10,7 @@
  *   - platform_diag_startup()：输出固件身份、构建时间和运行时时钟。
  *   - platform_diag_heartbeat()：输出平台心跳，以及 1 Hz IMU 在线状态、采样率、
  *       DRDY/DMA计数、DWT时间/dt、低通状态、错误计数、陀螺/加速度校准、
- *       参数Flash、SI物理量和ImuTask栈余量。
+ *       参数Flash、SI物理量、RC Failsafe、ADC电源状态和各任务栈余量。
  *   - platform_fault_halt()：记录故障码、关闭中断、强制安全输出并停止运行。
  *   - platform_freertos_assert_failed()：记录 FreeRTOS 断言位置后进入安全停机。
  *
@@ -31,6 +31,7 @@
 #include "app_state.h"
 #include "bsp/imu_bus.h"
 #include "main.h"
+#include "rtos/battery_task.h"
 #include "rtos/imu_task.h"
 #include "rtos/rc_task.h"
 #include "task.h"
@@ -403,7 +404,7 @@ void platform_diag_heartbeat(void)
         "crc=%lu len=%lu payload=%lu unsupported=%lu\r\n",
         snapshot.rc.channels_valid ? 1U : 0U,
         (unsigned long)snapshot.rc.channel_sequence,
-        snapshot.rc.channels_valid
+        snapshot.rc.channel_frame_count != 0U
             ? (unsigned long)(current_tick -
                               snapshot.rc.last_channel_tick)
             : 0UL,
@@ -418,8 +419,8 @@ void platform_diag_heartbeat(void)
     length = snprintf(
         line,
         sizeof(line),
-        "rc ch_us=[%u,%u,%u,%u,%u,%u,%u,%u] "
-        "raw=[%u,%u,%u,%u]\r\n",
+        "rc raw_us=[%u,%u,%u,%u,%u,%u,%u,%u] "
+        "app_rpyt=[%u,%u,%u,%u]\r\n",
         snapshot.rc.channel_us[0],
         snapshot.rc.channel_us[1],
         snapshot.rc.channel_us[2],
@@ -428,10 +429,23 @@ void platform_diag_heartbeat(void)
         snapshot.rc.channel_us[5],
         snapshot.rc.channel_us[6],
         snapshot.rc.channel_us[7],
-        snapshot.rc.channel_raw[0],
-        snapshot.rc.channel_raw[1],
-        snapshot.rc.channel_raw[2],
-        snapshot.rc.channel_raw[3]);
+        snapshot.rc.mapped_channel_us[0],
+        snapshot.rc.mapped_channel_us[1],
+        snapshot.rc.mapped_channel_us[2],
+        snapshot.rc.mapped_channel_us[3]);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "rc failsafe=%u phase=%u count=%lu recovery=%lu "
+        "recovery_frames=%u inhibit=0x%08lX\r\n",
+        snapshot.rc.failsafe_active ? 1U : 0U,
+        (unsigned int)snapshot.rc.failsafe_phase,
+        (unsigned long)snapshot.rc.failsafe_count,
+        (unsigned long)snapshot.rc.failsafe_recovery_count,
+        snapshot.rc.failsafe_recovery_frame_count,
+        (unsigned long)snapshot.arming_inhibit_flags);
     diag_write_formatted(line, sizeof(line), length);
 
     length = snprintf(
@@ -454,6 +468,48 @@ void platform_diag_heartbeat(void)
         (int)snapshot.rc.downlink_rssi_dbm,
         snapshot.rc.downlink_link_quality,
         (int)snapshot.rc.downlink_snr_db);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "power adc=%u present=%u state=%u cells=%u age_ticks=%lu "
+        "v_cv=%u i_ca=%d mah=%u stack_min=%lu\r\n",
+        snapshot.battery.adc_running ? 1U : 0U,
+        snapshot.battery.present ? 1U : 0U,
+        (unsigned int)snapshot.battery.state,
+        snapshot.battery.cell_count,
+        snapshot.battery.sample_sequence != 0U
+            ? (unsigned long)(current_tick -
+                              snapshot.battery.last_sample_tick)
+            : 0UL,
+        snapshot.battery.voltage_cv,
+        (int)snapshot.battery.current_ca,
+        snapshot.battery.consumed_mah,
+        (unsigned long)battery_task_stack_high_water_mark());
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "power raw=[%u,%u,%u,%u] filt=[%u,%u,%u,%u] "
+        "seq=%lu starts=%lu busy=%lu recovery=%lu dma_err=%lu "
+        "overrun=%lu flags=0x%08lX\r\n",
+        snapshot.battery.raw[0],
+        snapshot.battery.raw[1],
+        snapshot.battery.raw[2],
+        snapshot.battery.raw[3],
+        snapshot.battery.filtered_raw[0],
+        snapshot.battery.filtered_raw[1],
+        snapshot.battery.filtered_raw[2],
+        snapshot.battery.filtered_raw[3],
+        (unsigned long)snapshot.battery.sample_sequence,
+        (unsigned long)snapshot.battery.adc_start_count,
+        (unsigned long)snapshot.battery.adc_busy_count,
+        (unsigned long)snapshot.battery.adc_recovery_count,
+        (unsigned long)snapshot.battery.adc_dma_error_count,
+        (unsigned long)snapshot.battery.adc_overrun_count,
+        (unsigned long)snapshot.battery.adc_last_dma_flags);
     diag_write_formatted(line, sizeof(line), length);
 
     previous_tick = current_tick;

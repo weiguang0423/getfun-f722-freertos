@@ -198,11 +198,11 @@ Betaflight 的归档 DMA option，也不得据此推导 Motor/DShot DMA 映射�
 
 | 功能 | 引脚/外设 | 冻结状态 |
 |---|---|---|
-| VBAT | PC0 / ADC3 | 已配置，待标定 |
-| Current | PC1 / ADC3 | 已配置，待标定 |
-| RSSI ADC | PC2 / ADC3 | 已配置，默认未使用 |
-| External ADC | PC3 / ADC3 | 已配置 |
-| ADC DMA | ADC3 / DMA option 0 | 已配置 |
+| VBAT | PC0 / ADC3 IN10 | 自研软件已接入，待仪表标定 |
+| Current | PC1 / ADC3 IN11 | 自研软件已接入，待仪表标定 |
+| RSSI ADC | PC2 / ADC3 IN12 | 自研软件保留原始值，默认未使用 |
+| External ADC | PC3 / ADC3 IN13 | 自研软件保留原始值 |
+| ADC DMA | 归档option 0；自研DMA2 Stream1/Channel2 | 已接入，待实物验证 |
 | Buzzer | PB0 | 已配置为反相，待实测 |
 | PINIO1 | PC4 | 已配置，待实测 |
 | PINIO2 | PB2 | 已配置，待实测 |
@@ -228,6 +228,8 @@ PINIO2 box: 41
 ```
 
 电压表比例 110 和电流表比例 100 只是原配置基准，不能替代实物标定。
+自研固件因SPI1 RX已占DMA2 Stream0，使用STM32F722允许的ADC3备用映射
+DMA2 Stream1/Channel2；50 Hz单次四通道DMA契约与标定步骤见文档23/24。
 
 ---
 

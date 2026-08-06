@@ -23,8 +23,9 @@
  *
  * Core behavior:
  *   MX_DMA_Init() enables DMA1/DMA2 and configures DMA1 Stream 5 plus DMA2
- *   Stream 0/3 interrupts at preemption priority 5. Request parameters and
- *   handle linkage are generated with USART2/SPI1 from the .ioc model.
+ *   Stream 0/1/3 interrupts at preemption priority 5. Stream1 is reserved by
+ *   the application-owned ADC3 one-shot transport; USART2/SPI1 linkage remains
+ *   generated from the .ioc model.
  *
  * Boundary:
  *   Priority 5 is required because the completion path calls a FreeRTOS
@@ -64,6 +65,9 @@ void MX_DMA_Init(void)
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
   /* DMA2_Stream3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
