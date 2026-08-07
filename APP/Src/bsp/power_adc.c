@@ -69,7 +69,14 @@ static void configure_gpio(void)
 static void configure_adc(void)
 {
     ADC3->CR1 = ADC_CR1_SCAN;
-    ADC3->CR2 = ADC_CR2_DMA;
+    /*
+     * Keep the ADC DMA request path enabled between software-triggered scan
+     * sequences.  With DDS cleared, STM32F7 stops issuing DMA requests after
+     * the first completed DMA transfer; merely OR-ing DMA again does not
+     * create the required disable/enable edge.  CONT remains cleared, so each
+     * BatteryTask request is still one bounded four-channel scan.
+     */
+    ADC3->CR2 = ADC_CR2_DMA | ADC_CR2_DDS;
     ADC3->SMPR1 =
         (7UL << ADC_SMPR1_SMP10_Pos) |
         (7UL << ADC_SMPR1_SMP11_Pos) |
@@ -163,6 +170,7 @@ bool power_adc_start_conversion(void)
             return false;
         }
 
+        ADC3->CR2 &= ~ADC_CR2_DMA;
         if (!disable_dma_stream()) {
             adc_snapshot.dma_error_count++;
             irq_unlock(primask);
@@ -174,17 +182,23 @@ bool power_adc_start_conversion(void)
     }
 
     consecutive_busy_count = 0U;
+    if (!disable_dma_stream()) {
+        adc_snapshot.dma_error_count++;
+        irq_unlock(primask);
+        return false;
+    }
     if ((ADC3->SR & ADC_SR_OVR) != 0U) {
-        ADC3->SR &= ~ADC_SR_OVR;
         adc_snapshot.adc_overrun_count++;
     }
+    ADC3->SR = 0U;
     DMA2->LIFCR = POWER_ADC_DMA_ALL_FLAGS;
     POWER_ADC_DMA_STREAM->NDTR = POWER_ADC_CHANNEL_COUNT;
     POWER_ADC_DMA_STREAM->M0AR = (uint32_t)dma_samples;
     POWER_ADC_DMA_STREAM->CR |= DMA_SxCR_EN;
     adc_snapshot.conversion_busy = true;
     adc_snapshot.start_count++;
-    ADC3->CR2 |= ADC_CR2_DMA | ADC_CR2_SWSTART;
+    ADC3->CR2 |= ADC_CR2_DMA | ADC_CR2_DDS;
+    ADC3->CR2 |= ADC_CR2_SWSTART;
     irq_unlock(primask);
     return true;
 }
@@ -220,8 +234,8 @@ void power_adc_dma_irq_handler(void)
     uint32_t channel;
 
     DMA2->LIFCR = POWER_ADC_DMA_ALL_FLAGS;
+    POWER_ADC_DMA_STREAM->CR &= ~DMA_SxCR_EN;
     if ((flags & POWER_ADC_DMA_ERROR_FLAGS) != 0U) {
-        POWER_ADC_DMA_STREAM->CR &= ~DMA_SxCR_EN;
         adc_snapshot.last_dma_flags =
             flags & POWER_ADC_DMA_ERROR_FLAGS;
         adc_snapshot.dma_error_count++;

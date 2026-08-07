@@ -18,10 +18,10 @@
 > 通过 USB CDC 虚拟串口正常连接——而 PID、Mixer、ARM/Failsafe、电机安全链等核心
 > 逻辑由本项目自主实现并完全掌握。
 
-> **当前状态（2026-08-06）**：主线位于 `S3 IMU、姿态与飞行输入`，小目标
-> `S3.8 + S3.9 / v0.9.0-flight-input-baseline`，**合并软件已完成，待RC/App与ADC仪表标定实物验收**。
-> 最新冻结基线：[`v0.8.0-crsf-rc-baseline`](#-已冻结版本历史)。
-> 本固件**尚未飞行**，电机闭环、DShot、ARM 状态机均未实现，请勿接桨。
+> **当前状态（2026-08-08）**：`S3.8 + S3.9` 已通过RC/App与电源实物验收，
+> 当前启动 `S4.1 + S4.2 + S4.3` FlightTask、DShot300和四路无桨电机测试开发。
+> 最新冻结基线：[`v0.9.0-flight-input-baseline`](#-已冻结版本历史)。
+> 本固件**尚未飞行**，PID、Mixer和ARM状态机仍未实现；S4.3验收前必须全程拆桨。
 
 ---
 
@@ -245,16 +245,16 @@ cmake --build build/Release
 ```text
 S1 硬件基线            🟠 主体完成，并行实测项按依赖补齐
 S2 最小FreeRTOS平台    🟠 v0.1.0 已冻结；App/CLI 软件 DFU 未实现
-S3 IMU、姿态与飞行输入 🟠 当前阶段（S3.8/S3.9 合并软件完成，待实物验收）
-S4 控制与电机          ⬜ 已规划（FlightTask / PID / Mixer / DShot / ARM）
+S3 IMU、姿态与飞行输入 ✅ v0.9.0 已冻结
+S4 控制与电机          🟡 当前阶段（S4.1/S4.2/S4.3 同步开发）
 S5 基础飞行            ⬜ 已规划
 S6 功能完善            ⬜ 已规划（OSD / Blackbox / 气压计 / CLI）
 S7 后续扩展            ⏸ 条件式（GPS / 双向 DShot / 伴随计算）
 ```
 
-S3 细分里程碑：S3.1～S3.7 已全部冻结（IMU 轮询 → SPI DMA → 陀螺校准 → 加速度校准 →
-低通+精确 dt → Mahony 姿态 → CRSF RC）；当前合并验收 **S3.8 RC Failsafe/Receiver** 与
-**S3.9 ADC3电源监测/标定**。
+S3.1～S3.9 已全部冻结。S3.9沿用实物验收正确的电源换算参数，不再追加标定改动；
+当前同步开发 **S4.1 FlightTask安全骨架**、**S4.2 DShot300编码/Timer/DMA** 与
+**S4.3 四路无桨电机测试/超时归零**。
 
 ### 🏷 已冻结版本历史
 
@@ -268,6 +268,7 @@ S3 细分里程碑：S3.1～S3.7 已全部冻结（IMU 轮询 → SPI DMA → �
 | `v0.6.0-imu-filter-timing-baseline` | `c9aba14` | 2026-07-30 | DWT 微秒时基、真实 dt、Gyro/Accel PT1、异常恢复 |
 | `v0.7.0-mahony-attitude-baseline` | `32140de` | 2026-08-04 | Mahony 六轴姿态、坐标/比力语义、MSP_ATTITUDE、App 三维模型 |
 | `v0.8.0-crsf-rc-baseline` | `5bce889` | 2026-08-05 | UART2 循环 DMA、CRSF CRC、16 通道/Link Statistics、错误恢复 |
+| `v0.9.0-flight-input-baseline` | 见标签 | 2026-08-08 | RC Failsafe/Receiver、ADC3电源监测与实物验收冻结 |
 
 ---
 

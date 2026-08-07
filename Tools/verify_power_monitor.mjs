@@ -185,6 +185,10 @@ assert(adcSource.includes("DMA2_Stream1") &&
 assert(!adcSource.includes("DMA_SxCR_CIRC") &&
        !adcSource.includes("ADC_CR2_CONT"),
   "ADC3 must remain a bounded one-shot scan");
+assert(adcSource.includes("ADC_CR2_DMA | ADC_CR2_DDS"),
+  "ADC3 must preserve DMA requests across repeated one-shot scans");
+assert(adcSource.includes("if (!disable_dma_stream())"),
+  "DMA2 Stream1 must be disabled before its transfer count is reloaded");
 assert(adcSource.includes("10UL << 0U") &&
        adcSource.includes("13UL << 15U"),
   "ADC3 channel 10..13 scan order changed");
@@ -214,7 +218,11 @@ for (const command of requiredMspCases) {
 console.log(JSON.stringify({
   result: "PASS",
   adc: "ADC3 PC0..PC3, one-shot DMA2 Stream1/Channel2 at 50 Hz",
-  defaultsRequireHardwareCalibration: true,
+  acceptedCalibration: {
+    voltageScale: VBAT_SCALE,
+    currentScale: CURRENT_SCALE,
+    currentOffsetMa: 0,
+  },
   conversion: {
     fullScaleVoltageCv: voltageCv(4095),
     oneVoltCurrentCaAtScale100: currentCa(1242),
