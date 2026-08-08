@@ -2,7 +2,7 @@
 文件作用：项目顶层 README，面向新接触本仓库的开发者，用一页给出项目目标、硬件平台、分层架构、构建烧录、当前进度入口和关键约束。
 覆盖范围：GETFUN F722 V3 FreeRTOS 飞控固件的整体介绍；详细的实时进度以 Docs/00 为准，本文只做摘要并指向各专题文档。
 关联模块：APP 应用层（MSP 服务器、app_state、usb_cdc_transport、ImuTask/MspTask/RcTask、ICM42688P、校准、姿态、CRSF、参数存储）。
-仍需实物验证项：本文中“当前进度”一节的状态标记与 Docs/00 同步；涉及真实硬件的结论（电机映射、VBAT 标定、首飞等）尚未完成，以 Docs/00 的关口为准。
+仍需实物验证项：本文中“当前进度”一节的状态标记与 Docs/00 同步；涉及真实硬件的结论（DShot波形、电机映射/方向、首飞等）尚未完成，以 Docs/00 的关口为准。
 -->
 
 # GETFUN F722 V3 — FreeRTOS 飞控固件
@@ -19,7 +19,8 @@
 > 逻辑由本项目自主实现并完全掌握。
 
 > **当前状态（2026-08-08）**：`S3.8 + S3.9` 已通过RC/App与电源实物验收，
-> 当前启动 `S4.1 + S4.2 + S4.3` FlightTask、DShot300和四路无桨电机测试开发。
+> `S4.1 + S4.2 + S4.3` FlightTask、DShot300和四路无桨电机测试软件及构建已完成，
+> 当前等待逻辑分析仪与四路无桨联合验收。
 > 最新冻结基线：[`v0.9.0-flight-input-baseline`](#-已冻结版本历史)。
 > 本固件**尚未飞行**，PID、Mixer和ARM状态机仍未实现；S4.3验收前必须全程拆桨。
 
@@ -68,7 +69,7 @@
 | IMU | ICM42688P，SPI1 + DMA2，1 kHz / ±2000 dps / ±16 g |
 | RC 接收 | CRSF / ELRS，UART2 @ 420000 baud，DMA 循环接收 |
 | 诊断串口 | UART4，1 Hz 摘要输出 |
-| 电机输出 | 8 路 GPIO 安全输出（DShot 尚未实现） |
+| 电机输出 | M1～M4 DShot300软件完成待无桨验收；M5～M8保持GPIO安全低电平 |
 
 ### 关键引脚（定义见 [Core/Inc/main.h](Core/Inc/main.h)）
 
@@ -124,6 +125,10 @@ ADC3 PC0..PC3 + DMA2 Stream1/Channel2 单次扫描
   └─ power_adc -> BatteryTask (50 Hz) -> power_monitor (滤波/换算/低压/mAh)
        └─ app_state.battery (100ms停更失效 / bit 7解锁抑制)
                                                      │
+FlightTask (1 kHz，一致快照/新鲜度门禁)
+  └─ TIM2_CH1 M1 + TIM1_CH1..3 M4..M2，update DMA发送DShot300
+       └─ 仅显式无桨测试可非零；250 ms未刷新或输入失效立即停止
+                                                     │
 USB CDC 接收回调 (usbd_cdc_if.c, ISR 上下文)
   └─ usb_cdc_transport_receive_from_isr()        环形缓冲 + 任务通知
        │
@@ -156,6 +161,8 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
 | CRSF UART | [APP/Src/bsp/crsf_uart.c](APP/Src/bsp/crsf_uart.c) | UART2 420000 baud DMA 循环接收 |
 | 电源ADC | [APP/Src/bsp/power_adc.c](APP/Src/bsp/power_adc.c) | ADC3 PC0～PC3单次扫描，DMA2 Stream1/Channel2一致发布 |
 | 电源监测 | [APP/Src/algorithms/power_monitor.c](APP/Src/algorithms/power_monitor.c) | 固定点滤波、VBAT/Current换算、电芯锁存、低压状态与mAh积分 |
+| DShot输出 | [APP/Src/bsp/dshot_motor.c](APP/Src/bsp/dshot_motor.c) | M1～M4 DShot300编码、TIM1/TIM2 update DMA与故障低电平 |
+| 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、IMU/RC新鲜度、无桨测试250 ms超时 |
 | 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7 双槽，48 字节 v1 记录 + magic/version/CRC32/commit，序号选择 |
 | 平台时基 | [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) | DWT 微秒时基，ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展 |
 | 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
@@ -246,15 +253,15 @@ cmake --build build/Release
 S1 硬件基线            🟠 主体完成，并行实测项按依赖补齐
 S2 最小FreeRTOS平台    🟠 v0.1.0 已冻结；App/CLI 软件 DFU 未实现
 S3 IMU、姿态与飞行输入 ✅ v0.9.0 已冻结
-S4 控制与电机          🟡 当前阶段（S4.1/S4.2/S4.3 同步开发）
+S4 控制与电机          🔵 S4.1/S4.2/S4.3软件完成，待联合实物验收
 S5 基础飞行            ⬜ 已规划
 S6 功能完善            ⬜ 已规划（OSD / Blackbox / 气压计 / CLI）
 S7 后续扩展            ⏸ 条件式（GPS / 双向 DShot / 伴随计算）
 ```
 
 S3.1～S3.9 已全部冻结。S3.9沿用实物验收正确的电源换算参数，不再追加标定改动；
-当前同步开发 **S4.1 FlightTask安全骨架**、**S4.2 DShot300编码/Timer/DMA** 与
-**S4.3 四路无桨电机测试/超时归零**。
+当前 **S4.1 FlightTask安全骨架**、**S4.2 DShot300编码/Timer/DMA** 与
+**S4.3 四路无桨电机测试/超时归零** 已完成软件和双配置构建，按文档26统一实物验收。
 
 ### 🏷 已冻结版本历史
 

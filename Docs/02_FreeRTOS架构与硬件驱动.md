@@ -285,14 +285,15 @@ Body→NED四元数和Euler。任何输入边界失效都会撤销姿态READY并
 
 ### 5.2 FlightTask
 
-目标周期 1 kHz。每次执行：
+S4.1已创建静态FlightTask，优先级 `tskIDLE_PRIORITY+5`、栈384 words，周期1 kHz。
+当前每次执行：
 
 1. 取得同一发布链的最新IMU和姿态快照。
 2. 检查数据是否READY及是否过期。
 3. 读取 RC 快照和飞行模式。
-4. 计算 Rate/Angle 控制。
-5. 执行 Quad-X Mixer。
-6. 经过安全检查后提交 DShot 值。
+4. 检查既有全部解锁抑制和250 ms无桨测试刷新期限。
+5. 本阶段未实现Rate/Angle与Mixer，正常控制值固定为零。
+6. 经过安全检查后提交四路DShot停止值或显式无桨测试值。
 
 姿态随新IMU样本在ImuTask中更新，未来FlightTask只消费，不在另一周期重复积分。
 
@@ -409,7 +410,8 @@ mAh积分全部留在任务上下文。100 ms没有新序列时撤销ADC/电池�
 3. Motor 1～4
 4. 输出开关和超时归零
 
-完成结果：App Motors 页面可以完成无桨测试。
+当前结果：S4.1～S4.3软件完成；通过MSP2 `0x4006`和 `Tools/motor_test.ps1`
+执行无桨测试。完整App Motors页面仍留给S4.9。
 
 ### 8.4 第四批：附加功能
 

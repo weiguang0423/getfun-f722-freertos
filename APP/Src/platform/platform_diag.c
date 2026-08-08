@@ -32,6 +32,7 @@
 #include "bsp/imu_bus.h"
 #include "main.h"
 #include "rtos/battery_task.h"
+#include "rtos/flight_task.h"
 #include "rtos/imu_task.h"
 #include "rtos/rc_task.h"
 #include "task.h"
@@ -510,6 +511,29 @@ void platform_diag_heartbeat(void)
         (unsigned long)snapshot.battery.adc_dma_error_count,
         (unsigned long)snapshot.battery.adc_overrun_count,
         (unsigned long)snapshot.battery.adc_last_dma_flags);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "flight ready=%u safety=0x%08lX test=%u dshot=%u busy=%u "
+        "out=[%u,%u,%u,%u] loops=%lu missed=%lu timeout=%lu "
+        "submit_err=%lu dma_err=%lu stack_min=%lu\r\n",
+        snapshot.flight.inputs_ready ? 1U : 0U,
+        (unsigned long)snapshot.flight.safety_flags,
+        snapshot.flight.motor_test_active ? 1U : 0U,
+        snapshot.flight.dshot_ready ? 1U : 0U,
+        snapshot.flight.dshot_busy ? 1U : 0U,
+        snapshot.flight.output_motor_value[0],
+        snapshot.flight.output_motor_value[1],
+        snapshot.flight.output_motor_value[2],
+        snapshot.flight.output_motor_value[3],
+        (unsigned long)snapshot.flight.loop_count,
+        (unsigned long)snapshot.flight.missed_deadline_count,
+        (unsigned long)snapshot.flight.motor_test_timeout_count,
+        (unsigned long)snapshot.flight.dshot_submit_error_count,
+        (unsigned long)snapshot.flight.dshot_dma_error_count,
+        (unsigned long)flight_task_stack_high_water_mark());
     diag_write_formatted(line, sizeof(line), length);
 
     previous_tick = current_tick;

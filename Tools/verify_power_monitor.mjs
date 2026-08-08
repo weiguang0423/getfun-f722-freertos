@@ -159,7 +159,7 @@ const currentConfig = functionBody(
 const batteryConfig = functionBody(
   mspSource, "handle_battery_config", "handle_getfun_power_status");
 const powerStatus = functionBody(
-  mspSource, "handle_getfun_power_status", "handle_get_text");
+  mspSource, "handle_getfun_power_status", "handle_getfun_flight_motor_status");
 
 assert(writerBytes(voltageMeters) === 2,
   "MSP_VOLTAGE_METERS payload must remain 2 bytes for one ADC meter");

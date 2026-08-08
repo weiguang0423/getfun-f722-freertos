@@ -229,6 +229,16 @@ void app_state_publish_battery(const app_battery_state_t *battery)
     app_state_unlock(primask);
 }
 
+void app_state_publish_flight(const app_flight_state_t *flight)
+{
+    const uint32_t primask = app_state_lock();
+
+    if (flight != NULL) {
+        state.flight = *flight;
+    }
+    app_state_unlock(primask);
+}
+
 void app_state_set_configurator_arming_disabled(bool disabled)
 {
     const uint32_t primask = app_state_lock();

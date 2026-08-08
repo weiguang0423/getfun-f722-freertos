@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bsp/power_adc.h"
+#include "bsp/dshot_motor.h"
 #include "platform/platform_diag.h"
 #include "spi.h"
 #include "usart.h"
@@ -204,6 +205,18 @@ void DMA1_Stream5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 stream1 global interrupt.
+  */
+void DMA1_Stream1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
+
+  dshot_motor_dma_irq_handler();
+
+  /* USER CODE END DMA1_Stream1_IRQn 0 */
+}
+
+/**
   * @brief This function handles DMA2 stream0 global interrupt.
   */
 void DMA2_Stream0_IRQHandler(void)
@@ -258,6 +271,18 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 1 */
 
   /* USER CODE END USART2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream5 global interrupt.
+  */
+void DMA2_Stream5_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream5_IRQn 0 */
+
+  dshot_motor_dma_irq_handler();
+
+  /* USER CODE END DMA2_Stream5_IRQn 0 */
 }
 
 /**

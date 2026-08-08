@@ -41,6 +41,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/algorithms/rc_input.c
     APP/Src/app_state.c
     APP/Src/bsp/crsf_uart.c
+    APP/Src/bsp/dshot_motor.c
     APP/Src/bsp/imu_bus.c
     APP/Src/bsp/power_adc.c
     APP/Src/bsp/usb_cdc_transport.c
@@ -52,6 +53,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/protocol/msp_server.c
     APP/Src/rtos/app_task.c
     APP/Src/rtos/battery_task.c
+    APP/Src/rtos/flight_task.c
     APP/Src/rtos/imu_task.c
     APP/Src/rtos/rc_task.c
     APP/Src/storage/parameter_store.c

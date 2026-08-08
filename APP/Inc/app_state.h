@@ -16,9 +16,10 @@
  *       RC：16路CRSF原始/微秒/映射通道、接收时间、Failsafe、
  *       Link Statistics和接收诊断；
  *       电池：ADC运行状态、原始/滤波值、电芯数、电压、电流、已耗电量和低压状态；
+ *       飞行：输入新鲜度、安全位、四路测试/输出值和DShot诊断；
  *       宿主：configurator_arming_disabled + 宿主机下发的 RTC 时间。
  *   - 读取：app_state_get_snapshot() —— 整体拷贝一份快照（多任务安全）。
- *   - 发布/写入：app_state_publish_imu/attitude/rc/battery、app_state_set_runtime/
+ *   - 发布/写入：app_state_publish_imu/attitude/rc/battery/flight、app_state_set_runtime/
  *       set_fault_flags、app_state_set_configurator_arming_disabled、app_state_set_host_rtc。
  *
  * 设计说明：ImuTask是IMU/姿态单写者，RcTask是RC单写者；并发安全靠app_state.c内部的短临界区实现
@@ -49,6 +50,12 @@ extern "C" {
 #define APP_ARMING_INHIBIT_ATTITUDE_NOT_READY (1UL << 5U)
 #define APP_ARMING_INHIBIT_RC_NOT_READY (1UL << 6U)
 #define APP_ARMING_INHIBIT_BATTERY_NOT_READY (1UL << 7U)
+#define APP_FLIGHT_SAFETY_IMU_INVALID (1UL << 0U)
+#define APP_FLIGHT_SAFETY_IMU_STALE (1UL << 1U)
+#define APP_FLIGHT_SAFETY_RC_INVALID (1UL << 2U)
+#define APP_FLIGHT_SAFETY_RC_STALE (1UL << 3U)
+#define APP_FLIGHT_SAFETY_ARMING_INHIBITED (1UL << 4U)
+#define APP_STATE_MOTOR_COUNT 4U
 
 typedef enum
 {
@@ -242,6 +249,26 @@ typedef struct
 
 typedef struct
 {
+    bool inputs_ready;
+    bool motor_test_active;
+    bool dshot_ready;
+    bool dshot_busy;
+    uint32_t safety_flags;
+    TickType_t last_update_tick;
+    TickType_t last_motor_test_command_tick;
+    uint16_t requested_motor_value[APP_STATE_MOTOR_COUNT];
+    uint16_t output_motor_value[APP_STATE_MOTOR_COUNT];
+    uint32_t loop_count;
+    uint32_t missed_deadline_count;
+    uint32_t imu_stale_count;
+    uint32_t rc_stale_count;
+    uint32_t motor_test_timeout_count;
+    uint32_t dshot_submit_error_count;
+    uint32_t dshot_dma_error_count;
+} app_flight_state_t;
+
+typedef struct
+{
     uint32_t uptime_ms;
     uint16_t cycle_time_us;
     uint16_t i2c_error_count;
@@ -254,6 +281,7 @@ typedef struct
     app_attitude_state_t attitude;
     app_rc_state_t rc;
     app_battery_state_t battery;
+    app_flight_state_t flight;
     uint16_t rssi;
 
     bool configurator_arming_disabled;
@@ -276,6 +304,7 @@ void app_state_publish_attitude(
     const app_attitude_state_t *attitude);
 void app_state_publish_rc(const app_rc_state_t *rc);
 void app_state_publish_battery(const app_battery_state_t *battery);
+void app_state_publish_flight(const app_flight_state_t *flight);
 
 void app_state_set_configurator_arming_disabled(bool disabled);
 void app_state_set_host_rtc(uint32_t seconds, uint16_t millis);

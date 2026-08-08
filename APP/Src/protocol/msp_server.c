@@ -25,6 +25,8 @@
  *   - GETFUN MSP2 0x4003：返回RC年龄、Failsafe阶段/计数和映射通道。
  *   - Power页面：返回ADC电压/电流表、Battery State和只读标定配置；
  *       GETFUN MSP2 0x4004返回ADC3原始值、换算结果和DMA诊断。
+ *   - S4.1～S4.3：GETFUN MSP2 0x4005返回Flight/DShot状态，0x4006接收四路
+ *       有250 ms刷新期限的显式无桨测试值。
  *
  * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
  */
@@ -36,6 +38,7 @@
 
 #include "algorithms/imu_filter.h"
 #include "app_state.h"
+#include "rtos/flight_task.h"
 #include "rtos/imu_task.h"
 #include "stm32f7xx_hal.h"
 
@@ -78,6 +81,8 @@
 #define MSP2_GETFUN_ATTITUDE_STATUS 0x4002U
 #define MSP2_GETFUN_RC_STATUS 0x4003U
 #define MSP2_GETFUN_POWER_STATUS 0x4004U
+#define MSP2_GETFUN_FLIGHT_MOTOR_STATUS 0x4005U
+#define MSP2_SET_GETFUN_MOTOR_TEST 0x4006U
 
 #define MSP2TEXT_PILOT_NAME 1U
 #define MSP2TEXT_CRAFT_NAME 2U
@@ -633,6 +638,35 @@ static void handle_getfun_power_status(
     writer_u32(writer, state->battery.adc_last_dma_flags);
 }
 
+static void handle_getfun_flight_motor_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint32_t motor;
+
+    writer_u8(writer, state->flight.dshot_ready ? 1U : 0U);
+    writer_u8(writer, state->flight.inputs_ready ? 1U : 0U);
+    writer_u8(writer, state->flight.motor_test_active ? 1U : 0U);
+    writer_u8(writer, state->flight.dshot_busy ? 1U : 0U);
+    writer_u32(writer, state->flight.safety_flags);
+    writer_u32(writer, state->flight.loop_count);
+    writer_u32(writer, state->flight.missed_deadline_count);
+    writer_u32(writer, state->flight.imu_stale_count);
+    writer_u32(writer, state->flight.rc_stale_count);
+    writer_u32(writer, state->flight.motor_test_timeout_count);
+    writer_u32(writer, state->flight.dshot_submit_error_count);
+    writer_u32(writer, state->flight.dshot_dma_error_count);
+    writer_u32(writer, state->flight.last_update_tick);
+    writer_u32(writer, state->flight.last_motor_test_command_tick);
+    for (motor = 0U; motor < APP_STATE_MOTOR_COUNT; ++motor) {
+        writer_u16(writer, state->flight.requested_motor_value[motor]);
+    }
+    for (motor = 0U; motor < APP_STATE_MOTOR_COUNT; ++motor) {
+        writer_u16(writer, state->flight.output_motor_value[motor]);
+    }
+    writer_u32(writer, flight_task_stack_high_water_mark());
+}
+
 static void handle_get_text(const msp_request_t *request,
                             payload_writer_t *writer)
 {
@@ -999,6 +1033,27 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP2_GETFUN_POWER_STATUS:
         handle_getfun_power_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_FLIGHT_MOTOR_STATUS:
+        handle_getfun_flight_motor_status(&writer, &state);
+        break;
+
+    case MSP2_SET_GETFUN_MOTOR_TEST:
+        if (request->payload_length != (DSHOT_MOTOR_COUNT * 2U)) {
+            response->supported = false;
+        } else {
+            uint16_t values[DSHOT_MOTOR_COUNT];
+            uint32_t motor;
+
+            for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
+                values[motor] = request_u16(
+                    request, (uint16_t)(motor * 2U));
+            }
+            if (!flight_task_request_motor_test(values)) {
+                response->supported = false;
+            }
+        }
         break;
 
     default:
