@@ -36,7 +36,6 @@
 #include "algorithms/imu_filter.h"
 #include "app_state.h"
 #include "drivers/icm42688p.h"
-#include "platform/platform_diag.h"
 #include "platform/platform_time.h"
 #include "storage/parameter_store.h"
 #include "stm32f7xx.h"
@@ -451,12 +450,6 @@ static void persist_accel_calibration_candidate(void)
            candidate_bias,
            sizeof(candidate_values.accel_bias_m_s2));
 
-    /*
-     * v0.5.0 still has no armed state or timer motor output. Force every motor
-     * GPIO low immediately before the blocking internal-Flash transaction.
-     * The future ARM state machine must additionally reject save while armed.
-     */
-    platform_motor_outputs_force_safe();
     if (parameter_store_save(&candidate_values) ==
         PARAMETER_STORE_SAVE_OK) {
         parameter_values = candidate_values;

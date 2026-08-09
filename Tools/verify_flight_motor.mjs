@@ -40,6 +40,7 @@ assert(requestActive(0x20, 0xfffffff0),
 const dshot = fs.readFileSync("APP/Src/bsp/dshot_motor.c", "utf8");
 const dshotHeader = fs.readFileSync("APP/Inc/bsp/dshot_motor.h", "utf8");
 const flight = fs.readFileSync("APP/Src/rtos/flight_task.c", "utf8");
+const imuTask = fs.readFileSync("APP/Src/rtos/imu_task.c", "utf8");
 const msp = fs.readFileSync("APP/Src/protocol/msp_server.c", "utf8");
 const diag = fs.readFileSync("APP/Src/platform/platform_diag.c", "utf8");
 const irq = fs.readFileSync("Core/Src/stm32f7xx_it.c", "utf8");
@@ -84,6 +85,8 @@ assert(flight.includes("app_state_get_snapshot(&snapshot)") &&
        flight.includes("FLIGHT_TEST_TIMEOUT_TICKS") &&
        flight.includes("dshot_motor_force_safe()"),
   "FlightTask freshness or hard-stop path changed");
+assert(!imuTask.includes("platform_motor_outputs_force_safe()"),
+  "calibration save must not steal DShot motor pins");
 assert(msp.includes("MSP2_GETFUN_FLIGHT_MOTOR_STATUS 0x4005U") &&
        msp.includes("MSP2_SET_GETFUN_MOTOR_TEST 0x4006U") &&
        msp.includes("request->payload_length != (DSHOT_MOTOR_COUNT * 2U)") &&
@@ -107,10 +110,16 @@ assert(testTool.includes("[System.Diagnostics.Stopwatch]::StartNew()") &&
        testTool.includes("$timer.ElapsedMilliseconds -lt $DurationMs") &&
        !testTool.includes("[Environment]::TickCount64"),
   "motor test timer must remain compatible with Windows PowerShell 5.1");
-assert(testTool.includes("Read-Msp2EmptyResponse") &&
+assert(testTool.includes("Read-Msp2Response") &&
        testTool.includes("$serial.ReadTimeout = 500") &&
-       testTool.includes("$frame[2] -eq 0x21"),
+       testTool.includes("$header[2] -eq 0x21"),
   "motor test tool must verify the firmware response");
+assert(testTool.includes("$MotorStatusCommand = 0x4005") &&
+       testTool.includes("Get-MotorStatus") &&
+       testTool.includes("submit_err_delta") &&
+       testTool.includes("dma_err_delta") &&
+       testTool.includes("Firmware sustained clean DShot submission"),
+  "motor test tool must distinguish MSP acceptance from clean DShot submission");
 
 const flightMotorStatusBytes = 4 + (10 * 4) +
   (2 * MOTOR_COUNT * 2) + 4;

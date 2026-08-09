@@ -20,6 +20,14 @@ CMAKE_ADDR2LINE:FILEPATH=C:/ST/STM32CubeCLT_1.21.0/GNU-tools-for-STM32/bin/arm-n
 //Path to a program.
 CMAKE_AR:FILEPATH=C:/ST/STM32CubeCLT_1.21.0/GNU-tools-for-STM32/bin/arm-none-eabi-ar.exe
 
+//A wrapper around 'ar' adding the appropriate '--plugin' option
+// for the GCC compiler
+CMAKE_ASM_COMPILER_AR:FILEPATH=C:/ST/STM32CubeCLT_1.21.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc-ar.exe
+
+//A wrapper around 'ranlib' adding the appropriate '--plugin' option
+// for the GCC compiler
+CMAKE_ASM_COMPILER_RANLIB:FILEPATH=C:/ST/STM32CubeCLT_1.21.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc-ranlib.exe
+
 //Flags used by the ASM compiler during all build types.
 CMAKE_ASM_FLAGS:STRING=
 
@@ -233,7 +241,11 @@ GETFUN_F722_FreeRTOS_SOURCE_DIR:STATIC=E:/getfun-f722-freertos/GETFUN_F722_FreeR
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
 CMAKE_AR-ADVANCED:INTERNAL=1
-CMAKE_ASM_COMPILER_WORKS:INTERNAL=0
+//ADVANCED property for variable: CMAKE_ASM_COMPILER_AR
+CMAKE_ASM_COMPILER_AR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_ASM_COMPILER_RANLIB
+CMAKE_ASM_COMPILER_RANLIB-ADVANCED:INTERNAL=1
+CMAKE_ASM_COMPILER_WORKS:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ASM_FLAGS
 CMAKE_ASM_FLAGS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ASM_FLAGS_DEBUG

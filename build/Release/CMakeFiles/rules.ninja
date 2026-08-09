@@ -17,7 +17,7 @@
 rule ASM_COMPILER__GETFUN_F722_FreeRTOS_unscanned_Release
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}C:\ST\STM32CubeCLT_1.21.0\GNU-tools-for-STM32\bin\arm-none-eabi-gcc.exe $DEFINES $INCLUDES $FLAGS -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\ST\STM32CubeCLT_1.21.0\GNU-tools-for-STM32\bin\arm-none-eabi-gcc.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building ASM object $out
 
 
