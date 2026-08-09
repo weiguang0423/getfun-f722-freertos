@@ -72,16 +72,21 @@ assert(dshot.includes("DMA2_Stream5") &&
        dshot.includes("DMA1_Stream1") &&
        dshot.includes("TIM2_DMA_CHANNEL 3UL"),
   "TIM1_UP/TIM2_UP DMA resource contract changed");
-assert(dshot.includes("TIM1_DMA_STREAM->FCR = 0U") &&
-       dshot.includes("TIM2_DMA_STREAM->FCR = 0U") &&
-       /#define TIM1_DMA_ERROR_FLAGS \\\s*\(DMA_HISR_DMEIF5 \| DMA_HISR_TEIF5\)/.test(dshot) &&
-       /#define TIM2_DMA_ERROR_FLAGS \\\s*\(DMA_LISR_DMEIF1 \| DMA_LISR_TEIF1\)/.test(dshot),
-  "DShot direct-mode DMA error policy changed");
-assert(dshot.includes("static uint16_t tim1_dma_values") &&
-       dshot.includes("static uint16_t tim2_dma_values") &&
-       /TIM1_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_0\s*\|[\s\S]*?DMA_SxCR_MSIZE_0/.test(dshot) &&
-       /TIM2_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_0\s*\|[\s\S]*?DMA_SxCR_MSIZE_0/.test(dshot),
-  "DShot direct-mode DMA must use equal half-word widths");
+assert((dshot.match(/TIM_DMABURSTLENGTH_4TRANSFERS/g) || []).length === 2 &&
+       dshot.includes("DSHOT_DMA_UPDATE_COUNT * DSHOT_DMA_BURST_LENGTH") &&
+       dshot.includes("tim1_dma_values[update][3] = 0U") &&
+       dshot.includes("tim2_dma_values[update][3] = 0U"),
+  "DShot DMAR must write complete CCR1..CCR4 bursts");
+assert(dshot.includes("DMA_SxFCR_DMDIS | DMA_SxFCR_FTH") &&
+       dshot.includes("DMA_SxFCR_FEIE") &&
+       /#define TIM1_DMA_ERROR_FLAGS \\\s*\(DMA_HISR_FEIF5 \| DMA_HISR_DMEIF5 \| DMA_HISR_TEIF5\)/.test(dshot) &&
+       /#define TIM2_DMA_ERROR_FLAGS \\\s*\(DMA_LISR_FEIF1 \| DMA_LISR_DMEIF1 \| DMA_LISR_TEIF1\)/.test(dshot),
+  "DShot word-burst FIFO error policy changed");
+assert(dshot.includes("static uint32_t tim1_dma_values") &&
+       dshot.includes("static uint32_t tim2_dma_values") &&
+       /TIM1_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_1\s*\|[\s\S]*?DMA_SxCR_MSIZE_1/.test(dshot) &&
+       /TIM2_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_1\s*\|[\s\S]*?DMA_SxCR_MSIZE_1/.test(dshot),
+  "DShot DMAR DMA must use equal word widths");
 assert(dshotHeader.includes("last_tim1_dma_flags") &&
        dshotHeader.includes("last_tim2_dma_flags") &&
        diag.includes("dma_flags=[0x%08lX,0x%08lX]") &&

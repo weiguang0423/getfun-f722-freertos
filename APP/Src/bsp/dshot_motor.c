@@ -17,6 +17,7 @@
 #define DSHOT_FRAME_BITS 16U
 #define DSHOT_RESET_SLOTS 2U
 #define DSHOT_DMA_UPDATE_COUNT (DSHOT_FRAME_BITS + DSHOT_RESET_SLOTS)
+#define DSHOT_DMA_BURST_LENGTH 4U
 
 #define TIM1_CLOCK_HZ 216000000UL
 #define TIM2_CLOCK_HZ 108000000UL
@@ -39,9 +40,9 @@
     (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CTEIF1 | \
      DMA_LIFCR_CHTIF1 | DMA_LIFCR_CTCIF1)
 #define TIM1_DMA_ERROR_FLAGS \
-    (DMA_HISR_DMEIF5 | DMA_HISR_TEIF5)
+    (DMA_HISR_FEIF5 | DMA_HISR_DMEIF5 | DMA_HISR_TEIF5)
 #define TIM2_DMA_ERROR_FLAGS \
-    (DMA_LISR_DMEIF1 | DMA_LISR_TEIF1)
+    (DMA_LISR_FEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_TEIF1)
 
 _Static_assert((TIM1_CLOCK_HZ % DSHOT_BIT_RATE_HZ) == 0U,
                "TIM1 must divide exactly to DShot300");
@@ -52,8 +53,10 @@ _Static_assert(TIM1_PERIOD_TICKS == 720U,
 _Static_assert(TIM2_PERIOD_TICKS == 360U,
                "TIM2 DShot300 period changed");
 
-static uint16_t tim1_dma_values[DSHOT_DMA_UPDATE_COUNT][3];
-static uint16_t tim2_dma_values[DSHOT_DMA_UPDATE_COUNT];
+static uint32_t tim1_dma_values[DSHOT_DMA_UPDATE_COUNT]
+                                [DSHOT_DMA_BURST_LENGTH];
+static uint32_t tim2_dma_values[DSHOT_DMA_UPDATE_COUNT]
+                                [DSHOT_DMA_BURST_LENGTH];
 static dshot_motor_diagnostics_t diagnostics;
 static volatile bool tim1_transfer_complete;
 static volatile bool tim2_transfer_complete;
@@ -111,7 +114,8 @@ static void configure_timers(void)
                   TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2;
     TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2;
     TIM1->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E;
-    TIM1->DCR = TIM_DMABASE_CCR1 | TIM_DMABURSTLENGTH_3TRANSFERS;
+    TIM1->CCR4 = 0U;
+    TIM1->DCR = TIM_DMABASE_CCR1 | TIM_DMABURSTLENGTH_4TRANSFERS;
     TIM1->BDTR = TIM_BDTR_MOE;
     TIM1->EGR = TIM_EGR_UG;
     TIM1->SR = 0U;
@@ -124,9 +128,12 @@ static void configure_timers(void)
     TIM2->PSC = 0U;
     TIM2->ARR = TIM2_PERIOD_TICKS - 1U;
     TIM2->CCR1 = 0U;
+    TIM2->CCR2 = 0U;
+    TIM2->CCR3 = 0U;
+    TIM2->CCR4 = 0U;
     TIM2->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2;
     TIM2->CCER = TIM_CCER_CC1E;
-    TIM2->DCR = TIM_DMABASE_CCR1 | TIM_DMABURSTLENGTH_1TRANSFER;
+    TIM2->DCR = TIM_DMABASE_CCR1 | TIM_DMABURSTLENGTH_4TRANSFERS;
     TIM2->EGR = TIM_EGR_UG;
     TIM2->SR = 0U;
 }
@@ -141,18 +148,20 @@ static void configure_dma(void)
     TIM1_DMA_STREAM->PAR = (uint32_t)&TIM1->DMAR;
     TIM1_DMA_STREAM->CR =
         (TIM1_DMA_CHANNEL << DMA_SxCR_CHSEL_Pos) |
-        DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_0 |
-        DMA_SxCR_MSIZE_0 | DMA_SxCR_PL_1 |
+        DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_1 |
+        DMA_SxCR_MSIZE_1 | DMA_SxCR_PL_1 |
         DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
-    TIM1_DMA_STREAM->FCR = 0U;
+    TIM1_DMA_STREAM->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH |
+                           DMA_SxFCR_FEIE;
 
     TIM2_DMA_STREAM->PAR = (uint32_t)&TIM2->DMAR;
     TIM2_DMA_STREAM->CR =
         (TIM2_DMA_CHANNEL << DMA_SxCR_CHSEL_Pos) |
-        DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_0 |
-        DMA_SxCR_MSIZE_0 | DMA_SxCR_PL_1 |
+        DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_1 |
+        DMA_SxCR_MSIZE_1 | DMA_SxCR_PL_1 |
         DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
-    TIM2_DMA_STREAM->FCR = 0U;
+    TIM2_DMA_STREAM->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH |
+                           DMA_SxFCR_FEIE;
 }
 
 static void force_gpio_low(void)
@@ -206,7 +215,7 @@ static void build_dma_values(const uint16_t frames[DSHOT_MOTOR_COUNT])
         const uint32_t slot = update + 1U;
 
         if (slot < DSHOT_FRAME_BITS) {
-            tim2_dma_values[update] = duty_for_bit(
+            tim2_dma_values[update][0] = duty_for_bit(
                 frames[0], slot, TIM2_DUTY_ZERO_TICKS,
                 TIM2_DUTY_ONE_TICKS);
             tim1_dma_values[update][0] = duty_for_bit(
@@ -219,11 +228,15 @@ static void build_dma_values(const uint16_t frames[DSHOT_MOTOR_COUNT])
                 frames[1], slot, TIM1_DUTY_ZERO_TICKS,
                 TIM1_DUTY_ONE_TICKS);
         } else {
-            tim2_dma_values[update] = 0U;
+            tim2_dma_values[update][0] = 0U;
             tim1_dma_values[update][0] = 0U;
             tim1_dma_values[update][1] = 0U;
             tim1_dma_values[update][2] = 0U;
         }
+        tim1_dma_values[update][3] = 0U;
+        tim2_dma_values[update][1] = 0U;
+        tim2_dma_values[update][2] = 0U;
+        tim2_dma_values[update][3] = 0U;
     }
 }
 
@@ -300,9 +313,11 @@ bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
     DMA2->HIFCR = TIM1_DMA_ALL_FLAGS;
     DMA1->LIFCR = TIM2_DMA_ALL_FLAGS;
     TIM1_DMA_STREAM->M0AR = (uint32_t)tim1_dma_values;
-    TIM1_DMA_STREAM->NDTR = DSHOT_DMA_UPDATE_COUNT * 3U;
+    TIM1_DMA_STREAM->NDTR =
+        DSHOT_DMA_UPDATE_COUNT * DSHOT_DMA_BURST_LENGTH;
     TIM2_DMA_STREAM->M0AR = (uint32_t)tim2_dma_values;
-    TIM2_DMA_STREAM->NDTR = DSHOT_DMA_UPDATE_COUNT;
+    TIM2_DMA_STREAM->NDTR =
+        DSHOT_DMA_UPDATE_COUNT * DSHOT_DMA_BURST_LENGTH;
     TIM1->CNT = 0U;
     TIM2->CNT = 0U;
     TIM1->EGR = TIM_EGR_UG;
@@ -397,7 +412,11 @@ void dshot_motor_dma_irq_handler(void)
         TIM1->CCR1 = 0U;
         TIM1->CCR2 = 0U;
         TIM1->CCR3 = 0U;
+        TIM1->CCR4 = 0U;
         TIM2->CCR1 = 0U;
+        TIM2->CCR2 = 0U;
+        TIM2->CCR3 = 0U;
+        TIM2->CCR4 = 0U;
         diagnostics.busy = false;
         ++diagnostics.complete_count;
     }
