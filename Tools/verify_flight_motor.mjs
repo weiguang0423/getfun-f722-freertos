@@ -134,6 +134,11 @@ assert(testTool.includes("Read-Msp2Response") &&
        testTool.includes("$serial.ReadTimeout = 500") &&
        testTool.includes("$header[2] -eq 0x21"),
   "motor test tool must verify the firmware response");
+assert(testTool.includes("function Open-SerialPort") &&
+       testTool.includes("catch [System.UnauthorizedAccessException]") &&
+       testTool.includes("retrying open") &&
+       testTool.includes("Open-SerialPort -Serial $serial"),
+  "motor test tool must tolerate delayed Windows COM-port release");
 assert(testTool.includes("$MotorStatusCommand = 0x4005") &&
        testTool.includes("Get-MotorStatus") &&
        testTool.includes("[byte[]]$payload = [byte[]]::new(0)") &&
@@ -142,6 +147,9 @@ assert(testTool.includes("$MotorStatusCommand = 0x4005") &&
        testTool.includes("dma_err_delta") &&
        testTool.includes("Firmware sustained clean DShot submission"),
   "motor test tool must distinguish MSP acceptance from clean DShot submission");
+assert(testTool.includes("Flight controller rejected motor test: dshot={0} inputs={1}") &&
+       testTool.includes("$status = Get-MotorStatus -Serial $Serial"),
+  "motor-test rejection must report the gate state that caused it");
 
 const flightMotorStatusBytes = 4 + (10 * 4) +
   (2 * MOTOR_COUNT * 2) + 4;

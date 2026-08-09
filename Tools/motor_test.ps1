@@ -20,6 +20,23 @@ $ErrorActionPreference = 'Stop'
 $MotorTestCommand = 0x4006
 $MotorStatusCommand = 0x4005
 
+function Open-SerialPort {
+    param([System.IO.Ports.SerialPort]$Serial)
+
+    for ($attempt = 1; $attempt -le 5; $attempt++) {
+        try {
+            $Serial.Open()
+            return
+        } catch [System.UnauthorizedAccessException] {
+            if ($attempt -eq 5) {
+                throw
+            }
+            Write-Warning "$($Serial.PortName) is busy; retrying open ($attempt/5)."
+            Start-Sleep -Milliseconds 400
+        }
+    }
+}
+
 function Get-Crc8DvbS2 {
     param([byte[]]$Bytes)
 
@@ -101,7 +118,7 @@ function Read-Msp2Response {
             $ExpectedCommand, $expectedCrc, $actualCrc)
     }
     if ($header[2] -eq 0x21) {
-        throw 'Flight controller rejected the motor test. Check flight ready=1, dshot=1, and safety=0.'
+        throw ("Flight controller rejected MSP2 0x{0:X4}." -f $ExpectedCommand)
     }
     if ($header[2] -ne 0x3E) {
         throw 'Unexpected MSP2 response direction.'
@@ -191,8 +208,23 @@ function Send-Msp2MotorFrame {
         [byte[]]$Payload
     )
 
-    $response = Invoke-Msp2Request -Serial $Serial `
-        -Command $MotorTestCommand -Payload $Payload
+    try {
+        $response = Invoke-Msp2Request -Serial $Serial `
+            -Command $MotorTestCommand -Payload $Payload
+    } catch {
+        $rejection = $_
+        if ($_.Exception.Message -notlike 'Flight controller rejected MSP2 0x4006*') {
+            throw
+        }
+        try {
+            $status = Get-MotorStatus -Serial $Serial
+        } catch {
+            throw $rejection
+        }
+        throw ("Flight controller rejected motor test: dshot={0} inputs={1} safety=0x{2:X8} submit_err={3} dma_err={4}." -f `
+            [int]$status.DshotReady, [int]$status.InputsReady,
+            $status.SafetyFlags, $status.SubmitErrors, $status.DmaErrors)
+    }
     if ($response.Payload.Length -ne 0) {
         throw 'Unexpected non-empty motor-test response.'
     }
@@ -212,7 +244,7 @@ $serial.WriteTimeout = 200
 $serial.ReadTimeout = 500
 
 try {
-    $serial.Open()
+    Open-SerialPort -Serial $serial
     $serial.DiscardInBuffer()
     $baseline = Get-MotorStatus -Serial $serial
     Write-Host ("Initial firmware status: dshot={0} inputs={1} safety=0x{2:X8} submit_err={3} dma_err={4}" -f `
