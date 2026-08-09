@@ -1,4 +1,4 @@
-/* Independent S4.1-S4.3 freshness, DShot300 and motor-timeout regression. */
+/* Independent S4.1-S4.3 freshness, DShot600 and motor-timeout regression. */
 import fs from "node:fs";
 
 const MOTOR_COUNT = 4;
@@ -62,11 +62,14 @@ const irq = fs.readFileSync("Core/Src/stm32f7xx_it.c", "utf8");
 const cmake = fs.readFileSync("CMakeLists.txt", "utf8");
 const testTool = fs.readFileSync("Tools/motor_test.ps1", "utf8");
 
-assert(dshot.includes("TIM1_PERIOD_TICKS == 720U") &&
-       dshot.includes("TIM2_PERIOD_TICKS == 360U") &&
-       dshot.includes("TIM1_DUTY_ZERO_TICKS") &&
-       dshot.includes("TIM1_DUTY_ONE_TICKS"),
-  "DShot300 216/108 MHz timing contract changed");
+assert(dshot.includes("#define DSHOT_BIT_RATE_HZ 600000UL") &&
+       dshot.includes("TIM1_PERIOD_TICKS == 360U") &&
+       dshot.includes("TIM2_PERIOD_TICKS == 180U") &&
+       dshot.includes("TIM1_DUTY_ZERO_TICKS == 126U") &&
+       dshot.includes("TIM1_DUTY_ONE_TICKS == 252U") &&
+       dshot.includes("TIM2_DUTY_ZERO_TICKS == 63U") &&
+       dshot.includes("TIM2_DUTY_ONE_TICKS == 126U"),
+  "Betaflight-compatible DShot600 timing contract changed");
 assert(dshot.includes("DMA2_Stream5") &&
        dshot.includes("TIM1_DMA_CHANNEL 6UL") &&
        dshot.includes("DMA1_Stream1") &&
@@ -158,10 +161,10 @@ assert(flightMotorStatusBytes === 64,
 
 console.log(JSON.stringify({
   result: "PASS",
-  dshot300: {
+  dshot600: {
     frameBits: 16,
-    timer1: { clockHz: 216000000, periodTicks: 720, t0hTicks: 270, t1hTicks: 540 },
-    timer2: { clockHz: 108000000, periodTicks: 360, t0hTicks: 135, t1hTicks: 270 },
+    timer1: { clockHz: 216000000, periodTicks: 360, t0hTicks: 126, t1hTicks: 252 },
+    timer2: { clockHz: 108000000, periodTicks: 180, t0hTicks: 63, t1hTicks: 126 },
     vectors: { stop: "0x0000", minThrottle: "0x0606", max: "0xffee" },
   },
   motorCount: MOTOR_COUNT,

@@ -1,5 +1,5 @@
 /*
- * Four-output DShot300 transport for GETFUN F722 V3.
+ * Four-output DShot600 transport for GETFUN F722 V3.
  *
  * M1 uses PA15/TIM2_CH1 and TIM2_UP on DMA1 Stream1/Channel3. M2..M4
  * use PA10/PA9/PA8 (TIM1_CH3/CH2/CH1) and one TIM1 DMA burst on
@@ -13,7 +13,7 @@
 #include "main.h"
 #include "stm32f7xx_hal.h"
 
-#define DSHOT_BIT_RATE_HZ 300000UL
+#define DSHOT_BIT_RATE_HZ 600000UL
 #define DSHOT_FRAME_BITS 16U
 #define DSHOT_RESET_SLOTS 2U
 #define DSHOT_DMA_UPDATE_COUNT (DSHOT_FRAME_BITS + DSHOT_RESET_SLOTS)
@@ -23,10 +23,10 @@
 #define TIM2_CLOCK_HZ 108000000UL
 #define TIM1_PERIOD_TICKS (TIM1_CLOCK_HZ / DSHOT_BIT_RATE_HZ)
 #define TIM2_PERIOD_TICKS (TIM2_CLOCK_HZ / DSHOT_BIT_RATE_HZ)
-#define TIM1_DUTY_ZERO_TICKS ((TIM1_PERIOD_TICKS * 3U) / 8U)
-#define TIM1_DUTY_ONE_TICKS ((TIM1_PERIOD_TICKS * 3U) / 4U)
-#define TIM2_DUTY_ZERO_TICKS ((TIM2_PERIOD_TICKS * 3U) / 8U)
-#define TIM2_DUTY_ONE_TICKS ((TIM2_PERIOD_TICKS * 3U) / 4U)
+#define TIM1_DUTY_ZERO_TICKS ((TIM1_PERIOD_TICKS * 7U) / 20U)
+#define TIM1_DUTY_ONE_TICKS ((TIM1_PERIOD_TICKS * 14U) / 20U)
+#define TIM2_DUTY_ZERO_TICKS ((TIM2_PERIOD_TICKS * 7U) / 20U)
+#define TIM2_DUTY_ONE_TICKS ((TIM2_PERIOD_TICKS * 14U) / 20U)
 
 #define TIM1_DMA_STREAM DMA2_Stream5
 #define TIM2_DMA_STREAM DMA1_Stream1
@@ -45,13 +45,18 @@
     (DMA_LISR_FEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_TEIF1)
 
 _Static_assert((TIM1_CLOCK_HZ % DSHOT_BIT_RATE_HZ) == 0U,
-               "TIM1 must divide exactly to DShot300");
+               "TIM1 must divide exactly to DShot600");
 _Static_assert((TIM2_CLOCK_HZ % DSHOT_BIT_RATE_HZ) == 0U,
-               "TIM2 must divide exactly to DShot300");
-_Static_assert(TIM1_PERIOD_TICKS == 720U,
-               "TIM1 DShot300 period changed");
-_Static_assert(TIM2_PERIOD_TICKS == 360U,
-               "TIM2 DShot300 period changed");
+               "TIM2 must divide exactly to DShot600");
+_Static_assert(TIM1_PERIOD_TICKS == 360U,
+               "TIM1 DShot600 period changed");
+_Static_assert(TIM2_PERIOD_TICKS == 180U,
+               "TIM2 DShot600 period changed");
+_Static_assert(TIM1_DUTY_ZERO_TICKS == 126U &&
+                   TIM1_DUTY_ONE_TICKS == 252U &&
+                   TIM2_DUTY_ZERO_TICKS == 63U &&
+                   TIM2_DUTY_ONE_TICKS == 126U,
+               "Betaflight DShot pulse widths changed");
 
 static uint32_t tim1_dma_values[DSHOT_DMA_UPDATE_COUNT]
                                 [DSHOT_DMA_BURST_LENGTH];
