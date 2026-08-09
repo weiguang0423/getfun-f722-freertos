@@ -23,6 +23,8 @@ typedef struct
     uint32_t complete_count;
     uint32_t busy_reject_count;
     uint32_t dma_error_count;
+    uint32_t last_tim1_dma_flags;
+    uint32_t last_tim2_dma_flags;
 } dshot_motor_diagnostics_t;
 
 bool dshot_motor_init(void);

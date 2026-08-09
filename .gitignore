@@ -5,10 +5,7 @@
 # -----------------------------------------------------------------------------
 
 # CMake / Ninja out-of-source build directories
-/build/
 /out/
-/Debug/
-/Release/
 /RelWithDebInfo/
 /MinSizeRel/
 /cmake-build-*/

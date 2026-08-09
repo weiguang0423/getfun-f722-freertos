@@ -1045,12 +1045,17 @@ void msp_server_process(const msp_request_t *request,
         } else {
             uint16_t values[DSHOT_MOTOR_COUNT];
             uint32_t motor;
+            bool requests_output = false;
 
             for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
                 values[motor] = request_u16(
                     request, (uint16_t)(motor * 2U));
+                requests_output = requests_output || (values[motor] != 0U);
             }
-            if (!flight_task_request_motor_test(values)) {
+            if ((requests_output &&
+                 (!state.flight.dshot_ready ||
+                  !state.flight.inputs_ready)) ||
+                !flight_task_request_motor_test(values)) {
                 response->supported = false;
             }
         }

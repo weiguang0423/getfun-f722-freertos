@@ -189,6 +189,7 @@ void platform_diag_heartbeat(void)
     static TickType_t previous_tick;
     static uint32_t previous_sample_count;
     app_state_snapshot_t snapshot;
+    dshot_motor_diagnostics_t dshot;
     const TickType_t current_tick = xTaskGetTickCount();
     const TickType_t elapsed_ticks = current_tick - previous_tick;
     uint32_t sample_rate_hz = 0U;
@@ -196,6 +197,7 @@ void platform_diag_heartbeat(void)
     int length;
 
     app_state_get_snapshot(&snapshot);
+    dshot_motor_get_diagnostics(&dshot);
     if (have_previous_sample && (elapsed_ticks != 0U)) {
         const uint32_t sample_delta =
             snapshot.imu.sample_count - previous_sample_count;
@@ -518,7 +520,8 @@ void platform_diag_heartbeat(void)
         sizeof(line),
         "flight ready=%u safety=0x%08lX test=%u dshot=%u busy=%u "
         "out=[%u,%u,%u,%u] loops=%lu missed=%lu timeout=%lu "
-        "submit_err=%lu dma_err=%lu stack_min=%lu\r\n",
+        "submit_err=%lu dma_err=%lu dma_flags=[0x%08lX,0x%08lX] "
+        "stack_min=%lu\r\n",
         snapshot.flight.inputs_ready ? 1U : 0U,
         (unsigned long)snapshot.flight.safety_flags,
         snapshot.flight.motor_test_active ? 1U : 0U,
@@ -533,6 +536,8 @@ void platform_diag_heartbeat(void)
         (unsigned long)snapshot.flight.motor_test_timeout_count,
         (unsigned long)snapshot.flight.dshot_submit_error_count,
         (unsigned long)snapshot.flight.dshot_dma_error_count,
+        (unsigned long)dshot.last_tim1_dma_flags,
+        (unsigned long)dshot.last_tim2_dma_flags,
         (unsigned long)flight_task_stack_high_water_mark());
     diag_write_formatted(line, sizeof(line), length);
 

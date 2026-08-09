@@ -39,9 +39,9 @@
     (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CTEIF1 | \
      DMA_LIFCR_CHTIF1 | DMA_LIFCR_CTCIF1)
 #define TIM1_DMA_ERROR_FLAGS \
-    (DMA_HISR_FEIF5 | DMA_HISR_DMEIF5 | DMA_HISR_TEIF5)
+    (DMA_HISR_DMEIF5 | DMA_HISR_TEIF5)
 #define TIM2_DMA_ERROR_FLAGS \
-    (DMA_LISR_FEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_TEIF1)
+    (DMA_LISR_DMEIF1 | DMA_LISR_TEIF1)
 
 _Static_assert((TIM1_CLOCK_HZ % DSHOT_BIT_RATE_HZ) == 0U,
                "TIM1 must divide exactly to DShot300");
@@ -144,7 +144,7 @@ static void configure_dma(void)
         DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_0 |
         DMA_SxCR_MSIZE_0 | DMA_SxCR_PL_1 |
         DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
-    TIM1_DMA_STREAM->FCR = DMA_SxFCR_FEIE;
+    TIM1_DMA_STREAM->FCR = 0U;
 
     TIM2_DMA_STREAM->PAR = (uint32_t)&TIM2->DMAR;
     TIM2_DMA_STREAM->CR =
@@ -152,7 +152,7 @@ static void configure_dma(void)
         DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_0 |
         DMA_SxCR_MSIZE_0 | DMA_SxCR_PL_1 |
         DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
-    TIM2_DMA_STREAM->FCR = DMA_SxFCR_FEIE;
+    TIM2_DMA_STREAM->FCR = 0U;
 }
 
 static void force_gpio_low(void)
@@ -363,8 +363,9 @@ void dshot_motor_dma_irq_handler(void)
          DMA_LISR_HTIF1 | DMA_LISR_TCIF1);
 
     if (tim1_flags != 0U) {
-        DMA2->HIFCR = TIM1_DMA_ALL_FLAGS;
+        DMA2->HIFCR = tim1_flags;
         if ((tim1_flags & TIM1_DMA_ERROR_FLAGS) != 0U) {
+            diagnostics.last_tim1_dma_flags = tim1_flags;
             ++diagnostics.dma_error_count;
             dshot_motor_force_safe();
             return;
@@ -377,8 +378,9 @@ void dshot_motor_dma_irq_handler(void)
         }
     }
     if (tim2_flags != 0U) {
-        DMA1->LIFCR = TIM2_DMA_ALL_FLAGS;
+        DMA1->LIFCR = tim2_flags;
         if ((tim2_flags & TIM2_DMA_ERROR_FLAGS) != 0U) {
+            diagnostics.last_tim2_dma_flags = tim2_flags;
             ++diagnostics.dma_error_count;
             dshot_motor_force_safe();
             return;

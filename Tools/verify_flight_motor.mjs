@@ -56,21 +56,24 @@ assert(dshot.includes("DMA2_Stream5") &&
        dshot.includes("DMA1_Stream1") &&
        dshot.includes("TIM2_DMA_CHANNEL 3UL"),
   "TIM1_UP/TIM2_UP DMA resource contract changed");
-assert(dshot.includes("DMA_SxFCR_DMDIS | DMA_SxFCR_FTH | DMA_SxFCR_FEIE") &&
+assert(dshot.includes("TIM1_DMA_STREAM->FCR = 0U") &&
        dshot.includes("TIM2_DMA_STREAM->FCR = 0U") &&
+       /#define TIM1_DMA_ERROR_FLAGS \\\s*\(DMA_HISR_DMEIF5 \| DMA_HISR_TEIF5\)/.test(dshot) &&
        /#define TIM2_DMA_ERROR_FLAGS \\\s*\(DMA_LISR_DMEIF1 \| DMA_LISR_TEIF1\)/.test(dshot),
-  "TIM1 burst FIFO or TIM2 direct-mode error policy changed");
-assert(dshot.includes("static uint32_t tim1_dma_values") &&
+  "DShot direct-mode DMA error policy changed");
+assert(dshot.includes("static uint16_t tim1_dma_values") &&
        dshot.includes("static uint16_t tim2_dma_values") &&
-       /TIM1_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_1\s*\|[\s\S]*?DMA_SxCR_MSIZE_1/.test(dshot) &&
+       /TIM1_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_0\s*\|[\s\S]*?DMA_SxCR_MSIZE_0/.test(dshot) &&
        /TIM2_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_0\s*\|[\s\S]*?DMA_SxCR_MSIZE_0/.test(dshot),
-  "TIM1 burst must use words while TIM2 remains half-word-sized");
+  "DShot direct-mode DMA must use equal half-word widths");
 assert(dshotHeader.includes("last_tim1_dma_flags") &&
        dshotHeader.includes("last_tim2_dma_flags") &&
        diag.includes("dma_flags=[0x%08lX,0x%08lX]") &&
+       /if \(tim1_flags != 0U\) \{\s*DMA2->HIFCR = tim1_flags;/.test(dshot) &&
+       /if \(tim2_flags != 0U\) \{\s*DMA1->LIFCR = tim2_flags;/.test(dshot) &&
        /if \(\(tim1_flags & TIM1_DMA_ERROR_FLAGS\) != 0U\) \{\s*diagnostics\.last_tim1_dma_flags = tim1_flags;/.test(dshot) &&
        /if \(\(tim2_flags & TIM2_DMA_ERROR_FLAGS\) != 0U\) \{\s*diagnostics\.last_tim2_dma_flags = tim2_flags;/.test(dshot),
-  "per-timer fatal DMA flags must be latched before safe shutdown");
+  "DMA IRQ must clear only observed flags and latch fatal errors");
 assert(!dshot.includes("DMA1_Stream5") &&
        !dshot.includes("DMA2_Stream1") &&
        !dshot.includes("DMA2_Stream3"),
