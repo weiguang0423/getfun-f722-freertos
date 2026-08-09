@@ -60,17 +60,17 @@ assert(dshot.includes("DMA_SxFCR_DMDIS | DMA_SxFCR_FTH | DMA_SxFCR_FEIE") &&
        dshot.includes("TIM2_DMA_STREAM->FCR = 0U") &&
        /#define TIM2_DMA_ERROR_FLAGS \\\s*\(DMA_LISR_DMEIF1 \| DMA_LISR_TEIF1\)/.test(dshot),
   "TIM1 burst FIFO or TIM2 direct-mode error policy changed");
-assert(dshot.includes("static uint16_t tim1_dma_values") &&
+assert(dshot.includes("static uint32_t tim1_dma_values") &&
        dshot.includes("static uint16_t tim2_dma_values") &&
-       dshot.includes("DMA_SxCR_PSIZE_0") &&
-       dshot.includes("DMA_SxCR_MSIZE_0") &&
-       !dshot.includes("DMA_SxCR_PSIZE_1") &&
-       !dshot.includes("DMA_SxCR_MSIZE_1"),
-  "TIMx_DMAR DMA must remain half-word-sized");
+       /TIM1_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_1\s*\|[\s\S]*?DMA_SxCR_MSIZE_1/.test(dshot) &&
+       /TIM2_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_0\s*\|[\s\S]*?DMA_SxCR_MSIZE_0/.test(dshot),
+  "TIM1 burst must use words while TIM2 remains half-word-sized");
 assert(dshotHeader.includes("last_tim1_dma_flags") &&
        dshotHeader.includes("last_tim2_dma_flags") &&
-       diag.includes("dma_flags=[0x%08lX,0x%08lX]"),
-  "per-timer DShot DMA fault evidence is missing");
+       diag.includes("dma_flags=[0x%08lX,0x%08lX]") &&
+       /if \(\(tim1_flags & TIM1_DMA_ERROR_FLAGS\) != 0U\) \{\s*diagnostics\.last_tim1_dma_flags = tim1_flags;/.test(dshot) &&
+       /if \(\(tim2_flags & TIM2_DMA_ERROR_FLAGS\) != 0U\) \{\s*diagnostics\.last_tim2_dma_flags = tim2_flags;/.test(dshot),
+  "per-timer fatal DMA flags must be latched before safe shutdown");
 assert(!dshot.includes("DMA1_Stream5") &&
        !dshot.includes("DMA2_Stream1") &&
        !dshot.includes("DMA2_Stream3"),
