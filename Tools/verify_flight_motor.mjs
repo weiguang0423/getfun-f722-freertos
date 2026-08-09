@@ -21,6 +21,19 @@ function validMotorValue(value) {
   return value === 0 || (value >= MIN_THROTTLE && value <= MAX_VALUE);
 }
 
+function crc8DvbS2(bytes) {
+  let crc = 0;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) {
+      crc = (crc & 0x80) !== 0
+        ? ((crc << 1) ^ 0xd5) & 0xff
+        : (crc << 1) & 0xff;
+    }
+  }
+  return crc;
+}
+
 function requestActive(now, requestTick) {
   return ((now - requestTick) >>> 0) < TEST_TIMEOUT_MS;
 }
@@ -36,6 +49,8 @@ assert(requestActive(249, 0) && !requestActive(250, 0),
   "250 ms motor-test timeout boundary changed");
 assert(requestActive(0x20, 0xfffffff0),
   "motor-test timeout is not uint32-wrap safe");
+assert(crc8DvbS2([0x00, 0x06, 0x40, 0x00, 0x00]) === 0x2f,
+  "MSP2 0x4006 empty-response CRC changed");
 
 const dshot = fs.readFileSync("APP/Src/bsp/dshot_motor.c", "utf8");
 const dshotHeader = fs.readFileSync("APP/Inc/bsp/dshot_motor.h", "utf8");
@@ -116,6 +131,8 @@ assert(testTool.includes("Read-Msp2Response") &&
   "motor test tool must verify the firmware response");
 assert(testTool.includes("$MotorStatusCommand = 0x4005") &&
        testTool.includes("Get-MotorStatus") &&
+       testTool.includes("[byte[]]$payload = [byte[]]::new(0)") &&
+       !testTool.includes("[byte[]]$payload = if") &&
        testTool.includes("submit_err_delta") &&
        testTool.includes("dma_err_delta") &&
        testTool.includes("Firmware sustained clean DShot submission"),

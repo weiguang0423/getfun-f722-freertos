@@ -89,10 +89,9 @@ function Read-Msp2Response {
         throw "Invalid MSP2 payload length $payloadLength."
     }
     [byte[]]$tail = Read-ExactBytes -Serial $Serial -Count ($payloadLength + 1)
-    [byte[]]$payload = if ($payloadLength -eq 0) {
-        [byte[]]::new(0)
-    } else {
-        [byte[]]$tail[0..($payloadLength - 1)]
+    [byte[]]$payload = [byte[]]::new(0)
+    if ($payloadLength -ne 0) {
+        $payload = [byte[]]$tail[0..($payloadLength - 1)]
     }
     [byte[]]$body = @($header[3], $header[4], $header[5], $header[6], $header[7]) + $payload
     [byte]$expectedCrc = Get-Crc8DvbS2 -Bytes $body
