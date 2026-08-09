@@ -155,10 +155,10 @@ CR8 GND → 飞控 GND
 
 | 资源 | 引脚 | Timer 映射 | 状态 |
 |---|---|---|---|
-| Motor 1 | PA15 | TIM2_CH1 / AF1 | DShot600 GPIO bitbang候选，待无桨实测 |
-| Motor 2 | PA10 | TIM1_CH3 / AF1 | DShot600 GPIO bitbang候选，待无桨实测 |
-| Motor 3 | PA9 | TIM1_CH2 / AF1 | DShot600 GPIO bitbang候选，待无桨实测 |
-| Motor 4 | PA8 | TIM1_CH1 / AF1 | DShot600 GPIO bitbang候选，待无桨实测 |
+| Motor 1 | PA15 | TIM2_CH1 / AF1 | DShot600 GPIO bitbang，文档26无桨验收通过 |
+| Motor 2 | PA10 | TIM1_CH3 / AF1 | DShot600 GPIO bitbang，文档26无桨验收通过 |
+| Motor 3 | PA9 | TIM1_CH2 / AF1 | DShot600 GPIO bitbang，文档26无桨验收通过 |
+| Motor 4 | PA8 | TIM1_CH1 / AF1 | DShot600 GPIO bitbang，文档26无桨验收通过 |
 | Motor 5 | PC9 | TIM8_CH4 / AF3 | 已配置，第一版不使用 |
 | Motor 6 | PC8 | TIM8_CH3 / AF3 | 已配置，第一版不使用 |
 | Motor 7 | PB11 | TIM2_CH4 / AF1 | 已配置，第一版不使用 |
@@ -185,7 +185,7 @@ dma pin B01 0
 S4.2当前候选直接采用Betaflight在STM32F7上的默认DShot bitbang路径：TIM8_CH1作
 1.8 MHz DMA pacer，DMA2 Stream2/Channel7写GPIOA BSRR，一次传输同步驱动M1～M4。
 它没有占用CRSF的DMA1 Stream5、ADC3的DMA2 Stream1或SPI1的DMA2 Stream0/3。
-软件与构建已完成，时序和四路同步性仍以文档26逻辑分析仪验收为准。
+软件、时序和四路同步性已按文档26通过逻辑分析仪及无桨联合验收。
 
 自研固件 v0.3.0 为 SPI1 样本读取分配 `DMA2 Stream 0 / Channel 3`（RX）和
 `DMA2 Stream 3 / Channel 3`（TX）。这是当前独立工程的软件资源选择，不代表
