@@ -38,8 +38,10 @@ assert(requestActive(0x20, 0xfffffff0),
   "motor-test timeout is not uint32-wrap safe");
 
 const dshot = fs.readFileSync("APP/Src/bsp/dshot_motor.c", "utf8");
+const dshotHeader = fs.readFileSync("APP/Inc/bsp/dshot_motor.h", "utf8");
 const flight = fs.readFileSync("APP/Src/rtos/flight_task.c", "utf8");
 const msp = fs.readFileSync("APP/Src/protocol/msp_server.c", "utf8");
+const diag = fs.readFileSync("APP/Src/platform/platform_diag.c", "utf8");
 const irq = fs.readFileSync("Core/Src/stm32f7xx_it.c", "utf8");
 const cmake = fs.readFileSync("CMakeLists.txt", "utf8");
 const testTool = fs.readFileSync("Tools/motor_test.ps1", "utf8");
@@ -54,6 +56,21 @@ assert(dshot.includes("DMA2_Stream5") &&
        dshot.includes("DMA1_Stream1") &&
        dshot.includes("TIM2_DMA_CHANNEL 3UL"),
   "TIM1_UP/TIM2_UP DMA resource contract changed");
+assert(dshot.includes("DMA_SxFCR_DMDIS | DMA_SxFCR_FTH | DMA_SxFCR_FEIE") &&
+       dshot.includes("TIM2_DMA_STREAM->FCR = 0U") &&
+       /#define TIM2_DMA_ERROR_FLAGS \\\s*\(DMA_LISR_DMEIF1 \| DMA_LISR_TEIF1\)/.test(dshot),
+  "TIM1 burst FIFO or TIM2 direct-mode error policy changed");
+assert(dshot.includes("static uint16_t tim1_dma_values") &&
+       dshot.includes("static uint16_t tim2_dma_values") &&
+       dshot.includes("DMA_SxCR_PSIZE_0") &&
+       dshot.includes("DMA_SxCR_MSIZE_0") &&
+       !dshot.includes("DMA_SxCR_PSIZE_1") &&
+       !dshot.includes("DMA_SxCR_MSIZE_1"),
+  "TIMx_DMAR DMA must remain half-word-sized");
+assert(dshotHeader.includes("last_tim1_dma_flags") &&
+       dshotHeader.includes("last_tim2_dma_flags") &&
+       diag.includes("dma_flags=[0x%08lX,0x%08lX]"),
+  "per-timer DShot DMA fault evidence is missing");
 assert(!dshot.includes("DMA1_Stream5") &&
        !dshot.includes("DMA2_Stream1") &&
        !dshot.includes("DMA2_Stream3"),
@@ -66,7 +83,9 @@ assert(flight.includes("app_state_get_snapshot(&snapshot)") &&
   "FlightTask freshness or hard-stop path changed");
 assert(msp.includes("MSP2_GETFUN_FLIGHT_MOTOR_STATUS 0x4005U") &&
        msp.includes("MSP2_SET_GETFUN_MOTOR_TEST 0x4006U") &&
-       msp.includes("request->payload_length != (DSHOT_MOTOR_COUNT * 2U)"),
+       msp.includes("request->payload_length != (DSHOT_MOTOR_COUNT * 2U)") &&
+       msp.includes("!state.flight.dshot_ready") &&
+       msp.includes("!state.flight.inputs_ready"),
   "S4 motor-test MSP2 contract changed");
 assert(irq.includes("void DMA1_Stream1_IRQHandler(void)") &&
        irq.includes("void DMA2_Stream5_IRQHandler(void)"),
@@ -76,8 +95,19 @@ assert(cmake.includes("APP/Src/bsp/dshot_motor.c") &&
   "S4 sources are missing from the target");
 assert(testTool.includes("[switch]$PropsRemoved") &&
        testTool.includes("finally") &&
-       testTool.includes("@(0, 0, 0, 0)"),
+       testTool.includes("@(0, 0, 0, 0)") &&
+       testTool.includes("$stopWrites++") &&
+       testTool.includes("every stop write failed") &&
+       testTool.includes("$serial.Dispose()"),
   "motor test tool lost its prop-removal or final-stop guard");
+assert(testTool.includes("[System.Diagnostics.Stopwatch]::StartNew()") &&
+       testTool.includes("$timer.ElapsedMilliseconds -lt $DurationMs") &&
+       !testTool.includes("[Environment]::TickCount64"),
+  "motor test timer must remain compatible with Windows PowerShell 5.1");
+assert(testTool.includes("Read-Msp2EmptyResponse") &&
+       testTool.includes("$serial.ReadTimeout = 500") &&
+       testTool.includes("$frame[2] -eq 0x21"),
+  "motor test tool must verify the firmware response");
 
 const flightMotorStatusBytes = 4 + (10 * 4) +
   (2 * MOTOR_COUNT * 2) + 4;
