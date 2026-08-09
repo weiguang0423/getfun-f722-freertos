@@ -95,8 +95,11 @@ function Read-Msp2Response {
         [byte[]]$tail[0..($payloadLength - 1)]
     }
     [byte[]]$body = @($header[3], $header[4], $header[5], $header[6], $header[7]) + $payload
-    if ((Get-Crc8DvbS2 -Bytes $body) -ne $tail[$payloadLength]) {
-        throw 'Invalid MSP2 response CRC from the flight controller.'
+    [byte]$expectedCrc = Get-Crc8DvbS2 -Bytes $body
+    [byte]$actualCrc = $tail[$payloadLength]
+    if ($expectedCrc -ne $actualCrc) {
+        throw ("Invalid MSP2 response CRC for 0x{0:X4}: expected 0x{1:X2}, received 0x{2:X2}." -f `
+            $ExpectedCommand, $expectedCrc, $actualCrc)
     }
     if ($header[2] -eq 0x21) {
         throw 'Flight controller rejected the motor test. Check flight ready=1, dshot=1, and safety=0.'
@@ -144,8 +147,21 @@ function Get-UInt32Le {
 function Get-MotorStatus {
     param([System.IO.Ports.SerialPort]$Serial)
 
-    $response = Invoke-Msp2Request -Serial $Serial `
-        -Command $MotorStatusCommand -Payload ([byte[]]::new(0))
+    $response = $null
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            $response = Invoke-Msp2Request -Serial $Serial `
+                -Command $MotorStatusCommand -Payload ([byte[]]::new(0))
+            break
+        } catch {
+            if (($attempt -eq 3) -or
+                ($_.Exception.Message -notlike 'Invalid MSP2 response CRC*')) {
+                throw
+            }
+            Write-Warning "Motor status CRC retry $attempt/3."
+            Start-Sleep -Milliseconds 20
+        }
+    }
     [byte[]]$payload = $response.Payload
     if ($payload.Length -ne 64) {
         throw "Unexpected motor status size $($payload.Length); expected 64."
@@ -205,17 +221,14 @@ try {
         $baseline.SafetyFlags, $baseline.SubmitErrors, $baseline.DmaErrors)
     Write-Host "Testing motor M$Motor at value $Value for $DurationMs ms on $Port..."
     $timer = [System.Diagnostics.Stopwatch]::StartNew()
-    $runStatus = $null
     while ($timer.ElapsedMilliseconds -lt $DurationMs) {
         Send-Msp2MotorFrame -Serial $serial -Payload $runPayload
-        Start-Sleep -Milliseconds 20
-        $runStatus = Get-MotorStatus -Serial $serial
-        Start-Sleep -Milliseconds 80
+        Start-Sleep -Milliseconds 100
     }
 
-    if ($null -eq $runStatus) {
-        throw 'No motor-test status sample was collected.'
-    }
+    Send-Msp2MotorFrame -Serial $serial -Payload $runPayload
+    Start-Sleep -Milliseconds 20
+    $runStatus = Get-MotorStatus -Serial $serial
     $submitDelta = [uint64]$runStatus.SubmitErrors - [uint64]$baseline.SubmitErrors
     $dmaDelta = [uint64]$runStatus.DmaErrors - [uint64]$baseline.DmaErrors
     $outputText = $runStatus.Output -join ','
