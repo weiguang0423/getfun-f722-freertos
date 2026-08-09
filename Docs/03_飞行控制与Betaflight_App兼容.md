@@ -329,8 +329,8 @@ DShot 帧为 16 位：
 - 1 kHz 控制周期提交。
 - 撤锁和超时归零。
 
-S4.2/S4.3软件实现使用TIM2_CH1输出M1，TIM1_CH3/CH2/CH1输出M2/M3/M4；
-TIM2_UP走DMA1 Stream1/Channel3，TIM1_UP走DMA2 Stream5/Channel6 burst。
+S4.2/S4.3软件实现按Betaflight的STM32F7默认bitbang路径，把M1～M4保持为GPIOA
+推挽输出；TIM8_CH1只作三相节拍器，DMA2 Stream2/Channel7直接写GPIOA BSRR。
 测试写命令只接受停止值0或48～2047，250 ms未刷新、IMU/RC过期或任一既有解锁
 抑制出现时归零；DMA连续忙则切回GPIO低电平并锁存到重启。物理时序、编号和方向
 仍须按文档26验收。

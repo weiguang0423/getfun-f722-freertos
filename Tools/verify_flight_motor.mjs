@@ -38,6 +38,26 @@ function requestActive(now, requestTick) {
   return ((now - requestTick) >>> 0) < TEST_TIMEOUT_MS;
 }
 
+function buildBitbangWords(frames) {
+  const pins = [15, 10, 9, 8];
+  const pinMask = pins.reduce((mask, pin) => mask | (1 << pin), 0) >>> 0;
+  const resetMask = (pinMask << 16) >>> 0;
+  const words = [];
+
+  for (let bit = 0; bit < 16; bit++) {
+    const bitMask = 1 << (15 - bit);
+    let middle = 0;
+    for (let motor = 0; motor < MOTOR_COUNT; motor++) {
+      if ((frames[motor] & bitMask) === 0) {
+        middle = (middle | (1 << (pins[motor] + 16))) >>> 0;
+      }
+    }
+    words.push(pinMask, middle, resetMask);
+  }
+  words.push(resetMask, 0, 0);
+  return words;
+}
+
 assert(encodeFrame(0) === 0x0000, "DShot stop frame changed");
 assert(encodeFrame(48) === 0x0606, "DShot minimum throttle frame changed");
 assert(encodeFrame(2047) === 0xffee, "DShot maximum frame changed");
@@ -51,6 +71,18 @@ assert(requestActive(0x20, 0xfffffff0),
   "motor-test timeout is not uint32-wrap safe");
 assert(crc8DvbS2([0x00, 0x06, 0x40, 0x00, 0x00]) === 0x2f,
   "MSP2 0x4006 empty-response CRC changed");
+const bitbangWords = buildBitbangWords([
+  encodeFrame(200), encodeFrame(0), encodeFrame(0), encodeFrame(0),
+]);
+assert(bitbangWords.length === 51,
+  "Betaflight bitbang frame must contain 48 symbol states and 3 hold states");
+assert(bitbangWords[0] === 0x00008700 &&
+       bitbangWords[1] === 0x87000000 &&
+       bitbangWords[2] === 0x87000000,
+  "first DShot bit must set all four pins then reset all four for zero");
+assert(bitbangWords[48] === 0x87000000 &&
+       bitbangWords[49] === 0 && bitbangWords[50] === 0,
+  "DShot hold states must leave all four motor pins low");
 
 const dshot = fs.readFileSync("APP/Src/bsp/dshot_motor.c", "utf8");
 const dshotHeader = fs.readFileSync("APP/Inc/bsp/dshot_motor.h", "utf8");
@@ -63,40 +95,28 @@ const cmake = fs.readFileSync("CMakeLists.txt", "utf8");
 const testTool = fs.readFileSync("Tools/motor_test.ps1", "utf8");
 
 assert(dshot.includes("#define DSHOT_BIT_RATE_HZ 600000UL") &&
-       dshot.includes("TIM1_PERIOD_TICKS == 360U") &&
-       dshot.includes("TIM2_PERIOD_TICKS == 180U") &&
-       dshot.includes("TIM1_DUTY_ZERO_TICKS == 126U") &&
-       dshot.includes("TIM1_DUTY_ONE_TICKS == 252U") &&
-       dshot.includes("TIM2_DUTY_ZERO_TICKS == 63U") &&
-       dshot.includes("TIM2_DUTY_ONE_TICKS == 126U"),
-  "Betaflight-compatible DShot600 timing contract changed");
-assert(dshot.includes("DMA2_Stream5") &&
-       dshot.includes("TIM1_DMA_CHANNEL 6UL") &&
-       dshot.includes("DMA1_Stream1") &&
-       dshot.includes("TIM2_DMA_CHANNEL 3UL"),
-  "TIM1_UP/TIM2_UP DMA resource contract changed");
-assert((dshot.match(/TIM_DMABURSTLENGTH_4TRANSFERS/g) || []).length === 2 &&
-       dshot.includes("DSHOT_DMA_UPDATE_COUNT * DSHOT_DMA_BURST_LENGTH") &&
-       dshot.includes("tim1_dma_values[update][3] = 0U") &&
-       dshot.includes("tim2_dma_values[update][3] = 0U"),
-  "DShot DMAR must write complete CCR1..CCR4 bursts");
-assert(dshot.includes("DMA_SxFCR_DMDIS | DMA_SxFCR_FTH") &&
-       dshot.includes("DMA_SxFCR_FEIE") &&
-       /#define TIM1_DMA_ERROR_FLAGS \\\s*\(DMA_HISR_FEIF5 \| DMA_HISR_DMEIF5 \| DMA_HISR_TEIF5\)/.test(dshot) &&
-       /#define TIM2_DMA_ERROR_FLAGS \\\s*\(DMA_LISR_FEIF1 \| DMA_LISR_DMEIF1 \| DMA_LISR_TEIF1\)/.test(dshot),
-  "DShot word-burst FIFO error policy changed");
-assert(dshot.includes("static uint32_t tim1_dma_values") &&
-       dshot.includes("static uint32_t tim2_dma_values") &&
-       /TIM1_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_1\s*\|[\s\S]*?DMA_SxCR_MSIZE_1/.test(dshot) &&
-       /TIM2_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_1\s*\|[\s\S]*?DMA_SxCR_MSIZE_1/.test(dshot),
-  "DShot DMAR DMA must use equal word widths");
-assert(dshotHeader.includes("last_tim1_dma_flags") &&
-       dshotHeader.includes("last_tim2_dma_flags") &&
-       diag.includes("dma_flags=[0x%08lX,0x%08lX]") &&
-       /if \(tim1_flags != 0U\) \{\s*DMA2->HIFCR = tim1_flags;/.test(dshot) &&
-       /if \(tim2_flags != 0U\) \{\s*DMA1->LIFCR = tim2_flags;/.test(dshot) &&
-       /if \(\(tim1_flags & TIM1_DMA_ERROR_FLAGS\) != 0U\) \{\s*diagnostics\.last_tim1_dma_flags = tim1_flags;/.test(dshot) &&
-       /if \(\(tim2_flags & TIM2_DMA_ERROR_FLAGS\) != 0U\) \{\s*diagnostics\.last_tim2_dma_flags = tim2_flags;/.test(dshot),
+       dshot.includes("#define DSHOT_STATES_PER_BIT 3U") &&
+       dshot.includes("DSHOT_PACER_PERIOD_TICKS == 120U") &&
+       dshot.includes("DSHOT_DMA_WORD_COUNT == 51U"),
+  "Betaflight STM32F7 bitbang DShot600 pacing contract changed");
+assert(dshot.includes("#define DSHOT_DMA_STREAM DMA2_Stream2") &&
+       dshot.includes("#define DSHOT_DMA_CHANNEL 7UL") &&
+       dshot.includes("TIM8->DIER |= TIM_DIER_CC1DE") &&
+       dshot.includes("DSHOT_DMA_STREAM->PAR = (uint32_t)&GPIOA->BSRR"),
+  "Betaflight TIM8_CH1 pacer or GPIOA BSRR DMA resource changed");
+assert(dshot.includes("static uint32_t dma_values[DSHOT_DMA_WORD_COUNT]") &&
+       dshot.includes("dma_values[base] = DSHOT_MOTOR_PIN_MASK") &&
+       dshot.includes("dma_values[base + 2U] = DSHOT_MOTOR_PIN_RESET_MASK") &&
+       /DSHOT_DMA_STREAM->CR\s*=\s*[\s\S]*?DMA_SxCR_PSIZE_1\s*\|\s*DMA_SxCR_MSIZE_1/.test(dshot),
+  "DShot bitbang buffer or equal word-width DMA contract changed");
+assert(!dshot.includes("TIM_DMABURSTLENGTH") &&
+       !dshot.includes("TIM1_DMA_STREAM") &&
+       !dshot.includes("TIM2_DMA_STREAM"),
+  "obsolete TIM1/TIM2 DMAR implementation returned");
+assert(dshotHeader.includes("last_dma_flags") &&
+       diag.includes("dma_flags=0x%08lX") &&
+       /if \(flags == 0U\) \{\s*return;\s*\}\s*DMA2->LIFCR = flags;/.test(dshot) &&
+       /if \(\(flags & DSHOT_DMA_ERROR_FLAGS\) != 0U\) \{\s*diagnostics\.last_dma_flags = flags;/.test(dshot),
   "DMA IRQ must clear only observed flags and latch fatal errors");
 assert(!dshot.includes("DMA1_Stream5") &&
        !dshot.includes("DMA2_Stream1") &&
@@ -116,8 +136,8 @@ assert(msp.includes("MSP2_GETFUN_FLIGHT_MOTOR_STATUS 0x4005U") &&
        msp.includes("!state.flight.dshot_ready") &&
        msp.includes("!state.flight.inputs_ready"),
   "S4 motor-test MSP2 contract changed");
-assert(irq.includes("void DMA1_Stream1_IRQHandler(void)") &&
-       irq.includes("void DMA2_Stream5_IRQHandler(void)"),
+assert(irq.includes("void DMA2_Stream2_IRQHandler(void)") &&
+       /void DMA2_Stream2_IRQHandler\(void\)[\s\S]*?dshot_motor_dma_irq_handler\(\);/.test(irq),
   "DShot DMA IRQ routing changed");
 assert(cmake.includes("APP/Src/bsp/dshot_motor.c") &&
        cmake.includes("APP/Src/rtos/flight_task.c"),
@@ -163,14 +183,16 @@ console.log(JSON.stringify({
   result: "PASS",
   dshot600: {
     frameBits: 16,
-    timer1: { clockHz: 216000000, periodTicks: 360, t0hTicks: 126, t1hTicks: 252 },
-    timer2: { clockHz: 108000000, periodTicks: 180, t0hTicks: 63, t1hTicks: 126 },
+    implementation: "Betaflight STM32F7 GPIO bitbang",
+    pacer: { timer: "TIM8_CH1", clockHz: 216000000, stateTicks: 120 },
+    timingUs: { bit: 1.6667, t0h: 0.5556, t1h: 1.1111 },
+    dmaWords: bitbangWords.length,
     vectors: { stop: "0x0000", minThrottle: "0x0606", max: "0xffee" },
   },
   motorCount: MOTOR_COUNT,
   acceptedValues: `0 or ${MIN_THROTTLE}..${MAX_VALUE}`,
   motorTestTimeoutMs: TEST_TIMEOUT_MS,
   statusPayloadBytes: flightMotorStatusBytes,
-  dma: "TIM1_UP DMA2 Stream5/Channel6; TIM2_UP DMA1 Stream1/Channel3",
+  dma: "TIM8_CH1 pacer; DMA2 Stream2/Channel7 -> GPIOA BSRR",
   deferred: ["PID", "Mixer", "ARM state machine", "Betaflight Motors page"],
 }, null, 2));

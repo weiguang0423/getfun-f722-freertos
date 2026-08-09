@@ -25,8 +25,8 @@
  *   MX_DMA_Init() enables DMA1/DMA2 and configures DMA1 Stream 5 plus DMA2
  *   Stream 0/1/3 interrupts at preemption priority 5. Stream1 is reserved by
  *   the application-owned ADC3 one-shot transport; USART2/SPI1 linkage remains
- *   generated from the .ioc model. DShot owns DMA1 Stream1 and DMA2 Stream5,
- *   but configures both directly in APP/bsp/dshot_motor rather than here.
+ *   generated from the .ioc model. DShot owns DMA2 Stream2/Channel7 and
+ *   configures it directly in APP/bsp/dshot_motor rather than here.
  *
  * Boundary:
  *   Priority 5 is required because the completion path calls a FreeRTOS

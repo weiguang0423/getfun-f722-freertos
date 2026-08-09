@@ -1,192 +1,127 @@
 /*
  * Four-output DShot600 transport for GETFUN F722 V3.
  *
- * M1 uses PA15/TIM2_CH1 and TIM2_UP on DMA1 Stream1/Channel3. M2..M4
- * use PA10/PA9/PA8 (TIM1_CH3/CH2/CH1) and one TIM1 DMA burst on
- * DMA2 Stream5/Channel6. The .ioc keeps these pins as safe GPIO outputs;
- * this application-owned driver switches only M1..M4 to AF1 at runtime.
+ * This follows Betaflight's default STM32F7 DShot bitbang path: TIM8_CH1 is
+ * only a DMA pacer, and DMA2 Stream2/Channel7 writes all four GPIOA outputs
+ * through GPIOA->BSRR. M1..M4 are PA15/PA10/PA9/PA8 respectively.
  */
 #include "bsp/dshot_motor.h"
 
 #include <string.h>
 
 #include "main.h"
-#include "stm32f7xx_hal.h"
 
 #define DSHOT_BIT_RATE_HZ 600000UL
+#define DSHOT_STATES_PER_BIT 3U
 #define DSHOT_FRAME_BITS 16U
-#define DSHOT_RESET_SLOTS 2U
-#define DSHOT_DMA_UPDATE_COUNT (DSHOT_FRAME_BITS + DSHOT_RESET_SLOTS)
-#define DSHOT_DMA_BURST_LENGTH 4U
+#define DSHOT_HOLD_STATES 3U
+#define DSHOT_DMA_WORD_COUNT \
+    ((DSHOT_FRAME_BITS * DSHOT_STATES_PER_BIT) + DSHOT_HOLD_STATES)
 
-#define TIM1_CLOCK_HZ 216000000UL
-#define TIM2_CLOCK_HZ 108000000UL
-#define TIM1_PERIOD_TICKS (TIM1_CLOCK_HZ / DSHOT_BIT_RATE_HZ)
-#define TIM2_PERIOD_TICKS (TIM2_CLOCK_HZ / DSHOT_BIT_RATE_HZ)
-#define TIM1_DUTY_ZERO_TICKS ((TIM1_PERIOD_TICKS * 7U) / 20U)
-#define TIM1_DUTY_ONE_TICKS ((TIM1_PERIOD_TICKS * 14U) / 20U)
-#define TIM2_DUTY_ZERO_TICKS ((TIM2_PERIOD_TICKS * 7U) / 20U)
-#define TIM2_DUTY_ONE_TICKS ((TIM2_PERIOD_TICKS * 14U) / 20U)
+#define DSHOT_PACER_TIMER_CLOCK_HZ 216000000UL
+#define DSHOT_PACER_HZ (DSHOT_BIT_RATE_HZ * DSHOT_STATES_PER_BIT)
+#define DSHOT_PACER_PERIOD_TICKS \
+    (DSHOT_PACER_TIMER_CLOCK_HZ / DSHOT_PACER_HZ)
+#define DSHOT_PACER_COMPARE_TICKS 10U
 
-#define TIM1_DMA_STREAM DMA2_Stream5
-#define TIM2_DMA_STREAM DMA1_Stream1
-#define TIM1_DMA_CHANNEL 6UL
-#define TIM2_DMA_CHANNEL 3UL
+#define DSHOT_DMA_STREAM DMA2_Stream2
+#define DSHOT_DMA_CHANNEL 7UL
+#define DSHOT_DMA_ALL_FLAGS \
+    (DMA_LIFCR_CFEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CTEIF2 | \
+     DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTCIF2)
+#define DSHOT_DMA_ERROR_FLAGS (DMA_LISR_DMEIF2 | DMA_LISR_TEIF2)
 
-#define TIM1_DMA_ALL_FLAGS \
-    (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CTEIF5 | \
-     DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTCIF5)
-#define TIM2_DMA_ALL_FLAGS \
-    (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CTEIF1 | \
-     DMA_LIFCR_CHTIF1 | DMA_LIFCR_CTCIF1)
-#define TIM1_DMA_ERROR_FLAGS \
-    (DMA_HISR_FEIF5 | DMA_HISR_DMEIF5 | DMA_HISR_TEIF5)
-#define TIM2_DMA_ERROR_FLAGS \
-    (DMA_LISR_FEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_TEIF1)
+#define DSHOT_MOTOR_PIN_MASK \
+    ((uint32_t)(MOTOR1_Pin | MOTOR2_Pin | MOTOR3_Pin | MOTOR4_Pin))
+#define DSHOT_MOTOR_PIN_RESET_MASK (DSHOT_MOTOR_PIN_MASK << 16U)
 
-_Static_assert((TIM1_CLOCK_HZ % DSHOT_BIT_RATE_HZ) == 0U,
-               "TIM1 must divide exactly to DShot600");
-_Static_assert((TIM2_CLOCK_HZ % DSHOT_BIT_RATE_HZ) == 0U,
-               "TIM2 must divide exactly to DShot600");
-_Static_assert(TIM1_PERIOD_TICKS == 360U,
-               "TIM1 DShot600 period changed");
-_Static_assert(TIM2_PERIOD_TICKS == 180U,
-               "TIM2 DShot600 period changed");
-_Static_assert(TIM1_DUTY_ZERO_TICKS == 126U &&
-                   TIM1_DUTY_ONE_TICKS == 252U &&
-                   TIM2_DUTY_ZERO_TICKS == 63U &&
-                   TIM2_DUTY_ONE_TICKS == 126U,
-               "Betaflight DShot pulse widths changed");
+_Static_assert((DSHOT_PACER_TIMER_CLOCK_HZ % DSHOT_PACER_HZ) == 0U,
+               "TIM8 must divide exactly to Betaflight DShot600 pacing");
+_Static_assert(DSHOT_PACER_PERIOD_TICKS == 120U,
+               "TIM8 DShot600 pacer period changed");
+_Static_assert(DSHOT_DMA_WORD_COUNT == 51U,
+               "Betaflight DShot bitbang frame length changed");
 
-static uint32_t tim1_dma_values[DSHOT_DMA_UPDATE_COUNT]
-                                [DSHOT_DMA_BURST_LENGTH];
-static uint32_t tim2_dma_values[DSHOT_DMA_UPDATE_COUNT]
-                                [DSHOT_DMA_BURST_LENGTH];
+static const uint16_t motor_pins[DSHOT_MOTOR_COUNT] = {
+    MOTOR1_Pin, MOTOR2_Pin, MOTOR3_Pin, MOTOR4_Pin
+};
+static uint32_t dma_values[DSHOT_DMA_WORD_COUNT];
 static dshot_motor_diagnostics_t diagnostics;
-static volatile bool tim1_transfer_complete;
-static volatile bool tim2_transfer_complete;
 
-static bool disable_stream(DMA_Stream_TypeDef *stream)
+static bool disable_stream(void)
 {
     uint32_t attempts = 100000U;
 
-    stream->CR &= ~DMA_SxCR_EN;
-    while (((stream->CR & DMA_SxCR_EN) != 0U) && (attempts != 0U)) {
+    DSHOT_DMA_STREAM->CR &= ~DMA_SxCR_EN;
+    while (((DSHOT_DMA_STREAM->CR & DMA_SxCR_EN) != 0U) &&
+           (attempts != 0U)) {
         --attempts;
     }
-    return (stream->CR & DMA_SxCR_EN) == 0U;
+    return (DSHOT_DMA_STREAM->CR & DMA_SxCR_EN) == 0U;
 }
 
-static void configure_motor_pins_af(void)
+static void configure_motor_pins(void)
 {
     GPIO_InitTypeDef gpio = {0};
 
-    gpio.Pin = MOTOR1_Pin | MOTOR2_Pin | MOTOR3_Pin | MOTOR4_Pin;
-    gpio.Mode = GPIO_MODE_AF_PP;
-    gpio.Pull = GPIO_NOPULL;
-    gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    gpio.Alternate = GPIO_AF1_TIM1;
+    GPIOA->BSRR = DSHOT_MOTOR_PIN_RESET_MASK;
+    gpio.Pin = (uint32_t)DSHOT_MOTOR_PIN_MASK;
+    gpio.Mode = GPIO_MODE_OUTPUT_PP;
+    gpio.Pull = GPIO_PULLUP;
+    gpio.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOA, &gpio);
+    GPIOA->BSRR = DSHOT_MOTOR_PIN_RESET_MASK;
 }
 
-static bool motor_pins_are_af(void)
+static bool motor_pins_are_outputs(void)
 {
-    const uint32_t pins[] = {15U, 10U, 9U, 8U};
+    static const uint32_t pin_numbers[DSHOT_MOTOR_COUNT] = {
+        15U, 10U, 9U, 8U
+    };
     uint32_t index;
 
     for (index = 0U; index < DSHOT_MOTOR_COUNT; ++index) {
-        if (((GPIOA->MODER >> (pins[index] * 2U)) & 3U) != 2U) {
+        if (((GPIOA->MODER >> (pin_numbers[index] * 2U)) & 3U) != 1U) {
             return false;
         }
     }
     return true;
 }
 
-static void configure_timers(void)
+static void configure_pacer_timer(void)
 {
-    TIM1->CR1 = 0U;
-    TIM1->CR2 = 0U;
-    TIM1->SMCR = 0U;
-    TIM1->DIER = 0U;
-    TIM1->CCER = 0U;
-    TIM1->PSC = 0U;
-    TIM1->ARR = TIM1_PERIOD_TICKS - 1U;
-    TIM1->RCR = 0U;
-    TIM1->CCR1 = 0U;
-    TIM1->CCR2 = 0U;
-    TIM1->CCR3 = 0U;
-    TIM1->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 |
-                  TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2;
-    TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2;
-    TIM1->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E;
-    TIM1->CCR4 = 0U;
-    TIM1->DCR = TIM_DMABASE_CCR1 | TIM_DMABURSTLENGTH_4TRANSFERS;
-    TIM1->BDTR = TIM_BDTR_MOE;
-    TIM1->EGR = TIM_EGR_UG;
-    TIM1->SR = 0U;
-
-    TIM2->CR1 = 0U;
-    TIM2->CR2 = 0U;
-    TIM2->SMCR = 0U;
-    TIM2->DIER = 0U;
-    TIM2->CCER = 0U;
-    TIM2->PSC = 0U;
-    TIM2->ARR = TIM2_PERIOD_TICKS - 1U;
-    TIM2->CCR1 = 0U;
-    TIM2->CCR2 = 0U;
-    TIM2->CCR3 = 0U;
-    TIM2->CCR4 = 0U;
-    TIM2->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2;
-    TIM2->CCER = TIM_CCER_CC1E;
-    TIM2->DCR = TIM_DMABASE_CCR1 | TIM_DMABURSTLENGTH_4TRANSFERS;
-    TIM2->EGR = TIM_EGR_UG;
-    TIM2->SR = 0U;
+    TIM8->CR1 = 0U;
+    TIM8->CR2 = 0U;
+    TIM8->SMCR = 0U;
+    TIM8->DIER = 0U;
+    TIM8->CCER = 0U;
+    TIM8->PSC = 0U;
+    TIM8->ARR = DSHOT_PACER_PERIOD_TICKS - 1U;
+    TIM8->RCR = 0U;
+    TIM8->CCR1 = DSHOT_PACER_COMPARE_TICKS;
+    TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 |
+                  TIM_CCMR1_OC1PE;
+    TIM8->CCER = TIM_CCER_CC1E;
+    TIM8->BDTR = TIM_BDTR_MOE;
+    TIM8->EGR = TIM_EGR_UG;
+    TIM8->SR = 0U;
+    TIM8->CR1 = TIM_CR1_ARPE | TIM_CR1_CEN;
 }
 
 static void configure_dma(void)
 {
-    (void)disable_stream(TIM1_DMA_STREAM);
-    (void)disable_stream(TIM2_DMA_STREAM);
-    DMA2->HIFCR = TIM1_DMA_ALL_FLAGS;
-    DMA1->LIFCR = TIM2_DMA_ALL_FLAGS;
+    (void)disable_stream();
+    DMA2->LIFCR = DSHOT_DMA_ALL_FLAGS;
 
-    TIM1_DMA_STREAM->PAR = (uint32_t)&TIM1->DMAR;
-    TIM1_DMA_STREAM->CR =
-        (TIM1_DMA_CHANNEL << DMA_SxCR_CHSEL_Pos) |
-        DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_1 |
-        DMA_SxCR_MSIZE_1 | DMA_SxCR_PL_1 |
+    DSHOT_DMA_STREAM->PAR = (uint32_t)&GPIOA->BSRR;
+    DSHOT_DMA_STREAM->M0AR = (uint32_t)dma_values;
+    DSHOT_DMA_STREAM->CR =
+        (DSHOT_DMA_CHANNEL << DMA_SxCR_CHSEL_Pos) |
+        DMA_SxCR_DIR_0 | DMA_SxCR_MINC |
+        DMA_SxCR_PSIZE_1 | DMA_SxCR_MSIZE_1 |
+        DMA_SxCR_PL_0 | DMA_SxCR_PL_1 |
         DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
-    TIM1_DMA_STREAM->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH |
-                           DMA_SxFCR_FEIE;
-
-    TIM2_DMA_STREAM->PAR = (uint32_t)&TIM2->DMAR;
-    TIM2_DMA_STREAM->CR =
-        (TIM2_DMA_CHANNEL << DMA_SxCR_CHSEL_Pos) |
-        DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_1 |
-        DMA_SxCR_MSIZE_1 | DMA_SxCR_PL_1 |
-        DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE;
-    TIM2_DMA_STREAM->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH |
-                           DMA_SxFCR_FEIE;
-}
-
-static void force_gpio_low(void)
-{
-    GPIO_InitTypeDef gpio = {0};
-
-    TIM1->DIER &= ~TIM_DIER_UDE;
-    TIM2->DIER &= ~TIM_DIER_UDE;
-    TIM1->CR1 &= ~TIM_CR1_CEN;
-    TIM2->CR1 &= ~TIM_CR1_CEN;
-    TIM1->BDTR &= ~TIM_BDTR_MOE;
-    (void)disable_stream(TIM1_DMA_STREAM);
-    (void)disable_stream(TIM2_DMA_STREAM);
-    GPIOA->BSRR = (uint32_t)(MOTOR1_Pin | MOTOR2_Pin | MOTOR3_Pin |
-                             MOTOR4_Pin) << 16U;
-    gpio.Pin = MOTOR1_Pin | MOTOR2_Pin | MOTOR3_Pin | MOTOR4_Pin;
-    gpio.Mode = GPIO_MODE_OUTPUT_PP;
-    gpio.Pull = GPIO_NOPULL;
-    gpio.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOA, &gpio);
+    DSHOT_DMA_STREAM->FCR = DMA_SxFCR_DMDIS;
 }
 
 uint16_t dshot_encode_frame(uint16_t value, bool telemetry)
@@ -202,66 +137,46 @@ uint16_t dshot_encode_frame(uint16_t value, bool telemetry)
     return (uint16_t)((payload << 4U) | (checksum & 0x0FU));
 }
 
-static uint16_t duty_for_bit(uint16_t frame,
-                             uint32_t bit,
-                             uint16_t zero_ticks,
-                             uint16_t one_ticks)
-{
-    return ((frame & (uint16_t)(1U << (15U - bit))) != 0U)
-               ? one_ticks
-               : zero_ticks;
-}
-
 static void build_dma_values(const uint16_t frames[DSHOT_MOTOR_COUNT])
 {
-    uint32_t update;
+    uint32_t bit;
+    uint32_t motor;
 
-    for (update = 0U; update < DSHOT_DMA_UPDATE_COUNT; ++update) {
-        const uint32_t slot = update + 1U;
+    for (bit = 0U; bit < DSHOT_FRAME_BITS; ++bit) {
+        const uint32_t base = bit * DSHOT_STATES_PER_BIT;
+        const uint16_t bit_mask = (uint16_t)(1U << (15U - bit));
 
-        if (slot < DSHOT_FRAME_BITS) {
-            tim2_dma_values[update][0] = duty_for_bit(
-                frames[0], slot, TIM2_DUTY_ZERO_TICKS,
-                TIM2_DUTY_ONE_TICKS);
-            tim1_dma_values[update][0] = duty_for_bit(
-                frames[3], slot, TIM1_DUTY_ZERO_TICKS,
-                TIM1_DUTY_ONE_TICKS);
-            tim1_dma_values[update][1] = duty_for_bit(
-                frames[2], slot, TIM1_DUTY_ZERO_TICKS,
-                TIM1_DUTY_ONE_TICKS);
-            tim1_dma_values[update][2] = duty_for_bit(
-                frames[1], slot, TIM1_DUTY_ZERO_TICKS,
-                TIM1_DUTY_ONE_TICKS);
-        } else {
-            tim2_dma_values[update][0] = 0U;
-            tim1_dma_values[update][0] = 0U;
-            tim1_dma_values[update][1] = 0U;
-            tim1_dma_values[update][2] = 0U;
+        dma_values[base] = DSHOT_MOTOR_PIN_MASK;
+        dma_values[base + 1U] = 0U;
+        dma_values[base + 2U] = DSHOT_MOTOR_PIN_RESET_MASK;
+        for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
+            if ((frames[motor] & bit_mask) == 0U) {
+                dma_values[base + 1U] |=
+                    (uint32_t)motor_pins[motor] << 16U;
+            }
         }
-        tim1_dma_values[update][3] = 0U;
-        tim2_dma_values[update][1] = 0U;
-        tim2_dma_values[update][2] = 0U;
-        tim2_dma_values[update][3] = 0U;
     }
+
+    dma_values[DSHOT_FRAME_BITS * DSHOT_STATES_PER_BIT] =
+        DSHOT_MOTOR_PIN_RESET_MASK;
+    dma_values[(DSHOT_FRAME_BITS * DSHOT_STATES_PER_BIT) + 1U] = 0U;
+    dma_values[(DSHOT_FRAME_BITS * DSHOT_STATES_PER_BIT) + 2U] = 0U;
 }
 
 bool dshot_motor_init(void)
 {
     memset(&diagnostics, 0, sizeof(diagnostics));
+    memset(dma_values, 0, sizeof(dma_values));
     __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_TIM1_CLK_ENABLE();
-    __HAL_RCC_TIM2_CLK_ENABLE();
-    __HAL_RCC_DMA1_CLK_ENABLE();
+    __HAL_RCC_TIM8_CLK_ENABLE();
     __HAL_RCC_DMA2_CLK_ENABLE();
 
-    configure_motor_pins_af();
-    configure_timers();
+    configure_motor_pins();
+    configure_pacer_timer();
     configure_dma();
-    HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5U, 0U);
-    HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
-    HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 5U, 0U);
-    HAL_NVIC_EnableIRQ(DMA2_Stream5_IRQn);
-    diagnostics.ready = motor_pins_are_af();
+    HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5U, 0U);
+    HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+    diagnostics.ready = motor_pins_are_outputs();
     if (!diagnostics.ready) {
         dshot_motor_force_safe();
     }
@@ -274,7 +189,7 @@ bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
     uint32_t motor;
 
     if ((values == NULL) || !diagnostics.ready ||
-        diagnostics.fault_latched || !motor_pins_are_af()) {
+        diagnostics.fault_latched || !motor_pins_are_outputs()) {
         dshot_motor_force_safe();
         return false;
     }
@@ -291,8 +206,7 @@ bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
         frames[motor] = dshot_encode_frame(values[motor], false);
     }
 
-    if (!disable_stream(TIM1_DMA_STREAM) ||
-        !disable_stream(TIM2_DMA_STREAM)) {
+    if (!disable_stream()) {
         dshot_motor_force_safe();
         return false;
     }
@@ -302,44 +216,16 @@ bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
     memcpy(diagnostics.encoded_frame, frames,
            sizeof(diagnostics.encoded_frame));
 
-    TIM1->CCR1 = duty_for_bit(frames[3], 0U,
-                              TIM1_DUTY_ZERO_TICKS,
-                              TIM1_DUTY_ONE_TICKS);
-    TIM1->CCR2 = duty_for_bit(frames[2], 0U,
-                              TIM1_DUTY_ZERO_TICKS,
-                              TIM1_DUTY_ONE_TICKS);
-    TIM1->CCR3 = duty_for_bit(frames[1], 0U,
-                              TIM1_DUTY_ZERO_TICKS,
-                              TIM1_DUTY_ONE_TICKS);
-    TIM2->CCR1 = duty_for_bit(frames[0], 0U,
-                              TIM2_DUTY_ZERO_TICKS,
-                              TIM2_DUTY_ONE_TICKS);
-
-    DMA2->HIFCR = TIM1_DMA_ALL_FLAGS;
-    DMA1->LIFCR = TIM2_DMA_ALL_FLAGS;
-    TIM1_DMA_STREAM->M0AR = (uint32_t)tim1_dma_values;
-    TIM1_DMA_STREAM->NDTR =
-        DSHOT_DMA_UPDATE_COUNT * DSHOT_DMA_BURST_LENGTH;
-    TIM2_DMA_STREAM->M0AR = (uint32_t)tim2_dma_values;
-    TIM2_DMA_STREAM->NDTR =
-        DSHOT_DMA_UPDATE_COUNT * DSHOT_DMA_BURST_LENGTH;
-    TIM1->CNT = 0U;
-    TIM2->CNT = 0U;
-    TIM1->EGR = TIM_EGR_UG;
-    TIM2->EGR = TIM_EGR_UG;
-    TIM1->SR = 0U;
-    TIM2->SR = 0U;
-    tim1_transfer_complete = false;
-    tim2_transfer_complete = false;
+    TIM8->DIER &= ~TIM_DIER_CC1DE;
+    DMA2->LIFCR = DSHOT_DMA_ALL_FLAGS;
+    DSHOT_DMA_STREAM->M0AR = (uint32_t)dma_values;
+    DSHOT_DMA_STREAM->NDTR = DSHOT_DMA_WORD_COUNT;
+    GPIOA->BSRR = DSHOT_MOTOR_PIN_RESET_MASK;
     diagnostics.busy = true;
     ++diagnostics.submit_count;
     __DMB();
-    TIM1_DMA_STREAM->CR |= DMA_SxCR_EN;
-    TIM2_DMA_STREAM->CR |= DMA_SxCR_EN;
-    TIM1->DIER |= TIM_DIER_UDE;
-    TIM2->DIER |= TIM_DIER_UDE;
-    TIM2->CR1 |= TIM_CR1_CEN;
-    TIM1->CR1 |= TIM_CR1_CEN;
+    DSHOT_DMA_STREAM->CR |= DMA_SxCR_EN;
+    TIM8->DIER |= TIM_DIER_CC1DE;
     return true;
 }
 
@@ -347,7 +233,10 @@ void dshot_motor_force_safe(void)
 {
     uint32_t motor;
 
-    force_gpio_low();
+    TIM8->DIER &= ~TIM_DIER_CC1DE;
+    (void)disable_stream();
+    GPIOA->BSRR = DSHOT_MOTOR_PIN_RESET_MASK;
+    configure_motor_pins();
     diagnostics.ready = false;
     diagnostics.busy = false;
     diagnostics.fault_latched = true;
@@ -375,53 +264,24 @@ void dshot_motor_get_diagnostics(dshot_motor_diagnostics_t *destination)
 
 void dshot_motor_dma_irq_handler(void)
 {
-    const uint32_t tim1_flags = DMA2->HISR &
-        (DMA_HISR_FEIF5 | DMA_HISR_DMEIF5 | DMA_HISR_TEIF5 |
-         DMA_HISR_HTIF5 | DMA_HISR_TCIF5);
-    const uint32_t tim2_flags = DMA1->LISR &
-        (DMA_LISR_FEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_TEIF1 |
-         DMA_LISR_HTIF1 | DMA_LISR_TCIF1);
+    const uint32_t flags = DMA2->LISR &
+        (DMA_LISR_FEIF2 | DMA_LISR_DMEIF2 | DMA_LISR_TEIF2 |
+         DMA_LISR_HTIF2 | DMA_LISR_TCIF2);
 
-    if (tim1_flags != 0U) {
-        DMA2->HIFCR = tim1_flags;
-        if ((tim1_flags & TIM1_DMA_ERROR_FLAGS) != 0U) {
-            diagnostics.last_tim1_dma_flags = tim1_flags;
-            ++diagnostics.dma_error_count;
-            dshot_motor_force_safe();
-            return;
-        }
-        if ((tim1_flags & DMA_HISR_TCIF5) != 0U) {
-            TIM1->DIER &= ~TIM_DIER_UDE;
-            TIM1->CR1 &= ~TIM_CR1_CEN;
-            TIM1_DMA_STREAM->CR &= ~DMA_SxCR_EN;
-            tim1_transfer_complete = true;
-        }
+    if (flags == 0U) {
+        return;
     }
-    if (tim2_flags != 0U) {
-        DMA1->LIFCR = tim2_flags;
-        if ((tim2_flags & TIM2_DMA_ERROR_FLAGS) != 0U) {
-            diagnostics.last_tim2_dma_flags = tim2_flags;
-            ++diagnostics.dma_error_count;
-            dshot_motor_force_safe();
-            return;
-        }
-        if ((tim2_flags & DMA_LISR_TCIF1) != 0U) {
-            TIM2->DIER &= ~TIM_DIER_UDE;
-            TIM2->CR1 &= ~TIM_CR1_CEN;
-            TIM2_DMA_STREAM->CR &= ~DMA_SxCR_EN;
-            tim2_transfer_complete = true;
-        }
+    DMA2->LIFCR = flags;
+    if ((flags & DSHOT_DMA_ERROR_FLAGS) != 0U) {
+        diagnostics.last_dma_flags = flags;
+        ++diagnostics.dma_error_count;
+        dshot_motor_force_safe();
+        return;
     }
-    if (tim1_transfer_complete && tim2_transfer_complete &&
-        diagnostics.busy) {
-        TIM1->CCR1 = 0U;
-        TIM1->CCR2 = 0U;
-        TIM1->CCR3 = 0U;
-        TIM1->CCR4 = 0U;
-        TIM2->CCR1 = 0U;
-        TIM2->CCR2 = 0U;
-        TIM2->CCR3 = 0U;
-        TIM2->CCR4 = 0U;
+    if ((flags & DMA_LISR_TCIF2) != 0U) {
+        TIM8->DIER &= ~TIM_DIER_CC1DE;
+        DSHOT_DMA_STREAM->CR &= ~DMA_SxCR_EN;
+        GPIOA->BSRR = DSHOT_MOTOR_PIN_RESET_MASK;
         diagnostics.busy = false;
         ++diagnostics.complete_count;
     }
