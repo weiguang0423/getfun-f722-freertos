@@ -2,6 +2,16 @@
 	"configurations" : 
 	[
 		{
+			"abstractTargets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "stm32cubemx::@768a070a0fe75716b479",
+					"jsonFile" : "target-stm32cubemx-Debug-3dadfd9bdc04ead2ca29.json",
+					"name" : "stm32cubemx",
+					"projectIndex" : 0
+				}
+			],
 			"directories" : 
 			[
 				{
@@ -10,7 +20,7 @@
 					[
 						1
 					],
-					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"jsonFile" : "directory-.-Debug-f040eec181a89de70dbe.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.22"
@@ -23,8 +33,12 @@
 					]
 				},
 				{
+					"abstractTargetIndexes" : 
+					[
+						0
+					],
 					"build" : "cmake/stm32cubemx",
-					"jsonFile" : "directory-cmake.stm32cubemx-Debug-a874d3cc84b5982fda2e.json",
+					"jsonFile" : "directory-cmake.stm32cubemx-Debug-720efe0a241989607e76.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.22"
@@ -44,6 +58,10 @@
 			"projects" : 
 			[
 				{
+					"abstractTargetIndexes" : 
+					[
+						0
+					],
 					"directoryIndexes" : 
 					[
 						0,
@@ -64,28 +82,28 @@
 				{
 					"directoryIndex" : 1,
 					"id" : "FreeRTOS::@768a070a0fe75716b479",
-					"jsonFile" : "target-FreeRTOS-Debug-676b14e1020ca51924df.json",
+					"jsonFile" : "target-FreeRTOS-Debug-f5a6ce30a1b27fe014af.json",
 					"name" : "FreeRTOS",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "GETFUN_F722_FreeRTOS::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-GETFUN_F722_FreeRTOS-Debug-926bee0c0987d1638850.json",
+					"jsonFile" : "target-GETFUN_F722_FreeRTOS-Debug-14e122bb9f05367f0690.json",
 					"name" : "GETFUN_F722_FreeRTOS",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "STM32_Drivers::@768a070a0fe75716b479",
-					"jsonFile" : "target-STM32_Drivers-Debug-725662b6a2ad53bc9eff.json",
+					"jsonFile" : "target-STM32_Drivers-Debug-054d42f426bc6eae519a.json",
 					"name" : "STM32_Drivers",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "USB_Device_Library::@768a070a0fe75716b479",
-					"jsonFile" : "target-USB_Device_Library-Debug-e319fba333c1faa3429c.json",
+					"jsonFile" : "target-USB_Device_Library-Debug-60505e4b9731a59419c9.json",
 					"name" : "USB_Device_Library",
 					"projectIndex" : 0
 				}
@@ -101,6 +119,6 @@
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 6
+		"minor" : 10
 	}
 }

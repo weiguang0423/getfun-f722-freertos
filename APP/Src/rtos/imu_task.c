@@ -426,6 +426,9 @@ static void start_requested_accel_calibration(
     if (!take_accel_calibration_request()) {
         return;
     }
+    if (app_state_is_armed()) {
+        return;
+    }
 
     if (sample->present &&
         (gyro_calibration.state == GYRO_CALIBRATION_READY)) {
@@ -441,7 +444,10 @@ static void persist_accel_calibration_candidate(void)
     float candidate_bias[APP_STATE_AXIS_COUNT];
 
     if (!accel_calibration_get_candidate(&accel_calibration,
-                                         candidate_bias)) {
+                                          candidate_bias)) {
+        return;
+    }
+    if (app_state_is_armed()) {
         return;
     }
 

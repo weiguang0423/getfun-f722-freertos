@@ -81,6 +81,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
 - [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) — STM32F722 Sector 6/7双槽参数存储。48字节v1记录包含magic/version/length/sequence/flags/CRC32/commit；只擦除非活动槽且commit最后写入，支持空白默认、损坏恢复和序号选择。
 - [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) — Cortex-M7 DWT微秒时基。ISR只读CYCCNT；ImuTask单写者执行32位回绕扩展、周期余数累计和离线维护。216 MHz下必须严格短于约19.88秒维护一次。
 - [APP/Src/rtos/imu_task.c](APP/Src/rtos/imu_task.c) — ImuTask 是 IMU/时间扩展/低通/参数保存单写者，静态栈512 words、优先级idle+4；负责初始化/重试、1 kHz门控DMA、DMA完成取时、SI/CW90、校准、真实dt、PT1、参数提交和app_state发布。当前板级资料未定义IMU INT外部引脚，不得把PC4/PINIO1猜作DRDY EXTI。
+- [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) / [APP/Src/algorithms/flight_arming.c](APP/Src/algorithms/flight_arming.c) — FlightTask以1 kHz消费一致快照并更新RC setpoint、Rate PID和Quad-X Mixer；四态ARM/PREARM/Failsafe汇总全部安全原因，只有ARMED把Mixer映射到DShot 48～2047，Motor Test保持独立互斥门禁。
 - [APP/Inc/app_state.h](APP/Inc/app_state.h) / [APP/Src/app_state.c](APP/Src/app_state.c) — 全局运行态快照 `app_state_snapshot_t`（含IMU时间/dt、未滤波/滤波数据、两种校准、参数槽状态、解锁抑制、姿态/电池/运行信息）。多任务安全靠 **PRIMASK关中断 + DMB** 做短临界区。
 - [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) — USB CDC 上的一层收发适配。RX 是 1024 字节环形缓冲，ISR 写入后 `vTaskNotifyGiveFromISR` 唤醒绑定任务；`usb_cdc_transport_bind_current_task()` 必须在 MspTask 启动时调用一次。TX 320 字节缓冲，`tx_idle` 标志 + 轮询等待 `CDC_Transmit_FS` 完成（`usb_cdc_transport_transmit_complete_from_isr()` 在发送完成时置位）。
 - [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) — 平台基线诊断与安全停机。UART4 1 Hz输出IMU时间/dt、低通、两种校准、参数槽和偏置摘要；致命故障或参数保存前强制Motor 1～8低电平。
@@ -92,7 +93,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
 - 陀螺和加速度校准必须在SI换算和CW90之后执行；新加速度偏置必须持久化验证成功后才应用。IMU、校准或参数无效时对应 `arming_inhibit_flags` 必须保持置位。
 - DWT周期扩展只能由ImuTask更新；DMA ISR只捕获原始CYCCNT。`dt`不在500～2000 µs、首样本或滤波未READY时，`APP_ARMING_INHIBIT_IMU_TIMING_INVALID`必须保持置位，后续Mahony不得积分。
 - `MSP_RAW_IMU`继续使用校准后未滤波数据；`filtered_acceleration_m_s2`和`filtered_angular_rate_rad_s`专供后续姿态链，不能静默交换两条支路语义。
-- 参数Flash只能由ImuTask在安全状态写入。未来真实ARM状态机接入后，Armed时必须拒绝Sector 6/7擦写。
+- 参数Flash只能由ImuTask在安全状态写入；MSP校准入口、ImuTask校准启动和最终保存点都必须拒绝ARMED擦写Sector 6/7。
 - `usb_cdc_transport_receive_from_isr()` 跑在 USB ISR 上下文，**不能阻塞**；它只写环缓冲并发通知。
 - `app_state` 临界区是关中断而非互斥量，发布者要短小、不得在临界区内调任何可能阻塞的 API。
 

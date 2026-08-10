@@ -27,6 +27,9 @@
  *       GETFUN MSP2 0x4004返回ADC3原始值、换算结果和DMA诊断。
  *   - S4.1～S4.3：GETFUN MSP2 0x4005返回Flight/DShot状态，0x4006接收四路
  *       有250 ms刷新期限的显式无桨测试值。
+ *   - S4.4：GETFUN MSP2 0x4007返回归一化摇杆、Actual Rates设定值和AUX模式请求。
+ *   - S4.5/S4.6：GETFUN MSP2 0x4008返回Rate PID和Quad-X Mixer诊断。
+ *   - S4.7：GETFUN MSP2 0x4009返回ARM/Failsafe状态、原因和转换计数。
  *
  * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
  */
@@ -37,6 +40,9 @@
 #include <string.h>
 
 #include "algorithms/imu_filter.h"
+#include "algorithms/quad_x_mixer.h"
+#include "algorithms/rate_pid.h"
+#include "algorithms/rc_setpoint.h"
 #include "app_state.h"
 #include "rtos/flight_task.h"
 #include "rtos/imu_task.h"
@@ -83,6 +89,9 @@
 #define MSP2_GETFUN_POWER_STATUS 0x4004U
 #define MSP2_GETFUN_FLIGHT_MOTOR_STATUS 0x4005U
 #define MSP2_SET_GETFUN_MOTOR_TEST 0x4006U
+#define MSP2_GETFUN_RC_SETPOINT_STATUS 0x4007U
+#define MSP2_GETFUN_CONTROL_STATUS 0x4008U
+#define MSP2_GETFUN_ARMING_STATUS 0x4009U
 
 #define MSP2TEXT_PILOT_NAME 1U
 #define MSP2TEXT_CRAFT_NAME 2U
@@ -113,7 +122,6 @@
 #define GETFUN_ATTITUDE_READY (1U << 0U)
 #define RADIANS_TO_DEGREES 57.29577951308232088f
 #define BETAFLIGHT_SERIALRX_CRSF 9U
-#define BETAFLIGHT_RATES_TYPE_ACTUAL 3U
 #define BETAFLIGHT_RATE_LIMIT_DPS 1998U
 #define BETAFLIGHT_VOLTAGE_METER_ADC 1U
 #define BETAFLIGHT_CURRENT_METER_ADC 1U
@@ -152,6 +160,11 @@ static void writer_u32(payload_writer_t *writer, uint32_t value)
 static void writer_i32(payload_writer_t *writer, int32_t value)
 {
     writer_u32(writer, (uint32_t)value);
+}
+
+static void writer_i16(payload_writer_t *writer, int16_t value)
+{
+    writer_u16(writer, (uint16_t)value);
 }
 
 static int16_t scaled_float_to_i16(float value, float scale)
@@ -225,7 +238,7 @@ static void write_status_base(payload_writer_t *writer,
     writer_u16(writer, state->cycle_time_us);
     writer_u16(writer, state->i2c_error_count);
     writer_u16(writer, active_sensor_mask(state));
-    writer_u32(writer, 0U);
+    writer_u32(writer, state->flight.armed ? 1UL : 0UL);
     writer_u8(writer, 0U);
 }
 
@@ -383,37 +396,43 @@ static void handle_rc(payload_writer_t *writer,
 
 static void handle_rc_tuning(payload_writer_t *writer)
 {
-    writer_u8(writer, 7U);
-    writer_u8(writer, 0U);
-    writer_u8(writer, 67U);
-    writer_u8(writer, 67U);
-    writer_u8(writer, 67U);
+    const rc_setpoint_profile_t *profile =
+        rc_setpoint_default_profile();
+
+    writer_u8(writer, profile->actual_center_sensitivity[0]);
+    writer_u8(writer, profile->expo_percent[0]);
+    writer_u8(writer, profile->actual_max_rate[0]);
+    writer_u8(writer, profile->actual_max_rate[1]);
+    writer_u8(writer, profile->actual_max_rate[2]);
     writer_u8(writer, 0U);
     writer_u8(writer, 50U);
     writer_u8(writer, 0U);
     writer_u16(writer, 0U);
-    writer_u8(writer, 0U);
-    writer_u8(writer, 7U);
-    writer_u8(writer, 7U);
-    writer_u8(writer, 0U);
+    writer_u8(writer, profile->expo_percent[2]);
+    writer_u8(writer, profile->actual_center_sensitivity[2]);
+    writer_u8(writer, profile->actual_center_sensitivity[1]);
+    writer_u8(writer, profile->expo_percent[1]);
     writer_u8(writer, 0U);
     writer_u8(writer, 100U);
     writer_u16(writer, BETAFLIGHT_RATE_LIMIT_DPS);
     writer_u16(writer, BETAFLIGHT_RATE_LIMIT_DPS);
     writer_u16(writer, BETAFLIGHT_RATE_LIMIT_DPS);
-    writer_u8(writer, BETAFLIGHT_RATES_TYPE_ACTUAL);
+    writer_u8(writer, RC_SETPOINT_RATE_TYPE_ACTUAL);
     writer_u8(writer, 50U);
 }
 
 static void handle_rx_config(payload_writer_t *writer)
 {
+    const rc_setpoint_profile_t *profile =
+        rc_setpoint_default_profile();
+
     writer_u8(writer, BETAFLIGHT_SERIALRX_CRSF);
     writer_u16(writer, 1900U);
-    writer_u16(writer, 1500U);
+    writer_u16(writer, profile->input_mid_us);
     writer_u16(writer, 1050U);
     writer_u8(writer, 0U);
-    writer_u16(writer, 885U);
-    writer_u16(writer, 2115U);
+    writer_u16(writer, profile->input_min_us);
+    writer_u16(writer, profile->input_max_us);
     writer_u8(writer, 0U);
     writer_u8(writer, 0U);
     writer_u16(writer, 1250U);
@@ -665,6 +684,227 @@ static void handle_getfun_flight_motor_status(
         writer_u16(writer, state->flight.output_motor_value[motor]);
     }
     writer_u32(writer, flight_task_stack_high_water_mark());
+}
+
+static void handle_getfun_rc_setpoint_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    const rc_setpoint_profile_t *profile =
+        rc_setpoint_default_profile();
+    uint8_t flags = 0U;
+    uint32_t axis;
+    uint32_t age_ms = UINT32_MAX;
+
+    if (state->flight.rc_setpoint.valid) {
+        flags |= (1U << 0U);
+    }
+    if (state->flight.rc_setpoint.arm_requested) {
+        flags |= (1U << 1U);
+    }
+    if (state->flight.rc_setpoint.mode == RC_SETPOINT_MODE_ANGLE) {
+        flags |= (1U << 2U);
+    }
+    if (state->rc.channel_frame_count != 0U) {
+        age_ms = state->uptime_ms -
+                 (uint32_t)state->rc.last_channel_tick;
+    }
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, flags);
+    writer_u8(writer, (uint8_t)state->flight.rc_setpoint.mode);
+    writer_u8(writer, RC_SETPOINT_RATE_TYPE_ACTUAL);
+    writer_u16(writer, profile->input_min_us);
+    writer_u16(writer, profile->input_mid_us);
+    writer_u16(writer, profile->input_max_us);
+    writer_u8(writer, profile->deadband_us);
+    writer_u8(writer, profile->yaw_deadband_us);
+    for (axis = 0U; axis < RC_SETPOINT_AXIS_COUNT; ++axis) {
+        writer_u8(writer, profile->actual_center_sensitivity[axis]);
+    }
+    for (axis = 0U; axis < RC_SETPOINT_AXIS_COUNT; ++axis) {
+        writer_u8(writer, profile->actual_max_rate[axis]);
+    }
+    for (axis = 0U; axis < RC_SETPOINT_AXIS_COUNT; ++axis) {
+        writer_u8(writer, profile->expo_percent[axis]);
+    }
+    writer_u8(writer, profile->arm_aux_channel);
+    writer_u8(writer, profile->angle_aux_channel);
+    writer_u8(writer, 0U);
+    writer_u16(writer, profile->arm_range_min_us);
+    writer_u16(writer, profile->arm_range_max_us);
+    writer_u16(writer, profile->angle_range_min_us);
+    writer_u16(writer, profile->angle_range_max_us);
+    for (axis = 0U; axis < RC_SETPOINT_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(
+                       state->flight.rc_setpoint.normalized_stick[axis],
+                       1000.0f));
+    }
+    writer_u16(writer,
+               (uint16_t)scaled_float_to_i16(
+                   state->flight.rc_setpoint.throttle, 1000.0f));
+    for (axis = 0U; axis < RC_SETPOINT_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(
+                       state->flight.rc_setpoint.rate_dps[axis],
+                       10.0f));
+    }
+    writer_u32(writer, state->flight.rc_setpoint_update_count);
+    writer_u32(writer, state->flight.rc_setpoint_error_count);
+    writer_u32(writer, state->rc.channel_sequence);
+    writer_u32(writer, age_ms);
+    writer_u16(writer, 0U);
+}
+
+static void handle_getfun_control_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    const rate_pid_profile_t *profile = rate_pid_default_profile();
+    uint8_t flags = 0U;
+    uint32_t axis;
+    uint32_t motor;
+
+    if (state->flight.rate_pid.valid) {
+        flags |= (1U << 0U);
+    }
+    if (state->flight.mixer.valid) {
+        flags |= (1U << 1U);
+    }
+    if (state->flight.mixer.saturated) {
+        flags |= (1U << 2U);
+    }
+    if (state->flight.rate_pid_integrator_enabled) {
+        flags |= (1U << 3U);
+    }
+    if (state->flight.rc_setpoint.mode == RC_SETPOINT_MODE_RATE) {
+        flags |= (1U << 4U);
+    }
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, flags);
+    writer_u8(writer, state->flight.rate_pid.saturated_mask);
+    writer_u8(writer, QUAD_X_MIXER_MOTOR_COUNT);
+    writer_u32(writer, state->flight.control_dt_us);
+    writer_u32(writer, state->flight.control_sample_count);
+    writer_u32(writer, state->flight.rate_pid_update_count);
+    writer_u32(writer, state->flight.rate_pid_error_count);
+    writer_u32(writer, state->flight.mixer_update_count);
+    writer_u32(writer, state->flight.mixer_error_count);
+
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(profile->kp[axis], 10000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(profile->ki[axis], 10000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(profile->kd[axis], 10000.0f));
+    }
+    writer_i16(writer,
+               scaled_float_to_i16(profile->integral_limit, 10000.0f));
+    writer_i16(writer,
+               scaled_float_to_i16(profile->output_limit, 10000.0f));
+
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(
+                       state->flight.rate_pid.setpoint_rad_s[axis],
+                       1000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(
+                       state->flight.rate_pid.measurement_rad_s[axis],
+                       1000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(
+                       state->flight.rate_pid.error_rad_s[axis],
+                       1000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(state->flight.rate_pid.p[axis],
+                                       10000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(state->flight.rate_pid.i[axis],
+                                       10000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(state->flight.rate_pid.d[axis],
+                                       10000.0f));
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_i16(writer,
+                   scaled_float_to_i16(
+                       state->flight.rate_pid.correction[axis],
+                       10000.0f));
+    }
+    writer_i16(writer,
+               scaled_float_to_i16(
+                   state->flight.mixer.requested_throttle,
+                   10000.0f));
+    writer_i16(writer,
+               scaled_float_to_i16(
+                   state->flight.mixer.applied_throttle,
+                   10000.0f));
+    writer_i16(writer,
+               scaled_float_to_i16(
+                   state->flight.mixer.correction_scale,
+                   10000.0f));
+    for (motor = 0U; motor < QUAD_X_MIXER_MOTOR_COUNT; ++motor) {
+        writer_i16(writer,
+                   scaled_float_to_i16(state->flight.mixer.motor[motor],
+                                       10000.0f));
+    }
+}
+
+static void handle_getfun_arming_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint8_t flags = 0U;
+    uint32_t motor;
+
+    if (state->flight.armed) {
+        flags |= (1U << 0U);
+    }
+    if (state->flight.rc_setpoint.arm_requested) {
+        flags |= (1U << 1U);
+    }
+    if (state->flight.inputs_ready) {
+        flags |= (1U << 2U);
+    }
+    if (state->flight.motor_test_active) {
+        flags |= (1U << 3U);
+    }
+
+    writer_u8(writer, 1U);
+    writer_u8(writer, (uint8_t)state->flight.arming_state);
+    writer_u8(writer, flags);
+    writer_u8(writer, state->flight.dshot_ready ? 1U : 0U);
+    writer_u32(writer, state->arming_inhibit_flags);
+    writer_u32(writer, state->flight.safety_flags);
+    writer_u32(writer, state->flight.arming_block_flags);
+    writer_u32(writer, state->flight.last_failsafe_flags);
+    writer_u32(writer, state->flight.arm_count);
+    writer_u32(writer, state->flight.disarm_count);
+    writer_u32(writer, state->flight.flight_failsafe_count);
+    writer_u16(writer,
+               (uint16_t)scaled_float_to_i16(
+                   state->flight.rc_setpoint.throttle, 1000.0f));
+    for (motor = 0U; motor < APP_STATE_MOTOR_COUNT; ++motor) {
+        writer_u16(writer, state->flight.output_motor_value[motor]);
+    }
 }
 
 static void handle_get_text(const msp_request_t *request,
@@ -950,8 +1190,10 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP_RC_DEADBAND:
-        writer_u8(&writer, 0U);
-        writer_u8(&writer, 0U);
+        writer_u8(&writer,
+                  rc_setpoint_default_profile()->deadband_us);
+        writer_u8(&writer,
+                  rc_setpoint_default_profile()->yaw_deadband_us);
         writer_u8(&writer, 0U);
         writer_u16(&writer, 50U);
         break;
@@ -976,6 +1218,7 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP_ACC_CALIBRATION:
         if ((request->payload_length != 0U) ||
+            state.flight.armed ||
             !state.imu.present ||
             (state.imu.gyro_calibration_state !=
              APP_GYRO_CALIBRATION_READY) ||
@@ -1053,12 +1296,26 @@ void msp_server_process(const msp_request_t *request,
                 requests_output = requests_output || (values[motor] != 0U);
             }
             if ((requests_output &&
-                 (!state.flight.dshot_ready ||
+                 (state.flight.armed ||
+                  state.flight.rc_setpoint.arm_requested ||
+                  !state.flight.dshot_ready ||
                   !state.flight.inputs_ready)) ||
                 !flight_task_request_motor_test(values)) {
                 response->supported = false;
             }
         }
+        break;
+
+    case MSP2_GETFUN_RC_SETPOINT_STATUS:
+        handle_getfun_rc_setpoint_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_CONTROL_STATUS:
+        handle_getfun_control_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_ARMING_STATUS:
+        handle_getfun_arming_status(&writer, &state);
         break;
 
     default:

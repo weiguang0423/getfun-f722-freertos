@@ -35,10 +35,14 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/algorithms/accel_calibration.c
     APP/Src/algorithms/attitude_estimator.c
+    APP/Src/algorithms/flight_arming.c
     APP/Src/algorithms/gyro_calibration.c
     APP/Src/algorithms/imu_filter.c
     APP/Src/algorithms/power_monitor.c
+    APP/Src/algorithms/quad_x_mixer.c
     APP/Src/algorithms/rc_input.c
+    APP/Src/algorithms/rc_setpoint.c
+    APP/Src/algorithms/rate_pid.c
     APP/Src/app_state.c
     APP/Src/bsp/crsf_uart.c
     APP/Src/bsp/dshot_motor.c

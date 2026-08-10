@@ -126,7 +126,8 @@ assert(flight.includes("app_state_get_snapshot(&snapshot)") &&
        flight.includes("APP_FLIGHT_SAFETY_IMU_STALE") &&
        flight.includes("APP_FLIGHT_SAFETY_RC_STALE") &&
        flight.includes("FLIGHT_TEST_TIMEOUT_TICKS") &&
-       flight.includes("dshot_motor_force_safe()"),
+       flight.includes("dshot_motor_force_safe()") &&
+       flight.includes("!state.rc_setpoint.arm_requested && !state.armed"),
   "FlightTask freshness or hard-stop path changed");
 assert(!imuTask.includes("platform_motor_outputs_force_safe()"),
   "calibration save must not steal DShot motor pins");
@@ -194,5 +195,5 @@ console.log(JSON.stringify({
   motorTestTimeoutMs: TEST_TIMEOUT_MS,
   statusPayloadBytes: flightMotorStatusBytes,
   dma: "TIM8_CH1 pacer; DMA2 Stream2/Channel7 -> GPIOA BSRR",
-  deferred: ["PID", "Mixer", "ARM state machine", "Betaflight Motors page"],
+  deferred: ["Betaflight Motors page", "configurable motor/arming parameters"],
 }, null, 2));

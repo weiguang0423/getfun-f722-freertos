@@ -185,8 +185,9 @@ AUX：按开关范围判定
 S3.8保留CRSF `channel_us[]`原始线序，另外按Betaflight默认 `AETR1234`发布
 `mapped_channel_us[]`：Roll/Pitch/Yaw/Throttle分别来自线序CH1/CH2/CH4/CH3，
 AUX1～AUX12保持CH5～CH16。Betaflight App Receiver页面通过 `MSP_RC`读取16路映射值，
-并通过 `MSP_RX_MAP`显示 `AETR1234`。端点标定、Deadband、Rates、Expo和归一化
-仍留给S4.4；S3.8对这些App字段只做API 1.48可解析的只读投影。
+并通过 `MSP_RX_MAP`显示 `AETR1234`。S4.4已在映射后增加1000/1500/2000 us端点、
+Roll/Pitch/Yaw 5 us Deadband、Throttle `[0,1]`、Actual Rates和Expo归一化；
+S4.9再增加App写入、参数持久化和Armed拒绝事务。
 
 最后合法通道帧超过300 ms时，S3.8撤销 `channels_valid`、置
 `failsafe_active`并增加 `APP_ARMING_INHIBIT_RC_NOT_READY`；恢复必须同时满足
@@ -216,6 +217,10 @@ Rates / Expo
 - Rates
 - Expo
 - ARM 和 ANGLE AUX 范围
+
+S4.4软件固定Profile为Actual Rates：三轴中心灵敏度70 deg/s、最大角速度670 deg/s、
+Expo 0%；AUX1在1700～2000 us生成ARM请求，AUX2同范围生成ANGLE请求。ARM请求只供
+S4.7状态机消费，ANGLE请求只供S4.8外环消费，本阶段两者都不能让Motor非零。
 
 ---
 
@@ -253,6 +258,11 @@ output = P + I + D
 - NaN/Inf 时立即撤销本周期控制输出。
 
 D 项可以先对测量值求导，降低设定值跳变带来的冲击。
+
+S4.5当前纯C实现统一使用rad/s：Roll/Pitch/Yaw默认Kp为0.10/0.10/0.12，Ki均为0.25，
+Kd为0.001/0.001/0；积分限制±0.20，输出限制±0.50，只接受500～2000 us真实dt。
+D项对测量值求导；输出同向饱和时拒绝继续积分。S4.7接入真实ARM状态后，只有ARMED且
+Throttle大于5%才允许积分；低油门、正常DISARM或FAILSAFE都会立即清零积分。
 
 ---
 
@@ -308,6 +318,11 @@ Mixer 输出：
 
 Betaflight App 中显示的 Motor 1～4 顺序必须与实际焊盘和 Mixer 一致。
 
+S4.6当前采用Betaflight标准顺序：M1后右、M2前右、M3后左、M4前左；矩阵分别为
+`[-1,+1,-1]`、`[-1,-1,+1]`、`[+1,+1,+1]`、`[+1,-1,-1]`（Roll/Pitch/Yaw）。
+修正跨度大于1时统一缩放，再平移Throttle使全部逻辑值落在`[0,1]`。文档26没有补录
+实体位置细节，因此文档30联合验收时必须再次对应。当前逻辑值只供诊断，不连接DShot。
+
 ---
 
 ## 9. DShot300 输出
@@ -332,8 +347,8 @@ DShot 帧为 16 位：
 S4.2/S4.3软件实现按Betaflight的STM32F7默认bitbang路径，把M1～M4保持为GPIOA
 推挽输出；TIM8_CH1只作三相节拍器，DMA2 Stream2/Channel7直接写GPIOA BSRR。
 测试写命令只接受停止值0或48～2047，250 ms未刷新、IMU/RC过期或任一既有解锁
-抑制出现时归零；DMA连续忙则切回GPIO低电平并锁存到重启。物理时序、编号和方向
-仍须按文档26验收。
+抑制出现时归零；DMA连续忙则切回GPIO低电平并锁存到重启。S4.7只在ARMED时把Mixer
+`[0,1]`映射到48～2047，其他状态提交0；飞行输出与测试命令互斥。
 
 DShot 开发顺序：
 
@@ -348,16 +363,18 @@ DShot 开发顺序：
 
 ## 10. ARM、DISARM 与 Failsafe
 
-个人项目使用简单状态即可：
+S4.7实现四态安全状态机：
 
 ```text
-BOOT
+BOOT / Failsafe恢复
+  ↓
+PREARM（必须看到ARM低位、低油门、全部block清零）
   ↓
 DISARMED
-  ↓ ARM 条件满足
+  ↓ 新的ARM高位请求
 ARMED
-  ↓ DISARM 或故障
-DISARMED
+  ├─ ARM低位 → DISARMED
+  └─ 任一故障 → FAILSAFE → ARM低位后回PREARM
 ```
 
 ### 10.1 ARM 条件
@@ -371,6 +388,7 @@ DISARMED
 - 油门低位。
 - ARM 开关有效。
 - 不处于 App 电机测试。
+- DShot、Rate PID和Mixer有效，Configurator未禁止解锁，系统fault为0。
 
 ### 10.2 立即停止电机
 
@@ -381,7 +399,8 @@ DISARMED
 - 系统严重错误。
 - App 电机测试超时或断开。
 
-故障恢复后不自动 ARM，必须重新操作 ARM 开关。
+故障恢复后不自动ARM：ARM保持高位时停留FAILSAFE；切低后进入PREARM，全部条件恢复后
+只回到DISARMED，必须再次切高才可ARM。当前PREARM是固定安全握手，可配置PREARM AUX留给S4.9。
 
 ---
 

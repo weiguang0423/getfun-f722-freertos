@@ -219,6 +219,22 @@ void platform_diag_heartbeat(void)
     length = snprintf(
         line,
         sizeof(line),
+        "arming state=%u armed=%u arm_req=%u block=0x%08lX "
+        "last_fs=0x%08lX count=%lu/%lu/%lu inhibit=0x%08lX\r\n",
+        (unsigned int)snapshot.flight.arming_state,
+        snapshot.flight.armed ? 1U : 0U,
+        snapshot.flight.rc_setpoint.arm_requested ? 1U : 0U,
+        (unsigned long)snapshot.flight.arming_block_flags,
+        (unsigned long)snapshot.flight.last_failsafe_flags,
+        (unsigned long)snapshot.flight.arm_count,
+        (unsigned long)snapshot.flight.disarm_count,
+        (unsigned long)snapshot.flight.flight_failsafe_count,
+        (unsigned long)snapshot.arming_inhibit_flags);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
         "params valid=%u load=%u save=%u slot=%u invalid=0x%02X "
         "seq=%lu save_err=%lu hal=0x%08lX\r\n",
         snapshot.parameters.storage_valid ? 1U : 0U,
@@ -538,6 +554,104 @@ void platform_diag_heartbeat(void)
         (unsigned long)snapshot.flight.dshot_dma_error_count,
         (unsigned long)dshot.last_dma_flags,
         (unsigned long)flight_task_stack_high_water_mark());
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "setpoint valid=%u mode=%u arm_req=%u "
+        "stick_milli=[%ld,%ld,%ld] throttle_milli=%ld "
+        "rate_mdps=[%ld,%ld,%ld] updates=%lu errors=%lu\r\n",
+        snapshot.flight.rc_setpoint.valid ? 1U : 0U,
+        (unsigned int)snapshot.flight.rc_setpoint.mode,
+        snapshot.flight.rc_setpoint.arm_requested ? 1U : 0U,
+        (long)diag_float_to_milli(
+            snapshot.flight.rc_setpoint.normalized_stick[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rc_setpoint.normalized_stick[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rc_setpoint.normalized_stick[2]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rc_setpoint.throttle),
+        (long)diag_float_to_milli(
+            snapshot.flight.rc_setpoint.rate_dps[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rc_setpoint.rate_dps[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rc_setpoint.rate_dps[2]),
+        (unsigned long)snapshot.flight.rc_setpoint_update_count,
+        (unsigned long)snapshot.flight.rc_setpoint_error_count);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "control pid=%u int=%u sat=0x%02X dt_us=%lu sample=%lu "
+        "sp_mrad_s=[%ld,%ld,%ld] gyro_mrad_s=[%ld,%ld,%ld] "
+        "corr_milli=[%ld,%ld,%ld] updates=%lu errors=%lu\r\n",
+        snapshot.flight.rate_pid.valid ? 1U : 0U,
+        snapshot.flight.rate_pid_integrator_enabled ? 1U : 0U,
+        snapshot.flight.rate_pid.saturated_mask,
+        (unsigned long)snapshot.flight.control_dt_us,
+        (unsigned long)snapshot.flight.control_sample_count,
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.setpoint_rad_s[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.setpoint_rad_s[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.setpoint_rad_s[2]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.measurement_rad_s[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.measurement_rad_s[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.measurement_rad_s[2]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.correction[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.correction[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.rate_pid.correction[2]),
+        (unsigned long)snapshot.flight.rate_pid_update_count,
+        (unsigned long)snapshot.flight.rate_pid_error_count);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "pid_terms p_milli=[%ld,%ld,%ld] i_milli=[%ld,%ld,%ld] "
+        "d_milli=[%ld,%ld,%ld]\r\n",
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.p[0]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.p[1]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.p[2]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.i[0]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.i[1]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.i[2]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.d[0]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.d[1]),
+        (long)diag_float_to_milli(snapshot.flight.rate_pid.d[2]));
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "mixer valid=%u saturated=%u throttle_milli=%ld/%ld "
+        "scale_milli=%ld motor_milli=[%ld,%ld,%ld,%ld] "
+        "updates=%lu errors=%lu\r\n",
+        snapshot.flight.mixer.valid ? 1U : 0U,
+        snapshot.flight.mixer.saturated ? 1U : 0U,
+        (long)diag_float_to_milli(
+            snapshot.flight.mixer.requested_throttle),
+        (long)diag_float_to_milli(
+            snapshot.flight.mixer.applied_throttle),
+        (long)diag_float_to_milli(
+            snapshot.flight.mixer.correction_scale),
+        (long)diag_float_to_milli(snapshot.flight.mixer.motor[0]),
+        (long)diag_float_to_milli(snapshot.flight.mixer.motor[1]),
+        (long)diag_float_to_milli(snapshot.flight.mixer.motor[2]),
+        (long)diag_float_to_milli(snapshot.flight.mixer.motor[3]),
+        (unsigned long)snapshot.flight.mixer_update_count,
+        (unsigned long)snapshot.flight.mixer_error_count);
     diag_write_formatted(line, sizeof(line), length);
 
     previous_tick = current_tick;

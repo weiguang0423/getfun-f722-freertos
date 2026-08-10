@@ -19,9 +19,11 @@
 > 逻辑由本项目自主实现并完全掌握。
 
 > **当前状态（2026-08-10）**：`S4.1 + S4.2 + S4.3` 已通过FlightTask安全门禁、
-> DShot600逻辑分析仪和四路无桨联合验收，当前目标切换到`S4.4` RC setpoint、Rates、Expo与模式选择。
+> DShot600逻辑分析仪和四路无桨联合验收；`S4.4～S4.6` RC setpoint、Rate PID和Quad-X Mixer
+> 已完成软件和双配置构建，等待真实RC/App、控制方向、Mixer顺序与长时联合验收。
 > 最新冻结基线：[`v1.0.0-motor-output-baseline`](#-已冻结版本历史)。
-> 本固件**尚未飞行**，PID、Mixer和ARM状态机仍未实现；任何后续电机测试仍必须拆桨。
+> 本固件**尚未飞行**，PID/Mixer目前只发布逻辑诊断，ARM状态机及Mixer到DShot授权仍未实现；
+> 任何后续电机测试仍必须拆桨。
 
 ---
 
@@ -119,14 +121,17 @@ SPI1 + PA4 CS + DMA2 Stream 0/3
 UART2 + DMA1 Stream5 循环接收 (IDLE/HT/TC)
   └─ crsf_uart -> crsf 解析 (CRC-8/DVB-S2) -> rc_input (AETR映射) -> RcTask
        └─ app_state.rc (300ms Failsafe / 100ms+5帧恢复)
+            └─ FlightTask -> rc_setpoint (端点/Deadband/Actual Rates/AUX请求)
+                 └─ Rate PID -> Quad-X Mixer -> ARM/PREARM/Failsafe
+                      └─ 仅ARMED把[0,1]映射到DShot 48..2047
                                                      │
 ADC3 PC0..PC3 + DMA2 Stream1/Channel2 单次扫描
   └─ power_adc -> BatteryTask (50 Hz) -> power_monitor (滤波/换算/低压/mAh)
        └─ app_state.battery (100ms停更失效 / bit 7解锁抑制)
                                                      │
 FlightTask (1 kHz，一致快照/新鲜度门禁)
-  └─ TIM2_CH1 M1 + TIM1_CH1..3 M4..M2，update DMA发送DShot300
-       └─ 仅显式无桨测试可非零；250 ms未刷新或输入失效立即停止
+  └─ TIM8_CH1节拍 + DMA2 Stream2/Channel7写GPIOA BSRR，四路DShot600
+       └─ ARMED飞行输出与显式无桨测试互斥；DISARM/Failsafe/故障立即停止
                                                      │
 USB CDC 接收回调 (usbd_cdc_if.c, ISR 上下文)
   └─ usb_cdc_transport_receive_from_isr()        环形缓冲 + 任务通知
@@ -157,11 +162,12 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
 | 姿态解算 | [APP/Src/algorithms/attitude_estimator.c](APP/Src/algorithms/attitude_estimator.c) | 六轴 Mahony 四元数，FRD/NED 约定，驱动 App 三维模型 |
 | CRSF 解析 | [APP/Src/protocol/crsf.c](APP/Src/protocol/crsf.c) | 长度 2～62 + CRC-8/DVB-S2 `0xD5`，解码 16 路 11-bit 通道与 Link Statistics |
 | RC 输入 | [APP/Src/algorithms/rc_input.c](APP/Src/algorithms/rc_input.c) | AETR→App 逻辑顺序映射 + Failsafe 超时/恢复状态机 |
+| RC Setpoint | [APP/Src/algorithms/rc_setpoint.c](APP/Src/algorithms/rc_setpoint.c) | 端点/Deadband归一化、Actual Rates/Expo和AUX1 ARM/AUX2 ANGLE请求 |
 | CRSF UART | [APP/Src/bsp/crsf_uart.c](APP/Src/bsp/crsf_uart.c) | UART2 420000 baud DMA 循环接收 |
 | 电源ADC | [APP/Src/bsp/power_adc.c](APP/Src/bsp/power_adc.c) | ADC3 PC0～PC3单次扫描，DMA2 Stream1/Channel2一致发布 |
 | 电源监测 | [APP/Src/algorithms/power_monitor.c](APP/Src/algorithms/power_monitor.c) | 固定点滤波、VBAT/Current换算、电芯锁存、低压状态与mAh积分 |
-| DShot输出 | [APP/Src/bsp/dshot_motor.c](APP/Src/bsp/dshot_motor.c) | M1～M4 DShot300编码、TIM1/TIM2 update DMA与故障低电平 |
-| 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、IMU/RC新鲜度、无桨测试250 ms超时 |
+| DShot输出 | [APP/Src/bsp/dshot_motor.c](APP/Src/bsp/dshot_motor.c) | M1～M4 DShot600编码、TIM8_CH1节拍、GPIOA BSRR DMA与故障低电平 |
+| 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、IMU/RC新鲜度、RC setpoint与无桨测试250 ms超时 |
 | 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7 双槽，48 字节 v1 记录 + magic/version/CRC32/commit，序号选择 |
 | 平台时基 | [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) | DWT 微秒时基，ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展 |
 | 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
@@ -252,7 +258,7 @@ cmake --build build/Release
 S1 硬件基线            🟠 主体完成，并行实测项按依赖补齐
 S2 最小FreeRTOS平台    🟠 v0.1.0 已冻结；App/CLI 软件 DFU 未实现
 S3 IMU、姿态与飞行输入 ✅ v0.9.0 已冻结
-S4 控制与电机          🟠 S4.1～S4.3已冻结，当前S4.4
+S4 控制与电机          🟠 S4.1～S4.3已冻结；S4.4～S4.7软件完成待实物
 S5 基础飞行            ⬜ 已规划
 S6 功能完善            ⬜ 已规划（OSD / Blackbox / 气压计 / CLI）
 S7 后续扩展            ⏸ 条件式（GPS / 双向 DShot / 伴随计算）
@@ -260,7 +266,10 @@ S7 后续扩展            ⏸ 条件式（GPS / 双向 DShot / 伴随计算）
 
 S3.1～S3.9 已全部冻结。S3.9沿用实物验收正确的电源换算参数，不再追加标定改动；
 **S4.1 FlightTask安全骨架**、**S4.2 DShot600 GPIO bitbang** 与
-**S4.3 四路无桨电机测试/超时归零** 已按文档26通过联合实物验收并冻结，当前开发S4.4。
+**S4.3 四路无桨电机测试/超时归零** 已按文档26通过联合实物验收并冻结；
+**S4.4 RC setpoint** 仍按文档30待实物；**S4.5～S4.7 Rate PID/Quad-X Mixer/ARM安全链**
+已完成软件与构建，按文档32等待联合拆桨验收。Mixer只在ARMED时映射到DShot；上电或
+Failsafe后必须先完成ARM低位PREARM握手，任何输入、控制或DShot故障都会停机且禁止自动重解锁。
 
 ### 🏷 已冻结版本历史
 
@@ -290,7 +299,7 @@ S3.1～S3.9 已全部冻结。S3.9沿用实物验收正确的电源换算参数�
   500～2000 µs、首样本或滤波未 READY 时，`APP_ARMING_INHIBIT_IMU_TIMING_INVALID`
   必须置位，后续 Mahony 不得积分。
 - `MSP_RAW_IMU` 用校准后**未滤波**数据；`filtered_*` 专供姿态链，两条支路语义不能互换。
-- Flash 参数只能由 ImuTask 在安全状态写入；未来 ARM 后必须拒绝 Sector 6/7 擦写。
+- Flash 参数只能由 ImuTask 在安全状态写入；MSP入口、ImuTask校准启动和最终写入点都会拒绝ARMED校准/擦写Sector 6/7。
 - `usb_cdc_transport_receive_from_isr()` 跑在 **USB ISR 上下文，不能阻塞**，只写环缓冲并发通知。
 - 不在生成段（`Core/`、`USB_DEVICE/`、CubeMX 驱动）手写外设句柄、MSP、IRQ 或业务逻辑；
   生成文件里的项目代码只能写在成对的 `/* USER CODE BEGIN ... */` / `/* USER CODE END ... */` 之间。

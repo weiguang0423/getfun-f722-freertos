@@ -81,6 +81,16 @@ void app_state_get_snapshot(app_state_snapshot_t *snapshot)
     snapshot->uptime_ms = HAL_GetTick();
 }
 
+bool app_state_is_armed(void)
+{
+    bool armed;
+    const uint32_t primask = app_state_lock();
+
+    armed = state.flight.armed;
+    app_state_unlock(primask);
+    return armed;
+}
+
 void app_state_set_runtime(uint16_t cycle_time_us,
                            uint16_t cpu_load_permille,
                            uint16_t i2c_error_count)

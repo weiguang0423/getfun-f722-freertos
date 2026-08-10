@@ -285,15 +285,18 @@ Body→NED四元数和Euler。任何输入边界失效都会撤销姿态READY并
 
 ### 5.2 FlightTask
 
-S4.1已创建静态FlightTask，优先级 `tskIDLE_PRIORITY+5`、栈384 words，周期1 kHz。
+S4.1已创建静态FlightTask，优先级 `tskIDLE_PRIORITY+5`、周期1 kHz；S4.5因控制快照扩展把
+静态栈从384增加到512 words。
 当前每次执行：
 
 1. 取得同一发布链的最新IMU和姿态快照。
 2. 检查数据是否READY及是否过期。
-3. 读取 RC 快照和飞行模式。
-4. 检查既有全部解锁抑制和250 ms无桨测试刷新期限。
-5. 本阶段未实现Rate/Angle与Mixer，正常控制值固定为零。
-6. 经过安全检查后提交四路DShot停止值或显式无桨测试值。
+3. 读取RC快照；RC有效且未过期时计算端点、Deadband、Actual Rates和AUX模式请求，
+   RC失效时立即把setpoint清零。
+4. 仅在新IMU样本到达且当前为RATE请求时，用滤波Gyro和真实dt更新三轴Rate PID。
+5. 把有界PID修正送入标准顺序Quad-X Mixer，统一缩放修正并平移Throttle到`[0,1]`。
+6. 汇总既有解锁抑制、DShot/系统/Configurator/控制状态和ARM低位PREARM握手。
+7. 仅ARMED把Mixer `[0,1]`映射到DShot 48～2047；否则只允许停止值或与ARM互斥的显式无桨测试值。
 
 姿态随新IMU样本在ImuTask中更新，未来FlightTask只消费，不在另一周期重复积分。
 
@@ -411,7 +414,10 @@ mAh积分全部留在任务上下文。100 ms没有新序列时撤销ADC/电池�
 4. 输出开关和超时归零
 
 当前结果：S4.1～S4.3已按文档26通过联合实物验收并冻结；通过MSP2 `0x4006`和
-`Tools/motor_test.ps1`执行无桨测试。完整App Motors页面仍留给S4.9。
+`Tools/motor_test.ps1`执行无桨测试。S4.4新增纯算法setpoint和MSP2 `0x4007`诊断，
+S4.5/S4.6新增Rate PID、Quad-X逻辑Mixer和MSP2 `0x4008`诊断；S4.7新增四态
+ARM/PREARM/Failsafe和MSP2 `0x4009`，仅ARMED把Mixer接入DShot。完整App PID/Modes/Motors
+写入与保存仍留给S4.9。
 
 ### 8.4 第四批：附加功能
 

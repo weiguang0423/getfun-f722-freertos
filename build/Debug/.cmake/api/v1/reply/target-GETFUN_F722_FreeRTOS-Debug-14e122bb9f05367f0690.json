@@ -12,6 +12,7 @@
 		[
 			"add_executable",
 			"target_link_libraries",
+			"add_custom_command",
 			"target_include_directories",
 			"target_sources"
 		],
@@ -41,19 +42,55 @@
 				"parent" : 2
 			},
 			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 94,
+				"parent" : 0
+			},
+			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 76,
+				"line" : 101,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
+				"file" : 0,
+				"line" : 80,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
 				"file" : 1,
 				"line" : 129,
 				"parent" : 2
 			}
 		]
 	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 10
+	},
+	"compileDependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "STM32_Drivers::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "USB_Device_Library::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "FreeRTOS::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "stm32cubemx::@768a070a0fe75716b479"
+		}
+	],
 	"compileGroups" : 
 	[
 		{
@@ -81,7 +118,7 @@
 			"includes" : 
 			[
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"path" : "E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/APP/Inc"
 				},
 				{
@@ -182,7 +219,11 @@
 				35,
 				36,
 				37,
-				38
+				38,
+				39,
+				40,
+				41,
+				42
 			]
 		},
 		{
@@ -210,7 +251,7 @@
 			"includes" : 
 			[
 				{
-					"backtrace" : 4,
+					"backtrace" : 6,
 					"path" : "E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/APP/Inc"
 				},
 				{
@@ -265,7 +306,7 @@
 			"language" : "ASM",
 			"sourceIndexes" : 
 			[
-				39
+				43
 			]
 		}
 	],
@@ -305,8 +346,38 @@
 		],
 		"language" : "C"
 	},
+	"linkLibraries" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "STM32_Drivers::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"fragment" : "m"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "USB_Device_Library::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "FreeRTOS::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "stm32cubemx::@768a070a0fe75716b479"
+		}
+	],
 	"name" : "GETFUN_F722_FreeRTOS",
 	"nameOnDisk" : "GETFUN_F722_FreeRTOS.elf",
+	"orderDependencies" : 
+	[
+		{
+			"backtrace" : 5,
+			"id" : "GETFUN_F722_FreeRTOS::@6890427a1f51a3e7e1df"
+		}
+	],
 	"paths" : 
 	{
 		"build" : ".",
@@ -356,24 +427,24 @@
 				35,
 				36,
 				37,
-				38
+				38,
+				39,
+				40,
+				41,
+				42
 			]
 		},
 		{
 			"name" : "",
 			"sourceIndexes" : 
 			[
-				39
+				43
 			]
 		},
 		{
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				40,
-				41,
-				42,
-				43,
 				44,
 				45,
 				46,
@@ -407,7 +478,11 @@
 				74,
 				75,
 				76,
-				77
+				77,
+				78,
+				79,
+				80,
+				81
 			]
 		}
 	],
@@ -423,6 +498,12 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "APP/Src/algorithms/attitude_estimator.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "APP/Src/algorithms/flight_arming.c",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -446,7 +527,25 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "APP/Src/algorithms/quad_x_mixer.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "APP/Src/algorithms/rc_input.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "APP/Src/algorithms/rc_setpoint.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "APP/Src/algorithms/rate_pid.c",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -558,97 +657,97 @@
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "USB_DEVICE/Target/usbd_conf.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "USB_DEVICE/App/usb_device.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "USB_DEVICE/App/usbd_desc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "USB_DEVICE/App/usbd_cdc_if.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/main.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/gpio.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/freertos.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/dma.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/spi.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/usart.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32f7xx_it.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32f7xx_hal_msp.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32f7xx_hal_timebase_tim.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/sysmem.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/syscalls.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 5,
+			"backtrace" : 7,
 			"compileGroupIndex" : 1,
 			"path" : "startup_stm32f722xx.s",
 			"sourceGroupIndex" : 1
