@@ -5,6 +5,7 @@ const profile = {
   min: 1000,
   mid: 1500,
   max: 2000,
+  mincheck: 1050,
   deadband: 5,
   yawDeadband: 5,
   center: [7, 7, 7],
@@ -58,6 +59,7 @@ function validProfile(config) {
   return config.min < config.mid && config.mid < config.max &&
     config.deadband < left && config.deadband < right &&
     config.yawDeadband < left && config.yawDeadband < right &&
+    config.mincheck >= config.min && config.mincheck < config.max &&
     config.armAux >= 4 && config.armAux < 16 &&
     config.angleAux >= 4 && config.angleAux < 16 &&
     config.armAux !== config.angleAux &&
@@ -73,7 +75,9 @@ function compute(channels, config = profile) {
     normalizeAxis(value, axis === 2 ? config.yawDeadband : config.deadband, config));
   return {
     stick,
-    throttle: (clamp(channels[3], config.min, config.max) - config.min) /
+    throttle: Math.trunc(
+      (clamp(channels[3], config.mincheck, config.max) - config.mincheck) *
+      (config.max - config.min) / (config.max - config.mincheck)) /
       (config.max - config.min),
     rateDps: stick.map((value, axis) =>
       actualRate(value, config.center[axis], config.maxRate[axis], config.expo[axis])),
@@ -124,6 +128,13 @@ close(actualRate(0.5, 7, 67, 50), 114.6875, 1e-6,
 assert(compute([1500, 1500, 1500, 885, 1000, 1000,
   ...new Array(10).fill(1000)]).throttle === 0,
   "throttle below configured endpoint must clamp to zero");
+assert(compute([1500, 1500, 1500, 1050, 1000, 1000,
+  ...new Array(10).fill(1000)]).throttle === 0 &&
+       compute([1500, 1500, 1500, 1051, 1000, 1000,
+         ...new Array(10).fill(1000)]).throttle === 0.001 &&
+       compute([1500, 1500, 1500, 1525, 1000, 1000,
+         ...new Array(10).fill(1000)]).throttle === 0.5,
+  "Betaflight mincheck throttle mapping changed");
 assert(compute([1500, 1500, 1500, 2115, 1000, 1000,
   ...new Array(10).fill(1000)]).throttle === 1,
   "throttle above configured endpoint must clamp to one");
@@ -142,6 +153,7 @@ assert(header.includes("RC_SETPOINT_MODE_RATE = 0") &&
 assert(source.includes(".input_min_us = 1000U") &&
        source.includes(".input_mid_us = 1500U") &&
        source.includes(".input_max_us = 2000U") &&
+       source.includes(".throttle_min_check_us = 1050U") &&
        source.includes(".actual_center_sensitivity = {7U, 7U, 7U}") &&
        source.includes(".actual_max_rate = {67U, 67U, 67U}"),
   "default input or Actual Rates profile changed");

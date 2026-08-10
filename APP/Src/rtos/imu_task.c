@@ -656,9 +656,7 @@ static void imu_task(void *argument)
                 sample.consecutive_error_count = 0U;
                 sample.last_error = (uint8_t)ICM42688P_STATUS_OK;
                 sample.last_bus_error = (uint8_t)IMU_BUS_STATUS_OK;
-                sample.timing_valid = false;
-                sample.filter_ready = false;
-                publish_imu_and_attitude(&sample);
+                /* Retain the last sample; its 5 ms age gate owns staleness. */
                 continue;
             }
 

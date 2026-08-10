@@ -4,10 +4,14 @@
 #include <stddef.h>
 #include <string.h>
 
+#define TWO_PI_F 6.28318530717958647692f
+
 static const rate_pid_profile_t default_profile = {
     .kp = {0.10f, 0.10f, 0.12f},
     .ki = {0.25f, 0.25f, 0.25f},
     .kd = {0.001f, 0.001f, 0.0f},
+    .dterm_lpf1_hz = 75.0f,
+    .dterm_lpf2_hz = 150.0f,
     .integral_limit = 0.20f,
     .output_limit = 0.50f,
     .minimum_dt_s = 0.0005f,
@@ -37,10 +41,14 @@ bool rate_pid_profile_is_valid(const rate_pid_profile_t *profile)
     if ((profile == NULL) ||
         !isfinite(profile->integral_limit) ||
         !isfinite(profile->output_limit) ||
+        !isfinite(profile->dterm_lpf1_hz) ||
+        !isfinite(profile->dterm_lpf2_hz) ||
         !isfinite(profile->minimum_dt_s) ||
         !isfinite(profile->maximum_dt_s) ||
         (profile->integral_limit <= 0.0f) ||
         (profile->output_limit <= 0.0f) ||
+        (profile->dterm_lpf1_hz <= 0.0f) ||
+        (profile->dterm_lpf2_hz <= 0.0f) ||
         (profile->integral_limit > profile->output_limit) ||
         (profile->minimum_dt_s <= 0.0f) ||
         (profile->minimum_dt_s > profile->maximum_dt_s)) {
@@ -76,6 +84,8 @@ bool rate_pid_update(
     bool integrator_enabled,
     rate_pid_output_t *output)
 {
+    float dterm_lpf1_alpha;
+    float dterm_lpf2_alpha;
     uint32_t axis;
 
     if (output == NULL) {
@@ -90,6 +100,13 @@ bool rate_pid_update(
         rate_pid_reset(state);
         return false;
     }
+
+    dterm_lpf1_alpha =
+        (TWO_PI_F * profile->dterm_lpf1_hz * dt_s) /
+        (1.0f + TWO_PI_F * profile->dterm_lpf1_hz * dt_s);
+    dterm_lpf2_alpha =
+        (TWO_PI_F * profile->dterm_lpf2_hz * dt_s) /
+        (1.0f + TWO_PI_F * profile->dterm_lpf2_hz * dt_s);
 
     for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
         float candidate_integral;
@@ -108,12 +125,19 @@ bool rate_pid_update(
             setpoint_rad_s[axis] - measurement_rad_s[axis];
         output->p[axis] =
             profile->kp[axis] * output->error_rad_s[axis];
-        output->d[axis] = state->measurement_initialized
-                              ? -profile->kd[axis] *
-                                    (measurement_rad_s[axis] -
-                                     state->previous_measurement_rad_s[axis]) /
-                                    dt_s
-                              : 0.0f;
+        const float raw_d = state->measurement_initialized
+                                ? -profile->kd[axis] *
+                                      (measurement_rad_s[axis] -
+                                       state->previous_measurement_rad_s[axis]) /
+                                      dt_s
+                                : 0.0f;
+
+        state->dterm_lpf1[axis] +=
+            dterm_lpf1_alpha * (raw_d - state->dterm_lpf1[axis]);
+        state->dterm_lpf2[axis] +=
+            dterm_lpf2_alpha *
+            (state->dterm_lpf1[axis] - state->dterm_lpf2[axis]);
+        output->d[axis] = state->dterm_lpf2[axis];
 
         candidate_integral = integrator_enabled
                                  ? clampf(

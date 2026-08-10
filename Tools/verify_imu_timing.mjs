@@ -4,6 +4,8 @@
  * 对platform_time使用的32位DWT回绕扩展、周期余数累计、uint32微秒回绕和
  * S3.5 dt门限执行离线参考回归。
  */
+import fs from "node:fs";
+
 const cyclesPerMicrosecond = 216;
 const minimumIntervalUs = 500;
 const maximumIntervalUs = 2000;
@@ -89,6 +91,18 @@ for (const [intervalUs, expectedValid] of intervalCases) {
     `unexpected validity for ${intervalUs} us`,
   );
 }
+
+const imuTask = fs.readFileSync("APP/Src/rtos/imu_task.c", "utf8");
+const notReadyBranch = imuTask.slice(
+  imuTask.indexOf("if (!ready)"),
+  imuTask.indexOf("(void)ulTaskNotifyTake", imuTask.indexOf("if (!ready)")),
+);
+assertCondition(
+  !notReadyBranch.includes("sample.timing_valid = false") &&
+    !notReadyBranch.includes("sample.filter_ready = false") &&
+    !notReadyBranch.includes("publish_imu_and_attitude"),
+  "one early DRDY poll must retain the last valid sample until the age gate expires",
+);
 
 console.log(
   JSON.stringify(

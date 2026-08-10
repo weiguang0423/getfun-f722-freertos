@@ -7,6 +7,7 @@ const ARMED = 2;
 const FAILSAFE = 3;
 const DSHOT_MIN = 48;
 const DSHOT_MAX = 2047;
+const MOTOR_IDLE_PERCENT = 0.055;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -53,8 +54,9 @@ function update(arming, armRequested, blockingFlags, failsafeFlags) {
 function dshot(normalized) {
   assert(Number.isFinite(normalized) && normalized >= 0 && normalized <= 1,
     "mixer output must stay normalized");
-  return DSHOT_MIN + Math.floor(
-    normalized * (DSHOT_MAX - DSHOT_MIN) + 0.5);
+  const outputLow = DSHOT_MIN + MOTOR_IDLE_PERCENT *
+    (DSHOT_MAX - DSHOT_MIN);
+  return Math.floor(outputLow + normalized * (DSHOT_MAX - outputLow) + 0.5);
 }
 
 const arming = makeArming();
@@ -88,9 +90,9 @@ update(arming, false, 0, 0);
 assert(arming.state === DISARMED,
   "recovered PREARM must return only to DISARMED");
 
-assert(dshot(0) === DSHOT_MIN && dshot(0.5) === 1048 &&
+assert(dshot(0) === 158 && dshot(0.5) === 1102 &&
        dshot(1) === DSHOT_MAX,
-  "Mixer [0,1] must map exactly to DShot 48..2047");
+  "Betaflight motor_idle 5.5% must map Mixer [0,1] to DShot 158..2047");
 
 const header = fs.readFileSync("APP/Inc/algorithms/flight_arming.h", "utf8");
 const source = fs.readFileSync("APP/Src/algorithms/flight_arming.c", "utf8");
@@ -115,12 +117,14 @@ assert(state.includes("APP_FLIGHT_SAFETY_DSHOT_NOT_READY") &&
   "unified S4.7 blocker/failsafe flags are incomplete");
 assert(flight.includes("mixer_to_dshot(") &&
        flight.includes("if (state.armed)") &&
+       flight.includes("FLIGHT_DSHOT_MOTOR_IDLE_PERCENT 0.055f") &&
+       flight.includes("dshot_output_low + normalized * dshot_output_range") &&
        flight.includes("memcpy(output, flight_output") &&
        flight.includes("!state.rc_setpoint.arm_requested && !state.armed") &&
        flight.includes("if (state.armed ||") &&
        flight.includes("requests_output && app_state_is_armed()") &&
        flight.includes("dshot_motor_force_safe()"),
-  "armed-only flight output or immediate DShot stop path is missing");
+  "Betaflight DShot endpoint mapping or immediate stop path is missing");
 assert(msp.includes("MSP2_GETFUN_ARMING_STATUS 0x4009U") &&
        msp.includes("handle_getfun_arming_status(&writer, &state)") &&
        msp.includes("state.flight.armed ||") &&
@@ -140,7 +144,7 @@ console.log(JSON.stringify({
   result: "PASS",
   states: ["PREARM", "DISARMED", "ARMED", "FAILSAFE"],
   prearm: "ARM low and no blockers required after boot/failsafe",
-  dshotRange: [DSHOT_MIN, DSHOT_MAX],
+  dshotFlightRange: [dshot(0), DSHOT_MAX],
   armingStatusBytes,
   deferred: ["configurable PREARM AUX", "Angle outer loop", "App mode writes"],
 }, null, 2));

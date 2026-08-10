@@ -16,6 +16,8 @@ typedef struct
     float kp[RATE_PID_AXIS_COUNT];
     float ki[RATE_PID_AXIS_COUNT];
     float kd[RATE_PID_AXIS_COUNT];
+    float dterm_lpf1_hz;
+    float dterm_lpf2_hz;
     float integral_limit;
     float output_limit;
     float minimum_dt_s;
@@ -26,6 +28,8 @@ typedef struct
 {
     float integral[RATE_PID_AXIS_COUNT];
     float previous_measurement_rad_s[RATE_PID_AXIS_COUNT];
+    float dterm_lpf1[RATE_PID_AXIS_COUNT];
+    float dterm_lpf2[RATE_PID_AXIS_COUNT];
     bool measurement_initialized;
 } rate_pid_state_t;
 

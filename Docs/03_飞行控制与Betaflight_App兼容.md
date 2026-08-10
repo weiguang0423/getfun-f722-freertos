@@ -186,6 +186,7 @@ S3.8保留CRSF `channel_us[]`原始线序，另外按Betaflight默认 `AETR1234`
 `mapped_channel_us[]`：Roll/Pitch/Yaw/Throttle分别来自线序CH1/CH2/CH4/CH3，
 AUX1～AUX12保持CH5～CH16。Betaflight App Receiver页面通过 `MSP_RC`读取16路映射值，
 并通过 `MSP_RX_MAP`显示 `AETR1234`。S4.4已在映射后增加1000/1500/2000 us端点、
+Betaflight默认`min_check=1050`油门低端映射、
 Roll/Pitch/Yaw 5 us Deadband、Throttle `[0,1]`、Actual Rates和Expo归一化；
 S4.9再增加App写入、参数持久化和Armed拒绝事务。
 
@@ -261,7 +262,7 @@ D 项可以先对测量值求导，降低设定值跳变带来的冲击。
 
 S4.5当前纯C实现统一使用rad/s：Roll/Pitch/Yaw默认Kp为0.10/0.10/0.12，Ki均为0.25，
 Kd为0.001/0.001/0；积分限制±0.20，输出限制±0.50，只接受500～2000 us真实dt。
-D项对测量值求导；输出同向饱和时拒绝继续积分。S4.7接入真实ARM状态后，只有ARMED且
+D项对测量值求导后依次经过Betaflight默认结构的75 Hz、150 Hz PT1；输出同向饱和时拒绝继续积分。S4.7接入真实ARM状态后，只有ARMED且
 Throttle大于5%才允许积分；低油门、正常DISARM或FAILSAFE都会立即清零积分。
 
 ---
@@ -348,7 +349,7 @@ S4.2/S4.3软件实现按Betaflight的STM32F7默认bitbang路径，把M1～M4保�
 推挽输出；TIM8_CH1只作三相节拍器，DMA2 Stream2/Channel7直接写GPIOA BSRR。
 测试写命令只接受停止值0或48～2047，250 ms未刷新、IMU/RC过期或任一既有解锁
 抑制出现时归零；DMA连续忙则切回GPIO低电平并锁存到重启。S4.7只在ARMED时把Mixer
-`[0,1]`映射到48～2047，其他状态提交0；飞行输出与测试命令互斥。
+`[0,1]`按Betaflight默认`motor_idle=5.5%`映射到158～2047，其他状态提交0；飞行输出与测试命令互斥。
 
 DShot 开发顺序：
 

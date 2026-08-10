@@ -26,6 +26,7 @@ typedef struct
     uint16_t input_min_us;
     uint16_t input_mid_us;
     uint16_t input_max_us;
+    uint16_t throttle_min_check_us;
     uint8_t deadband_us;
     uint8_t yaw_deadband_us;
     uint8_t actual_center_sensitivity[RC_SETPOINT_AXIS_COUNT];

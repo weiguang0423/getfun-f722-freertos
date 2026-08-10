@@ -8,6 +8,7 @@ static const rc_setpoint_profile_t default_profile = {
     .input_min_us = 1000U,
     .input_mid_us = 1500U,
     .input_max_us = 2000U,
+    .throttle_min_check_us = 1050U,
     .deadband_us = 5U,
     .yaw_deadband_us = 5U,
     .actual_center_sensitivity = {7U, 7U, 7U},
@@ -110,6 +111,8 @@ bool rc_setpoint_profile_is_valid(const rc_setpoint_profile_t *profile)
     if ((profile == NULL) ||
         (profile->input_min_us >= profile->input_mid_us) ||
         (profile->input_mid_us >= profile->input_max_us) ||
+        (profile->throttle_min_check_us < profile->input_min_us) ||
+        (profile->throttle_min_check_us >= profile->input_max_us) ||
         ((uint32_t)profile->deadband_us >=
          (uint32_t)(profile->input_mid_us - profile->input_min_us)) ||
         ((uint32_t)profile->deadband_us >=
@@ -174,11 +177,15 @@ bool rc_setpoint_compute(
                             profile->expo_percent[axis]);
     }
 
-    output->throttle =
-        (float)(clamp_channel(mapped_channel_us[3],
-                              profile->input_min_us,
-                              profile->input_max_us) -
-                profile->input_min_us) /
+    /* Betaflight updateRcCommands(): mincheck first, default throttle curve is linear. */
+    output->throttle = (float)(
+        ((uint32_t)(clamp_channel(mapped_channel_us[3],
+                                  profile->throttle_min_check_us,
+                                  profile->input_max_us) -
+                    profile->throttle_min_check_us) *
+         (uint32_t)(profile->input_max_us - profile->input_min_us)) /
+        (uint32_t)(profile->input_max_us -
+                   profile->throttle_min_check_us)) /
         (float)(profile->input_max_us - profile->input_min_us);
     output->arm_requested =
         range_is_active(clamp_channel(

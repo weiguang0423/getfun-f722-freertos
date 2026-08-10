@@ -23,7 +23,8 @@
 #define FLIGHT_MAX_CONSECUTIVE_SUBMIT_ERRORS 2U
 #define FLIGHT_DEGREES_TO_RADIANS 0.01745329251994329577f
 #define FLIGHT_PID_INTEGRATOR_THROTTLE_MIN 0.05f
-#define FLIGHT_ARM_THROTTLE_MAX 0.05f
+#define FLIGHT_ARM_THROTTLE_MAX 0.0f
+#define FLIGHT_DSHOT_MOTOR_IDLE_PERCENT 0.055f
 
 typedef struct
 {
@@ -106,8 +107,13 @@ static void reset_control(rate_pid_state_t *pid_state,
 static bool mixer_to_dshot(const quad_x_mixer_output_t *mixer,
                            uint16_t output[DSHOT_MOTOR_COUNT])
 {
-    const float dshot_range =
-        (float)(DSHOT_MAX_VALUE - DSHOT_MIN_THROTTLE_VALUE);
+    /* Betaflight dshotInitEndpoints(), default motor_idle = 550 (5.5%). */
+    const float dshot_output_low =
+        (float)DSHOT_MIN_THROTTLE_VALUE +
+        FLIGHT_DSHOT_MOTOR_IDLE_PERCENT *
+            (float)(DSHOT_MAX_VALUE - DSHOT_MIN_THROTTLE_VALUE);
+    const float dshot_output_range =
+        (float)DSHOT_MAX_VALUE - dshot_output_low;
     uint32_t motor;
 
     if ((mixer == NULL) || (output == NULL) || !mixer->valid) {
@@ -121,9 +127,8 @@ static bool mixer_to_dshot(const quad_x_mixer_output_t *mixer,
             memset(output, 0, sizeof(uint16_t) * DSHOT_MOTOR_COUNT);
             return false;
         }
-        output[motor] =
-            DSHOT_MIN_THROTTLE_VALUE +
-            (uint16_t)(normalized * dshot_range + 0.5f);
+        output[motor] = (uint16_t)(
+            dshot_output_low + normalized * dshot_output_range + 0.5f);
     }
     return true;
 }
@@ -239,14 +244,29 @@ static void flight_task(void *argument)
                     FLIGHT_DEGREES_TO_RADIANS;
             }
 
-            if (rate_pid_update(
-                    pid_profile,
-                    &pid_state,
-                    setpoint_rad_s,
-                    snapshot.imu.filtered_angular_rate_rad_s,
-                    (float)snapshot.imu.sample_interval_us * 0.000001f,
-                    state.rate_pid_integrator_enabled,
-                    &state.rate_pid)) {
+            if (state.rc_setpoint.throttle == 0.0f) {
+                /* Keep Betaflight idle, but never let bench vibration raise it. */
+                rate_pid_reset(&pid_state);
+                memset(&state.rate_pid, 0, sizeof(state.rate_pid));
+                state.rate_pid.valid = true;
+                memcpy(state.rate_pid.setpoint_rad_s, setpoint_rad_s,
+                       sizeof(state.rate_pid.setpoint_rad_s));
+                memcpy(state.rate_pid.measurement_rad_s,
+                       snapshot.imu.filtered_angular_rate_rad_s,
+                       sizeof(state.rate_pid.measurement_rad_s));
+            } else if (!rate_pid_update(
+                           pid_profile,
+                           &pid_state,
+                           setpoint_rad_s,
+                           snapshot.imu.filtered_angular_rate_rad_s,
+                           (float)snapshot.imu.sample_interval_us * 0.000001f,
+                           state.rate_pid_integrator_enabled,
+                           &state.rate_pid)) {
+                memset(&state.mixer, 0, sizeof(state.mixer));
+                ++state.rate_pid_error_count;
+            }
+
+            if (state.rate_pid.valid) {
                 ++state.rate_pid_update_count;
                 if (quad_x_mixer_compute(
                         state.rc_setpoint.throttle,
@@ -257,9 +277,6 @@ static void flight_task(void *argument)
                     memset(&state.mixer, 0, sizeof(state.mixer));
                     ++state.mixer_error_count;
                 }
-            } else {
-                memset(&state.mixer, 0, sizeof(state.mixer));
-                ++state.rate_pid_error_count;
             }
         }
 

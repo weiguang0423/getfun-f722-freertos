@@ -5,6 +5,8 @@ const pidProfile = {
   kp: [0.10, 0.10, 0.12],
   ki: [0.25, 0.25, 0.25],
   kd: [0.001, 0.001, 0.0],
+  dtermLpf1Hz: 75,
+  dtermLpf2Hz: 150,
   integralLimit: 0.20,
   outputLimit: 0.50,
   minimumDt: 0.0005,
@@ -32,12 +34,20 @@ function clamp(value, minimum, maximum) {
 }
 
 function makePidState() {
-  return { integral: [0, 0, 0], previous: [0, 0, 0], initialized: false };
+  return {
+    integral: [0, 0, 0],
+    previous: [0, 0, 0],
+    dtermLpf1: [0, 0, 0],
+    dtermLpf2: [0, 0, 0],
+    initialized: false,
+  };
 }
 
 function resetPid(state) {
   state.integral.fill(0);
   state.previous.fill(0);
+  state.dtermLpf1.fill(0);
+  state.dtermLpf2.fill(0);
   state.initialized = false;
 }
 
@@ -59,12 +69,21 @@ function updatePid(state, setpoint, measurement, dt,
     d: [0, 0, 0],
     correction: [0, 0, 0],
   };
+  const lpf1Alpha = 2 * Math.PI * profile.dtermLpf1Hz * dt /
+    (1 + 2 * Math.PI * profile.dtermLpf1Hz * dt);
+  const lpf2Alpha = 2 * Math.PI * profile.dtermLpf2Hz * dt /
+    (1 + 2 * Math.PI * profile.dtermLpf2Hz * dt);
   for (let axis = 0; axis < 3; axis++) {
     output.error[axis] = setpoint[axis] - measurement[axis];
     output.p[axis] = profile.kp[axis] * output.error[axis];
-    output.d[axis] = state.initialized
+    const rawD = state.initialized
       ? -profile.kd[axis] * (measurement[axis] - state.previous[axis]) / dt
       : 0;
+    state.dtermLpf1[axis] += lpf1Alpha *
+      (rawD - state.dtermLpf1[axis]);
+    state.dtermLpf2[axis] += lpf2Alpha *
+      (state.dtermLpf1[axis] - state.dtermLpf2[axis]);
+    output.d[axis] = state.dtermLpf2[axis];
     let candidate = integratorEnabled
       ? clamp(state.integral[axis] +
           profile.ki[axis] * output.error[axis] * dt,
@@ -121,6 +140,8 @@ assert(pid.correction[0] > 0 && pid.d[0] === 0,
 pid = updatePid(pidState, [0, 0, 0], [1, 0, 0], 0.001, false);
 assert(pid.correction[0] < 0 && pid.d[0] < 0,
   "positive measured Roll rate must produce negative correction");
+assert(pid.d[0] > -1,
+  "Betaflight-style two-stage D-term PT1 must attenuate a one-sample gyro step");
 
 const integrating = makePidState();
 for (let sample = 0; sample < 2000; sample++) {
@@ -169,6 +190,8 @@ const cmake = fs.readFileSync("CMakeLists.txt", "utf8");
 
 assert(pidHeader.includes("rate_pid_update(") &&
        pidSource.includes("state->previous_measurement_rad_s[axis]") &&
+       pidSource.includes("profile->dterm_lpf1_hz") &&
+       pidSource.includes("state->dterm_lpf2[axis]") &&
        pidSource.includes("candidate_integral = integrator_enabled") &&
        pidSource.includes("profile->output_limit"),
   "S4.5 measurement-D, integrator gate or limits are missing");
@@ -181,7 +204,10 @@ assert(stateHeader.includes("rate_pid_output_t rate_pid") &&
        stateHeader.includes("quad_x_mixer_output_t mixer") &&
        flight.includes("snapshot.imu.filtered_angular_rate_rad_s") &&
        flight.includes("snapshot.imu.sample_count !=") &&
-       flight.includes("FLIGHT_PID_INTEGRATOR_THROTTLE_MIN"),
+       flight.includes("FLIGHT_PID_INTEGRATOR_THROTTLE_MIN") &&
+       flight.includes("state.rc_setpoint.throttle == 0.0f") &&
+       flight.includes("rate_pid_reset(&pid_state);") &&
+       flight.includes("state.rate_pid.valid = true;"),
   "FlightTask no longer updates control once per fresh filtered IMU sample");
 assert(flight.includes("mixer_to_dshot(") &&
        flight.includes("if (state.armed)") &&
@@ -207,6 +233,7 @@ console.log(JSON.stringify({
     kp: pidProfile.kp,
     ki: pidProfile.ki,
     kd: pidProfile.kd,
+    dtermLpfHz: [pidProfile.dtermLpf1Hz, pidProfile.dtermLpf2Hz],
     integralLimit: pidProfile.integralLimit,
     outputLimit: pidProfile.outputLimit,
     dtUs: [pidProfile.minimumDt * 1e6, pidProfile.maximumDt * 1e6],
