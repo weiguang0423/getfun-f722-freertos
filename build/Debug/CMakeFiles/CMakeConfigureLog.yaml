@@ -20140,3 +20140,624 @@ events:
     message: |
       Checking whether the ASM compiler is Renesas using "-v" did not match "(RX Family C/C\\+\\+ Compiler)|(RL78 Family Compiler)|(RH850 Family Compiler)":
 ...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompiler.cmake:115 (find_program)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:64 (_cmake_find_compiler_path)"
+      - "CMakeLists.txt:32 (enable_language)"
+    mode: "program"
+    variable: "CMAKE_ASM_COMPILER_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "arm-none-eabi-gcc"
+    candidate_directories:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/"
+      - "C:/Users/user/.vscode/extensions/stmicroelectronics.stm32cube-ide-build-cmake-1.46.0-win32-x64/resources/cube-cmake/win32/x86_64/"
+      - "C:/Users/user/.vscode/extensions/stmicroelectronics.stm32cube-ide-core-1.4.0-win32-x64/resources/binaries/win32/x86_64/"
+      - "C:/Program Files (x86)/STMicroelectronics/stlink_server/"
+      - "C:/ST/STM32CubeCLT_1.21.0/"
+      - "C:/ST/STM32CubeCLT_1.21.0/CMake/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/st-arm-clang/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/Ninja/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/GNU-tools-for-STM32/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/STLink-gdb-server/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/STM32CubeProgrammer/bin/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Windows/SysWOW64/5097/"
+      - "C:/Windows/SysWOW64/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Users/user/AppData/Local/Programs/OpenAI/Codex/bin/"
+      - "C:/Users/user/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/user/AppData/Local/Programs/Python/Python313/"
+      - "C:/Users/user/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/user/.cargo/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Microsoft VS Code/bin/"
+      - "C:/Users/user/AppData/Roaming/npm/"
+      - "C:/Users/user/.bun/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/arndawg.zellij-windows_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/user/.local/bin/"
+      - "C:/Users/user/.agentmemory/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe/xpack-openocd-0.12.0-7/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe/ripgrep-15.2.0-x86_64-pc-windows-msvc/"
+      - "/bin/"
+    searched_directories:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/arm-none-eabi-gcc.com"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/arm-none-eabi-gcc.exe"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/arm-none-eabi-gcc"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/arm-none-eabi-gcc.com"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/arm-none-eabi-gcc.exe"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/arm-none-eabi-gcc"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc.com"
+    found: "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc.exe"
+    search_context:
+      ENV{PATH}:
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin"
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin"
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin"
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin"
+        - "c:/Users/user/.vscode/extensions/stmicroelectronics.stm32cube-ide-build-cmake-1.46.0-win32-x64/resources/cube-cmake/win32/x86_64"
+        - "c:\\Users\\user\\.vscode\\extensions\\stmicroelectronics.stm32cube-ide-core-1.4.0-win32-x64\\resources\\binaries\\win32\\x86_64"
+        - "C:/Program Files (x86)/STMicroelectronics/stlink_server"
+        - "C:\\ST\\STM32CubeCLT_1.21.0"
+        - "C:/ST/STM32CubeCLT_1.21.0/CMake/bin"
+        - "C:\\ST\\STM32CubeCLT_1.21.0\\st-arm-clang\\bin"
+        - "C:/ST/STM32CubeCLT_1.21.0/Ninja/bin"
+        - "C:\\ST\\STM32CubeCLT_1.21.0\\GNU-tools-for-STM32\\bin"
+        - "C:/ST/STM32CubeCLT_1.21.0/STLink-gdb-server/bin"
+        - "C:\\ST\\STM32CubeCLT_1.21.0\\STM32CubeProgrammer\\bin"
+        - "C:/Windows/system32"
+        - "C:\\Windows"
+        - "C:/Windows/System32/Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:/Windows/System32/OpenSSH/"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:/Program Files/Git/cmd"
+        - "C:/Windows/SysWOW64/5097"
+        - "C:\\Windows\\SysWOW64\\5097"
+        - "C:\\Windows\\SysWOW64"
+        - "C:/Program Files/dotnet/"
+        - "C:\\Users\\user\\AppData\\Local\\Programs\\OpenAI\\Codex\\bin"
+        - "C:/Users/user/AppData/Local/Programs/Python/Python313/Scripts/"
+        - "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\"
+        - "C:/Users/user/AppData/Local/Programs/Python/Launcher/"
+        - "C:\\Users\\user\\.cargo\\bin"
+        - "C:/Users/user/AppData/Local/Microsoft/WindowsApps"
+        - "C:\\Microsoft VS Code\\bin"
+        - "C:/Users/user/AppData/Roaming/npm"
+        - "C:\\Users\\user\\.bun\\bin"
+        - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/arndawg.zellij-windows_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\user\\.local\\bin"
+        - "C:/Users/user/.agentmemory/bin"
+        - "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe\\xpack-openocd-0.12.0-7\\bin"
+        - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe/ripgrep-15.2.0-x86_64-pc-windows-msvc"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/GETFUN_F722_FreeRTOS"
+      CMAKE_SYSTEM_PROGRAM_PATH:
+        - "/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is GNU using "--version" did not match "(GNU assembler)|(GCC)|(Free Software Foundation)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is AppleClang using "--version" did not match "(Apple (clang|LLVM) version)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Clang using "--version" did not match "(clang version)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is ARMClang using "--version" did not match "armclang":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is OrangeC using "--version" did not match "occ \\(OrangeC\\) Version":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is HP using "-V" did not match "HP C":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Intel using "--version" did not match "(ICC)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is IntelLLVM using "--version" did not match "(Intel[^
+      ]+oneAPI)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is SunPro using "-V" did not match "Sun C":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is XL using "-qversion" did not match "XL C":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-qversion'; did you mean '--version'?
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is MSVC using "-?" did not match "Microsoft":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-?'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is TI using "-h" did not match "Texas Instruments":
+      arm-none-eabi-gcc.exe: error: missing argument to '-h'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is TIClang using "--version" did not match "(TI (.*) Clang Compiler)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is IAR using "" did not match "IAR Assembler":
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Diab using "-V" did not match "Wind River Systems":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is ARMCC using "" did not match "(ARM Compiler)|(ARM Assembler)|(Arm Compiler)":
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is NASM using "-v" did not match "(NASM version)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is YASM using "--version" did not match "(yasm)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is ADSP using "-version" did not match "Analog Devices":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-version'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is QCC using "-V" did not match "gcc_nto":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Tasking using "--version" did not match "TASKING":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Renesas using "-v" did not match "(RX Family C/C\\+\\+ Compiler)|(RL78 Family Compiler)|(RH850 Family Compiler)":
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompiler.cmake:115 (find_program)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:64 (_cmake_find_compiler_path)"
+      - "CMakeLists.txt:32 (enable_language)"
+    mode: "program"
+    variable: "CMAKE_ASM_COMPILER_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "arm-none-eabi-gcc"
+    candidate_directories:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/"
+      - "C:/Users/user/.vscode/extensions/stmicroelectronics.stm32cube-ide-build-cmake-1.46.0-win32-x64/resources/cube-cmake/win32/x86_64/"
+      - "C:/Users/user/.vscode/extensions/stmicroelectronics.stm32cube-ide-core-1.4.0-win32-x64/resources/binaries/win32/x86_64/"
+      - "C:/Program Files (x86)/STMicroelectronics/stlink_server/"
+      - "C:/ST/STM32CubeCLT_1.21.0/"
+      - "C:/ST/STM32CubeCLT_1.21.0/CMake/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/st-arm-clang/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/Ninja/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/GNU-tools-for-STM32/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/STLink-gdb-server/bin/"
+      - "C:/ST/STM32CubeCLT_1.21.0/STM32CubeProgrammer/bin/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Windows/SysWOW64/5097/"
+      - "C:/Windows/SysWOW64/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Users/user/AppData/Local/Programs/OpenAI/Codex/bin/"
+      - "C:/Users/user/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/user/AppData/Local/Programs/Python/Python313/"
+      - "C:/Users/user/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/user/.cargo/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Microsoft VS Code/bin/"
+      - "C:/Users/user/AppData/Roaming/npm/"
+      - "C:/Users/user/.bun/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/arndawg.zellij-windows_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/user/.local/bin/"
+      - "C:/Users/user/.agentmemory/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe/xpack-openocd-0.12.0-7/bin/"
+      - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe/ripgrep-15.2.0-x86_64-pc-windows-msvc/"
+      - "/bin/"
+    searched_directories:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/arm-none-eabi-gcc.com"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/arm-none-eabi-gcc.exe"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin/arm-none-eabi-gcc"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/arm-none-eabi-gcc.com"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/arm-none-eabi-gcc.exe"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin/arm-none-eabi-gcc"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc.com"
+    found: "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc.exe"
+    search_context:
+      ENV{PATH}:
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin"
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/ninja/1.13.2+st.1/bin"
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin"
+        - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/bin"
+        - "c:/Users/user/.vscode/extensions/stmicroelectronics.stm32cube-ide-build-cmake-1.46.0-win32-x64/resources/cube-cmake/win32/x86_64"
+        - "c:\\Users\\user\\.vscode\\extensions\\stmicroelectronics.stm32cube-ide-core-1.4.0-win32-x64\\resources\\binaries\\win32\\x86_64"
+        - "C:/Program Files (x86)/STMicroelectronics/stlink_server"
+        - "C:\\ST\\STM32CubeCLT_1.21.0"
+        - "C:/ST/STM32CubeCLT_1.21.0/CMake/bin"
+        - "C:\\ST\\STM32CubeCLT_1.21.0\\st-arm-clang\\bin"
+        - "C:/ST/STM32CubeCLT_1.21.0/Ninja/bin"
+        - "C:\\ST\\STM32CubeCLT_1.21.0\\GNU-tools-for-STM32\\bin"
+        - "C:/ST/STM32CubeCLT_1.21.0/STLink-gdb-server/bin"
+        - "C:\\ST\\STM32CubeCLT_1.21.0\\STM32CubeProgrammer\\bin"
+        - "C:/Windows/system32"
+        - "C:\\Windows"
+        - "C:/Windows/System32/Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:/Windows/System32/OpenSSH/"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:/Program Files/Git/cmd"
+        - "C:/Windows/SysWOW64/5097"
+        - "C:\\Windows\\SysWOW64\\5097"
+        - "C:\\Windows\\SysWOW64"
+        - "C:/Program Files/dotnet/"
+        - "C:\\Users\\user\\AppData\\Local\\Programs\\OpenAI\\Codex\\bin"
+        - "C:/Users/user/AppData/Local/Programs/Python/Python313/Scripts/"
+        - "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\"
+        - "C:/Users/user/AppData/Local/Programs/Python/Launcher/"
+        - "C:\\Users\\user\\.cargo\\bin"
+        - "C:/Users/user/AppData/Local/Microsoft/WindowsApps"
+        - "C:\\Microsoft VS Code\\bin"
+        - "C:/Users/user/AppData/Roaming/npm"
+        - "C:\\Users\\user\\.bun\\bin"
+        - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/arndawg.zellij-windows_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\user\\.local\\bin"
+        - "C:/Users/user/.agentmemory/bin"
+        - "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe\\xpack-openocd-0.12.0-7\\bin"
+        - "C:/Users/user/AppData/Local/Microsoft/WinGet/Packages/BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe/ripgrep-15.2.0-x86_64-pc-windows-msvc"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/GETFUN_F722_FreeRTOS"
+      CMAKE_SYSTEM_PROGRAM_PATH:
+        - "/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is GNU using "--version" did not match "(GNU assembler)|(GCC)|(Free Software Foundation)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is AppleClang using "--version" did not match "(Apple (clang|LLVM) version)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Clang using "--version" did not match "(clang version)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is ARMClang using "--version" did not match "armclang":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is OrangeC using "--version" did not match "occ \\(OrangeC\\) Version":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is HP using "-V" did not match "HP C":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Intel using "--version" did not match "(ICC)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is IntelLLVM using "--version" did not match "(Intel[^
+      ]+oneAPI)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is SunPro using "-V" did not match "Sun C":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is XL using "-qversion" did not match "XL C":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-qversion'; did you mean '--version'?
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is MSVC using "-?" did not match "Microsoft":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-?'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+      compilation terminated.
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is TI using "-h" did not match "Texas Instruments":
+      arm-none-eabi-gcc.exe: error: missing argument to '-h'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is TIClang using "--version" did not match "(TI (.*) Clang Compiler)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is IAR using "" did not match "IAR Assembler":
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Diab using "-V" did not match "Wind River Systems":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is ARMCC using "" did not match "(ARM Compiler)|(ARM Assembler)|(Arm Compiler)":
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is NASM using "-v" did not match "(NASM version)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is YASM using "--version" did not match "(yasm)":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is ADSP using "-version" did not match "Analog Devices":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-version'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is QCC using "-V" did not match "gcc_nto":
+      arm-none-eabi-gcc.exe: error: unrecognized command-line option '-V'
+      arm-none-eabi-gcc.exe: fatal error: no input files
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Tasking using "--version" did not match "TASKING":
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:1309 (message)"
+      - "C:/Users/user/AppData/Local/stm32cube/bundles/cmake/4.3.1+st.1/share/cmake-4.3/Modules/CMakeDetermineASMCompiler.cmake:170 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:32 (enable_language)"
+    message: |
+      Checking whether the ASM compiler is Renesas using "-v" did not match "(RX Family C/C\\+\\+ Compiler)|(RL78 Family Compiler)|(RH850 Family Compiler)":
+...

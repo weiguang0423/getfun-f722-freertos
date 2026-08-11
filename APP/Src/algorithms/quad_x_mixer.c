@@ -6,10 +6,11 @@
 
 static const float quad_x_matrix[QUAD_X_MIXER_MOTOR_COUNT]
                                 [QUAD_X_MIXER_AXIS_COUNT] = {
-    [QUAD_X_MOTOR_REAR_RIGHT] = {-1.0f, 1.0f, -1.0f},
-    [QUAD_X_MOTOR_FRONT_RIGHT] = {-1.0f, -1.0f, 1.0f},
-    [QUAD_X_MOTOR_REAR_LEFT] = {1.0f, 1.0f, 1.0f},
-    [QUAD_X_MOTOR_FRONT_LEFT] = {1.0f, -1.0f, -1.0f},
+    /* Betaflight QUADX after its default scaledAxisPidYaw sign inversion. */
+    [QUAD_X_MOTOR_REAR_RIGHT] = {-1.0f, 1.0f, 1.0f},
+    [QUAD_X_MOTOR_FRONT_RIGHT] = {-1.0f, -1.0f, -1.0f},
+    [QUAD_X_MOTOR_REAR_LEFT] = {1.0f, 1.0f, -1.0f},
+    [QUAD_X_MOTOR_FRONT_LEFT] = {1.0f, -1.0f, 1.0f},
 };
 
 static float clampf(float value, float minimum, float maximum)

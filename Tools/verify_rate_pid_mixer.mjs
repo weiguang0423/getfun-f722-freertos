@@ -14,10 +14,10 @@ const pidProfile = {
 };
 
 const quadX = [
-  [-1, 1, -1],
-  [-1, -1, 1],
-  [1, 1, 1],
-  [1, -1, -1],
+  [-1, 1, 1],
+  [-1, -1, -1],
+  [1, 1, -1],
+  [1, -1, 1],
 ];
 
 function assert(condition, message) {
@@ -168,11 +168,11 @@ mixed = mixQuadX(0.5, [0, 0.1, 0]);
 assert(mixed.motor.join(",") === "0.6,0.4,0.6,0.4",
   "positive Pitch correction must increase rear and decrease front motors");
 mixed = mixQuadX(0.5, [0, 0, 0.1]);
-assert(mixed.motor.join(",") === "0.4,0.6,0.6,0.4",
-  "positive Yaw correction must split opposite motor pairs");
+assert(mixed.motor.join(",") === "0.6,0.4,0.4,0.6",
+  "positive Yaw correction must include Betaflight's default yaw inversion");
 mixed = mixQuadX(0.5, [0.5, -0.5, 0.5]);
 assert(mixed.valid && mixed.saturated && mixed.scale === 0.5 &&
-       mixed.motor.join(",") === "0,1,1,1",
+       mixed.motor.join(",") === "0,0,0,1",
   "desaturation must preserve differential ratios inside [0,1]");
 assert(!mixQuadX(1.1, [0, 0, 0]).valid &&
        !mixQuadX(0.5, [0, Number.NaN, 0]).valid,
@@ -196,8 +196,8 @@ assert(pidHeader.includes("rate_pid_update(") &&
        pidSource.includes("profile->output_limit"),
   "S4.5 measurement-D, integrator gate or limits are missing");
 assert(mixerHeader.includes("QUAD_X_MOTOR_REAR_RIGHT = 0") &&
-       mixerSource.includes("{-1.0f, 1.0f, -1.0f}") &&
-       mixerSource.includes("{1.0f, -1.0f, -1.0f}") &&
+       mixerSource.includes("{-1.0f, 1.0f, 1.0f}") &&
+       mixerSource.includes("{1.0f, -1.0f, 1.0f}") &&
        mixerSource.includes("range > 1.0f ? 1.0f / range : 1.0f"),
   "S4.6 Betaflight motor order or desaturation changed");
 assert(stateHeader.includes("rate_pid_output_t rate_pid") &&
