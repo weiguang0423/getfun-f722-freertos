@@ -2,12 +2,17 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Port,
 
-    [Parameter(Mandatory = $true)]
     [ValidateRange(1, 4)]
     [int]$Motor,
 
-    [ValidateRange(48, 200)]
+    [ValidateRange(48, 1000)]
     [int]$Value = 80,
+
+    [ValidateScript({
+            $_ -eq 0 -or ($_ -ge 48 -and $_ -le 1000)
+        })]
+    [ValidateCount(4, 4)]
+    [int[]]$Values,
 
     [ValidateRange(100, 5000)]
     [int]$DurationMs = 1000,
@@ -234,9 +239,16 @@ if (-not $PropsRemoved) {
     throw 'Refusing motor test: pass -PropsRemoved only after removing every propeller.'
 }
 
-$values = @(0, 0, 0, 0)
-$values[$Motor - 1] = $Value
-$runPayload = New-MotorPayload -Values $values
+$motorValues = @(0, 0, 0, 0)
+if ($null -ne $Values) {
+    $motorValues = $Values
+} else {
+    if ($null -eq $Motor -or $Motor -lt 1 -or $Motor -gt 4) {
+        throw 'Specify -Motor 1..4 (single-motor mode) or -Values with 4 values (all-motor mode).'
+    }
+    $motorValues[$Motor - 1] = $Value
+}
+$runPayload = New-MotorPayload -Values $motorValues
 $stopFrame = New-Msp2Frame -Command $MotorTestCommand `
     -Payload (New-MotorPayload -Values @(0, 0, 0, 0))
 $serial = [System.IO.Ports.SerialPort]::new($Port, 115200, 'None', 8, 'One')
@@ -250,7 +262,8 @@ try {
     Write-Host ("Initial firmware status: dshot={0} inputs={1} safety=0x{2:X8} submit_err={3} dma_err={4}" -f `
         [int]$baseline.DshotReady, [int]$baseline.InputsReady,
         $baseline.SafetyFlags, $baseline.SubmitErrors, $baseline.DmaErrors)
-    Write-Host "Testing motor M$Motor at value $Value for $DurationMs ms on $Port..."
+    $motorValuesText = $motorValues -join ','
+    Write-Host "Testing motors at values [$motorValuesText] for $DurationMs ms on $Port..."
     $timer = [System.Diagnostics.Stopwatch]::StartNew()
     while ($timer.ElapsedMilliseconds -lt $DurationMs) {
         Send-Msp2MotorFrame -Serial $serial -Payload $runPayload
@@ -266,8 +279,14 @@ try {
     Write-Host ("Run status: test={0} dshot={1} out=[{2}] submit_err_delta={3} dma_err_delta={4}" -f `
         [int]$runStatus.TestActive, [int]$runStatus.DshotReady,
         $outputText, $submitDelta, $dmaDelta)
+    $allMatch = $true
+    for ($motorIndex = 0; $motorIndex -lt 4; $motorIndex++) {
+        if ($runStatus.Output[$motorIndex] -ne $motorValues[$motorIndex]) {
+            $allMatch = $false
+        }
+    }
     if (-not $runStatus.TestActive -or -not $runStatus.DshotReady -or
-        $runStatus.Output[$Motor - 1] -ne $Value -or
+        -not $allMatch -or
         $submitDelta -ne 0 -or $dmaDelta -ne 0) {
         throw 'Firmware accepted the command but did not sustain clean DShot submission; use the Run status line to diagnose it.'
     }
