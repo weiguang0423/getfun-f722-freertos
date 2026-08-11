@@ -294,7 +294,7 @@ S4.1已创建静态FlightTask，优先级 `tskIDLE_PRIORITY+5`、周期1 kHz；S
 3. 读取RC快照；RC有效且未过期时计算端点、Deadband、Actual Rates和AUX模式请求，
    RC失效时立即把setpoint清零。
 4. 仅在新IMU样本到达且当前为RATE请求时，用滤波Gyro和真实dt更新三轴Rate PID。
-5. 把有界PID修正送入标准顺序Quad-X Mixer，统一缩放修正并平移Throttle到`[0,1]`。
+5. 把有界PID修正送入实测板级顺序Quad-X Mixer，保持Throttle并按上下余量缩放修正到`[0,1]`。
 6. 汇总既有解锁抑制、DShot/系统/Configurator/控制状态和ARM低位PREARM握手。
 7. 仅ARMED按Betaflight默认`motor_idle=5.5%`把Mixer `[0,1]`映射到DShot 158～2047；否则只允许停止值或与ARM互斥的显式无桨测试值。
 

@@ -187,7 +187,7 @@ S3.8保留CRSF `channel_us[]`原始线序，另外按Betaflight默认 `AETR1234`
 AUX1～AUX12保持CH5～CH16。Betaflight App Receiver页面通过 `MSP_RC`读取16路映射值，
 并通过 `MSP_RX_MAP`显示 `AETR1234`。S4.4已在映射后增加1000/1500/2000 us端点、
 Betaflight默认`min_check=1050`油门低端映射、
-Roll/Pitch/Yaw 5 us Deadband、Throttle `[0,1]`、Actual Rates和Expo归一化；
+Roll/Pitch/Yaw 10 us Deadband、Throttle `[0,1]`、Actual Rates和Expo归一化；
 S4.9再增加App写入、参数持久化和Armed拒绝事务。
 
 最后合法通道帧超过300 ms时，S3.8撤销 `channels_valid`、置
@@ -260,10 +260,11 @@ output = P + I + D
 
 D 项可以先对测量值求导，降低设定值跳变带来的冲击。
 
-S4.5当前纯C实现统一使用rad/s：Roll/Pitch/Yaw默认Kp为0.10/0.10/0.12，Ki均为0.25，
-Kd为0.001/0.001/0；积分限制±0.20，输出限制±0.50，只接受500～2000 us真实dt。
-D项对测量值求导后依次经过Betaflight默认结构的75 Hz、150 Hz PT1；输出同向饱和时拒绝继续积分。S4.7接入真实ARM状态后，只有ARMED且
-Throttle大于5%才允许积分；低油门、正常DISARM或FAILSAFE都会立即清零积分。
+S4.5当前纯C实现统一使用rad/s：Roll/Pitch/Yaw默认Kp为0.10/0.10/0.12；拆桨台架最终冻结
+Ki/Kd均为0的P-only Profile，避免持续小偏差和电机振动形成电机分裂。算法仍保留可配置I项、
+测量值D、75/150 Hz两级PT1、积分限制±0.20、输出限制±0.50和同向抗饱和，只接受
+500～2000 us真实dt。未来重新启用Ki时，仅ARMED且Throttle大于0才允许积分；低油门、
+正常DISARM或FAILSAFE都会立即清零积分。
 
 ---
 
@@ -319,11 +320,11 @@ Mixer 输出：
 
 Betaflight App 中显示的 Motor 1～4 顺序必须与实际焊盘和 Mixer 一致。
 
-S4.6当前采用Betaflight标准顺序：M1后右、M2前右、M3后左、M4前左；并包含Betaflight默认
-Yaw PID取反，最终矩阵为`[-1,+1,+1]`、`[-1,-1,-1]`、`[+1,+1,-1]`、
-`[+1,-1,+1]`（Roll/Pitch/Yaw）。
-修正跨度大于1时统一缩放，再平移Throttle使全部逻辑值落在`[0,1]`。文档26没有补录
-实体位置细节，因此文档30联合验收时必须再次对应。当前逻辑值只供诊断，不连接DShot。
+S4.6经拆桨实测冻结板级顺序：M1前左、M2后左、M3前右、M4后右；包含Betaflight默认
+Yaw PID取反，最终矩阵为`[+1,-1,+1]`、`[+1,+1,-1]`、`[-1,-1,-1]`、
+`[-1,+1,+1]`（Roll/Pitch/Yaw）。Mixer保持请求Throttle不变，并按当前Throttle上下余量统一
+缩放修正，使全部逻辑值落在`[0,1]`且低油门扰动不会抬升collective。S4.7仅在ARMED时
+把该逻辑值映射到DShot。
 
 ---
 

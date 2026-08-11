@@ -1,4 +1,4 @@
-/* Pure S4.6 Betaflight-order Quad-X mixer with bounded desaturation. */
+/* Pure S4.6 board-order Quad-X mixer with bounded desaturation. */
 #ifndef QUAD_X_MIXER_H
 #define QUAD_X_MIXER_H
 
@@ -14,10 +14,10 @@ extern "C" {
 
 typedef enum
 {
-    QUAD_X_MOTOR_REAR_RIGHT = 0,
-    QUAD_X_MOTOR_FRONT_RIGHT,
+    QUAD_X_MOTOR_FRONT_LEFT = 0,
     QUAD_X_MOTOR_REAR_LEFT,
-    QUAD_X_MOTOR_FRONT_LEFT
+    QUAD_X_MOTOR_FRONT_RIGHT,
+    QUAD_X_MOTOR_REAR_RIGHT
 } quad_x_motor_position_t;
 
 typedef struct

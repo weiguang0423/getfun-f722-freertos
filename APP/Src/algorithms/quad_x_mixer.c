@@ -6,11 +6,11 @@
 
 static const float quad_x_matrix[QUAD_X_MIXER_MOTOR_COUNT]
                                 [QUAD_X_MIXER_AXIS_COUNT] = {
-    /* Betaflight QUADX after its default scaledAxisPidYaw sign inversion. */
-    [QUAD_X_MOTOR_REAR_RIGHT] = {-1.0f, 1.0f, 1.0f},
-    [QUAD_X_MOTOR_FRONT_RIGHT] = {-1.0f, -1.0f, -1.0f},
-    [QUAD_X_MOTOR_REAR_LEFT] = {1.0f, 1.0f, -1.0f},
+    /* Measured output order: M1 FL, M2 RL, M3 FR, M4 RR. */
     [QUAD_X_MOTOR_FRONT_LEFT] = {1.0f, -1.0f, 1.0f},
+    [QUAD_X_MOTOR_REAR_LEFT] = {1.0f, 1.0f, -1.0f},
+    [QUAD_X_MOTOR_FRONT_RIGHT] = {-1.0f, -1.0f, -1.0f},
+    [QUAD_X_MOTOR_REAR_RIGHT] = {-1.0f, 1.0f, 1.0f},
 };
 
 static float clampf(float value, float minimum, float maximum)
@@ -32,7 +32,6 @@ bool quad_x_mixer_compute(
     float motor_correction[QUAD_X_MIXER_MOTOR_COUNT];
     float minimum;
     float maximum;
-    float range;
     uint32_t motor;
     uint32_t axis;
 
@@ -70,16 +69,19 @@ bool quad_x_mixer_compute(
         }
     }
 
-    range = maximum - minimum;
-    output->correction_scale = range > 1.0f ? 1.0f / range : 1.0f;
-    minimum *= output->correction_scale;
-    maximum *= output->correction_scale;
+    output->correction_scale = 1.0f;
+    if ((minimum < 0.0f) &&
+        (-minimum > throttle)) {
+        output->correction_scale = throttle / -minimum;
+    }
+    if ((maximum > 0.0f) &&
+        (maximum * output->correction_scale > 1.0f - throttle)) {
+        output->correction_scale =
+            (1.0f - throttle) / maximum;
+    }
     output->requested_throttle = throttle;
-    output->applied_throttle =
-        clampf(throttle, -minimum, 1.0f - maximum);
-    output->saturated =
-        (output->correction_scale < 1.0f) ||
-        (output->applied_throttle != throttle);
+    output->applied_throttle = throttle;
+    output->saturated = output->correction_scale < 1.0f;
 
     for (motor = 0U; motor < QUAD_X_MIXER_MOTOR_COUNT; ++motor) {
         output->motor[motor] =

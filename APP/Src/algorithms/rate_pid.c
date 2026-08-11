@@ -8,8 +8,11 @@
 
 static const rate_pid_profile_t default_profile = {
     .kp = {0.10f, 0.10f, 0.12f},
-    .ki = {0.25f, 0.25f, 0.25f},
-    .kd = {0.001f, 0.001f, 0.0f},
+    /* Disabled for bench bring-up: a tiny persistent bias must not keep
+     * increasing the left/right or front/rear motor split. */
+    .ki = {0.0f, 0.0f, 0.0f},
+    /* Disabled for the first physical bring-up; motor vibration dominated it. */
+    .kd = {0.0f, 0.0f, 0.0f},
     .dterm_lpf1_hz = 75.0f,
     .dterm_lpf2_hz = 150.0f,
     .integral_limit = 0.20f,

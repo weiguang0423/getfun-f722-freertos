@@ -6,8 +6,8 @@ const profile = {
   mid: 1500,
   max: 2000,
   mincheck: 1050,
-  deadband: 5,
-  yawDeadband: 5,
+  deadband: 10,
+  yawDeadband: 10,
   center: [7, 7, 7],
   maxRate: [67, 67, 67],
   expo: [0, 0, 0],
@@ -115,11 +115,12 @@ assert(endpoints.throttle === 1 && endpoints.armRequested &&
        endpoints.mode === "ANGLE",
   "clamped high CRSF endpoints must activate AUX ranges");
 
-assert(normalizeAxis(1495, profile.deadband) === 0 &&
-       normalizeAxis(1505, profile.deadband) === 0,
+assert(normalizeAxis(1490, profile.deadband) === 0 &&
+       normalizeAxis(1510, profile.deadband) === 0 &&
+       normalizeAxis(1508, profile.deadband) === 0,
   "deadband boundary must remain zero");
-assert(normalizeAxis(1494, profile.deadband) < 0 &&
-       normalizeAxis(1506, profile.deadband) > 0,
+assert(normalizeAxis(1489, profile.deadband) < 0 &&
+       normalizeAxis(1511, profile.deadband) > 0,
   "first value outside deadband must preserve sign");
 close(actualRate(0.5, 7, 67, 0), 185, 1e-6,
   "Actual Rates midpoint without expo changed");
@@ -154,6 +155,8 @@ assert(source.includes(".input_min_us = 1000U") &&
        source.includes(".input_mid_us = 1500U") &&
        source.includes(".input_max_us = 2000U") &&
        source.includes(".throttle_min_check_us = 1050U") &&
+       source.includes(".deadband_us = 10U") &&
+       source.includes(".yaw_deadband_us = 10U") &&
        source.includes(".actual_center_sensitivity = {7U, 7U, 7U}") &&
        source.includes(".actual_max_rate = {67U, 67U, 67U}"),
   "default input or Actual Rates profile changed");

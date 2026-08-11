@@ -3,8 +3,8 @@ import fs from "node:fs";
 
 const pidProfile = {
   kp: [0.10, 0.10, 0.12],
-  ki: [0.25, 0.25, 0.25],
-  kd: [0.001, 0.001, 0.0],
+  ki: [0.0, 0.0, 0.0],
+  kd: [0.0, 0.0, 0.0],
   dtermLpf1Hz: 75,
   dtermLpf2Hz: 150,
   integralLimit: 0.20,
@@ -14,10 +14,10 @@ const pidProfile = {
 };
 
 const quadX = [
-  [-1, 1, 1],
-  [-1, -1, -1],
-  [1, 1, -1],
   [1, -1, 1],
+  [1, 1, -1],
+  [-1, -1, -1],
+  [-1, 1, 1],
 ];
 
 function assert(condition, message) {
@@ -116,10 +116,14 @@ function mixQuadX(throttle, correction) {
       sum + coefficient * correction[axis], 0));
   const minimum = Math.min(...raw);
   const maximum = Math.max(...raw);
-  const range = maximum - minimum;
-  const scale = range > 1 ? 1 / range : 1;
-  const appliedThrottle = clamp(throttle, -minimum * scale,
-    1 - maximum * scale);
+  let scale = 1;
+  if (minimum < 0 && -minimum > throttle) {
+    scale = throttle / -minimum;
+  }
+  if (maximum > 0 && maximum * scale > 1 - throttle) {
+    scale = (1 - throttle) / maximum;
+  }
+  const appliedThrottle = throttle;
   return {
     valid: true,
     saturated: scale < 1 || appliedThrottle !== throttle,
@@ -138,20 +142,28 @@ pid = updatePid(pidState, [1, 0, 0], [0, 0, 0], 0.001, false);
 assert(pid.correction[0] > 0 && pid.d[0] === 0,
   "positive rate error must correct positive without setpoint D kick");
 pid = updatePid(pidState, [0, 0, 0], [1, 0, 0], 0.001, false);
-assert(pid.correction[0] < 0 && pid.d[0] < 0,
-  "positive measured Roll rate must produce negative correction");
-assert(pid.d[0] > -1,
-  "Betaflight-style two-stage D-term PT1 must attenuate a one-sample gyro step");
+assert(pid.correction[0] < 0 && pid.d.every((value) => value === 0),
+  "positive measured Roll rate must produce negative P correction with D disabled");
 
+const disabledIntegrating = makePidState();
+for (let sample = 0; sample < 2000; sample++) {
+  pid = updatePid(disabledIntegrating, [1, 0, 0], [0, 0, 0], 0.001, true);
+}
+assert(pid.i.every((value) => value === 0),
+  "bench profile must not accumulate a persistent motor split");
+
+const integralProfile = { ...pidProfile, ki: [0.25, 0.25, 0.25] };
 const integrating = makePidState();
 for (let sample = 0; sample < 2000; sample++) {
-  pid = updatePid(integrating, [1, 0, 0], [0, 0, 0], 0.001, true);
+  pid = updatePid(integrating, [1, 0, 0], [0, 0, 0], 0.001, true,
+    integralProfile);
 }
-close(pid.i[0], pidProfile.integralLimit, 1e-9,
+close(pid.i[0], integralProfile.integralLimit, 1e-9,
   "integral must stop at its configured limit");
-pid = updatePid(integrating, [100, 0, 0], [0, 0, 0], 0.001, true);
-assert(pid.correction[0] === pidProfile.outputLimit &&
-       pid.i[0] === pidProfile.integralLimit,
+pid = updatePid(integrating, [100, 0, 0], [0, 0, 0], 0.001, true,
+  integralProfile);
+assert(pid.correction[0] === integralProfile.outputLimit &&
+       pid.i[0] === integralProfile.integralLimit,
   "output saturation must not wind the integral further");
 pid = updatePid(integrating, [0, 0, 0], [0, 0, 0], 0.001, false);
 assert(pid.i.every((value) => value === 0),
@@ -162,18 +174,32 @@ assert(!updatePid(integrating, [0, 0, 0], [0, 0, 0], 0.003, true).valid &&
   "invalid dt or non-finite input must invalidate and reset PID");
 
 let mixed = mixQuadX(0.5, [0.1, 0, 0]);
-assert(mixed.motor.join(",") === "0.4,0.4,0.6,0.6",
-  "positive Roll correction must decrease right and increase left motors");
+assert(mixed.motor.join(",") === "0.6,0.6,0.4,0.4",
+  "positive Roll correction must increase left and decrease right motors");
 mixed = mixQuadX(0.5, [0, 0.1, 0]);
-assert(mixed.motor.join(",") === "0.6,0.4,0.6,0.4",
-  "positive Pitch correction must increase rear and decrease front motors");
+assert(mixed.motor.join(",") === "0.4,0.6,0.4,0.6",
+  "positive Pitch correction must decrease front and increase rear motors");
+const noseUpState = makePidState();
+const noseUpPid = updatePid(noseUpState, [0, 0, 0], [0, -1, 0],
+  0.001, false);
+mixed = mixQuadX(0.5, noseUpPid.correction);
+assert(mixed.motor.join(",") === "0.4,0.6,0.4,0.6",
+  "measured nose-up rotation must slow front and speed rear motors");
 mixed = mixQuadX(0.5, [0, 0, 0.1]);
 assert(mixed.motor.join(",") === "0.6,0.4,0.4,0.6",
   "positive Yaw correction must include Betaflight's default yaw inversion");
 mixed = mixQuadX(0.5, [0.5, -0.5, 0.5]);
-assert(mixed.valid && mixed.saturated && mixed.scale === 0.5 &&
-       mixed.motor.join(",") === "0,0,0,1",
-  "desaturation must preserve differential ratios inside [0,1]");
+assert(mixed.valid && mixed.saturated &&
+       Math.abs(mixed.scale - 1 / 3) < 1e-12 &&
+       mixed.appliedThrottle === 0.5 &&
+       mixed.motor.every((value, index) =>
+         Math.abs(value - [1, 1 / 3, 1 / 3, 1 / 3][index]) < 1e-12),
+  "desaturation must reduce correction without raising throttle");
+mixed = mixQuadX(0.005, [-0.153, 0.082, -0.022]);
+assert(mixed.valid && mixed.saturated &&
+       mixed.appliedThrottle === 0.005 &&
+       Math.max(...mixed.motor) < 0.012,
+  "logged 0.5% throttle disturbance must never raise collective throttle");
 assert(!mixQuadX(1.1, [0, 0, 0]).valid &&
        !mixQuadX(0.5, [0, Number.NaN, 0]).valid,
   "invalid mixer input must be rejected");
@@ -189,25 +215,28 @@ const diag = fs.readFileSync("APP/Src/platform/platform_diag.c", "utf8");
 const cmake = fs.readFileSync("CMakeLists.txt", "utf8");
 
 assert(pidHeader.includes("rate_pid_update(") &&
+       pidSource.includes(".ki = {0.0f, 0.0f, 0.0f}") &&
        pidSource.includes("state->previous_measurement_rad_s[axis]") &&
        pidSource.includes("profile->dterm_lpf1_hz") &&
        pidSource.includes("state->dterm_lpf2[axis]") &&
        pidSource.includes("candidate_integral = integrator_enabled") &&
        pidSource.includes("profile->output_limit"),
   "S4.5 measurement-D, integrator gate or limits are missing");
-assert(mixerHeader.includes("QUAD_X_MOTOR_REAR_RIGHT = 0") &&
-       mixerSource.includes("{-1.0f, 1.0f, 1.0f}") &&
+assert(mixerHeader.includes("QUAD_X_MOTOR_FRONT_LEFT = 0") &&
        mixerSource.includes("{1.0f, -1.0f, 1.0f}") &&
-       mixerSource.includes("range > 1.0f ? 1.0f / range : 1.0f"),
-  "S4.6 Betaflight motor order or desaturation changed");
+       mixerSource.includes("{-1.0f, 1.0f, 1.0f}") &&
+       mixerSource.includes("output->applied_throttle = throttle") &&
+       mixerSource.includes("output->correction_scale = throttle / -minimum"),
+  "S4.6 measured motor order or desaturation changed");
 assert(stateHeader.includes("rate_pid_output_t rate_pid") &&
        stateHeader.includes("quad_x_mixer_output_t mixer") &&
        flight.includes("snapshot.imu.filtered_angular_rate_rad_s") &&
        flight.includes("snapshot.imu.sample_count !=") &&
-       flight.includes("FLIGHT_PID_INTEGRATOR_THROTTLE_MIN") &&
-       flight.includes("state.rc_setpoint.throttle == 0.0f") &&
+       !flight.includes("FLIGHT_PID_ACTIVE_THROTTLE_MIN") &&
+       !flight.includes("Keep all motors equal") &&
+       flight.includes("state.rc_setpoint.throttle > 0.0f") &&
        flight.includes("rate_pid_reset(&pid_state);") &&
-       flight.includes("state.rate_pid.valid = true;"),
+       flight.includes("if (!rate_pid_update("),
   "FlightTask no longer updates control once per fresh filtered IMU sample");
 assert(flight.includes("mixer_to_dshot(") &&
        flight.includes("if (state.armed)") &&
@@ -239,8 +268,8 @@ console.log(JSON.stringify({
     dtUs: [pidProfile.minimumDt * 1e6, pidProfile.maximumDt * 1e6],
     derivative: "measurement",
   },
-  quadXOrder: ["M1 rear-right", "M2 front-right", "M3 rear-left", "M4 front-left"],
-  saturation: "scale correction span, then shift throttle into [0,1]",
+  quadXOrder: ["M1 front-left", "M2 rear-left", "M3 front-right", "M4 rear-right"],
+  saturation: "keep requested throttle and scale correction into [0,1]",
   statusPayloadBytes: controlStatusBytes,
   dshotBoundary: "Mixer output reaches DShot only while the S4.7 state is ARMED",
 }, null, 2));

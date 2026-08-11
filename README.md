@@ -70,7 +70,7 @@
 | IMU | ICM42688P，SPI1 + DMA2，1 kHz / ±2000 dps / ±16 g |
 | RC 接收 | CRSF / ELRS，UART2 @ 420000 baud，DMA 循环接收 |
 | 诊断串口 | UART4，1 Hz 摘要输出 |
-| 电机输出 | M1～M4 DShot300软件完成待无桨验收；M5～M8保持GPIO安全低电平 |
+| 电机输出 | M1～M4 DShot600拆桨验收通过；M5～M8保持GPIO安全低电平 |
 
 ### 关键引脚（定义见 [Core/Inc/main.h](Core/Inc/main.h)）
 
@@ -123,7 +123,7 @@ UART2 + DMA1 Stream5 循环接收 (IDLE/HT/TC)
        └─ app_state.rc (300ms Failsafe / 100ms+5帧恢复)
             └─ FlightTask -> rc_setpoint (端点/Deadband/Actual Rates/AUX请求)
                  └─ Rate PID -> Quad-X Mixer -> ARM/PREARM/Failsafe
-                      └─ 仅ARMED把[0,1]映射到DShot 48..2047
+                      └─ 仅ARMED把[0,1]映射到DShot 158..2047
                                                      │
 ADC3 PC0..PC3 + DMA2 Stream1/Channel2 单次扫描
   └─ power_adc -> BatteryTask (50 Hz) -> power_monitor (滤波/换算/低压/mAh)
@@ -167,7 +167,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
 | 电源ADC | [APP/Src/bsp/power_adc.c](APP/Src/bsp/power_adc.c) | ADC3 PC0～PC3单次扫描，DMA2 Stream1/Channel2一致发布 |
 | 电源监测 | [APP/Src/algorithms/power_monitor.c](APP/Src/algorithms/power_monitor.c) | 固定点滤波、VBAT/Current换算、电芯锁存、低压状态与mAh积分 |
 | DShot输出 | [APP/Src/bsp/dshot_motor.c](APP/Src/bsp/dshot_motor.c) | M1～M4 DShot600编码、TIM8_CH1节拍、GPIOA BSRR DMA与故障低电平 |
-| 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、IMU/RC新鲜度、RC setpoint与无桨测试250 ms超时 |
+| 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、IMU/RC新鲜度、RC setpoint、ARM安全链与无桨测试250 ms超时 |
 | 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7 双槽，48 字节 v1 记录 + magic/version/CRC32/commit，序号选择 |
 | 平台时基 | [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) | DWT 微秒时基，ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展 |
 | 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
@@ -258,7 +258,7 @@ cmake --build build/Release
 S1 硬件基线            🟠 主体完成，并行实测项按依赖补齐
 S2 最小FreeRTOS平台    🟠 v0.1.0 已冻结；App/CLI 软件 DFU 未实现
 S3 IMU、姿态与飞行输入 ✅ v0.9.0 已冻结
-S4 控制与电机          🟠 S4.1～S4.3已冻结；S4.4～S4.7软件完成待实物
+S4 控制与电机          🟡 S4.5～S4.7已冻结；S4.8开发中
 S5 基础飞行            ⬜ 已规划
 S6 功能完善            ⬜ 已规划（OSD / Blackbox / 气压计 / CLI）
 S7 RK3568手势RC控制    ⬜ 已规划（摄像头 / RKNN / 虚拟RC / 人工接管）
@@ -267,8 +267,8 @@ S7 RK3568手势RC控制    ⬜ 已规划（摄像头 / RKNN / 虚拟RC / 人工�
 S3.1～S3.9 已全部冻结。S3.9沿用实物验收正确的电源换算参数，不再追加标定改动；
 **S4.1 FlightTask安全骨架**、**S4.2 DShot600 GPIO bitbang** 与
 **S4.3 四路无桨电机测试/超时归零** 已按文档26通过联合实物验收并冻结；
-**S4.4 RC setpoint** 仍按文档30待实物；**S4.5～S4.7 Rate PID/Quad-X Mixer/ARM安全链**
-已完成软件与构建，按文档32等待联合拆桨验收。Mixer只在ARMED时映射到DShot；上电或
+**S4.4 RC setpoint** 的实物关口并入S4.9；**S4.5～S4.7 Rate PID/Quad-X Mixer/ARM安全链**
+已按文档32通过联合拆桨验收并冻结。Mixer只在ARMED时映射到DShot；上电或
 Failsafe后必须先完成ARM低位PREARM握手，任何输入、控制或DShot故障都会停机且禁止自动重解锁。
 飞控基础飞行稳定后，按[文档33](Docs/33_S7_RK3568_Linux摄像头手势RC控制总体开发计划.md)
 推进Linux手势控制；当前只完成路线规划，不改变S4验收状态。
@@ -287,6 +287,7 @@ Failsafe后必须先完成ARM低位PREARM握手，任何输入、控制或DShot�
 | `v0.8.0-crsf-rc-baseline` | `5bce889` | 2026-08-05 | UART2 循环 DMA、CRSF CRC、16 通道/Link Statistics、错误恢复 |
 | `v0.9.0-flight-input-baseline` | 见标签 | 2026-08-08 | RC Failsafe/Receiver、ADC3电源监测与实物验收冻结 |
 | `v1.0.0-motor-output-baseline` | 见标签 | 2026-08-10 | 1 kHz FlightTask安全门禁、四路DShot600 GPIO bitbang与无桨验收冻结 |
+| `v1.3.0-flight-safety-baseline` | 见标签 | 2026-08-12 | P-only Rate控制、实测Quad-X顺序、ARM/PREARM/Failsafe及拆桨联合验收冻结 |
 
 ---
 

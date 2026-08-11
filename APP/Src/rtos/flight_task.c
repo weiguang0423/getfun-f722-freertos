@@ -22,7 +22,6 @@
     pdMS_TO_TICKS(FLIGHT_MOTOR_TEST_TIMEOUT_MS)
 #define FLIGHT_MAX_CONSECUTIVE_SUBMIT_ERRORS 2U
 #define FLIGHT_DEGREES_TO_RADIANS 0.01745329251994329577f
-#define FLIGHT_PID_INTEGRATOR_THROTTLE_MIN 0.05f
 #define FLIGHT_ARM_THROTTLE_MAX 0.0f
 #define FLIGHT_DSHOT_MOTOR_IDLE_PERCENT 0.055f
 
@@ -236,32 +235,21 @@ static void flight_task(void *argument)
             state.rate_pid_integrator_enabled =
                 flight_arming_is_armed(&arming) &&
                 state.rc_setpoint.arm_requested &&
-                (state.rc_setpoint.throttle >
-                 FLIGHT_PID_INTEGRATOR_THROTTLE_MIN);
+                (state.rc_setpoint.throttle > 0.0f);
             for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
                 setpoint_rad_s[axis] =
                     state.rc_setpoint.rate_dps[axis] *
                     FLIGHT_DEGREES_TO_RADIANS;
             }
 
-            if (state.rc_setpoint.throttle == 0.0f) {
-                /* Keep Betaflight idle, but never let bench vibration raise it. */
-                rate_pid_reset(&pid_state);
-                memset(&state.rate_pid, 0, sizeof(state.rate_pid));
-                state.rate_pid.valid = true;
-                memcpy(state.rate_pid.setpoint_rad_s, setpoint_rad_s,
-                       sizeof(state.rate_pid.setpoint_rad_s));
-                memcpy(state.rate_pid.measurement_rad_s,
-                       snapshot.imu.filtered_angular_rate_rad_s,
-                       sizeof(state.rate_pid.measurement_rad_s));
-            } else if (!rate_pid_update(
-                           pid_profile,
-                           &pid_state,
-                           setpoint_rad_s,
-                           snapshot.imu.filtered_angular_rate_rad_s,
-                           (float)snapshot.imu.sample_interval_us * 0.000001f,
-                           state.rate_pid_integrator_enabled,
-                           &state.rate_pid)) {
+            if (!rate_pid_update(
+                    pid_profile,
+                    &pid_state,
+                    setpoint_rad_s,
+                    snapshot.imu.filtered_angular_rate_rad_s,
+                    (float)snapshot.imu.sample_interval_us * 0.000001f,
+                    state.rate_pid_integrator_enabled,
+                    &state.rate_pid)) {
                 memset(&state.mixer, 0, sizeof(state.mixer));
                 ++state.rate_pid_error_count;
             }

@@ -1,6 +1,9 @@
 /* Independent S4.7 arming/failsafe and Mixer-to-DShot regression. */
 import fs from "node:fs";
 
+const readSource = (path) => fs.readFileSync(path, "utf8")
+  .replaceAll("\r\n", "\n");
+
 const PREARM = 0;
 const DISARMED = 1;
 const ARMED = 2;
@@ -94,15 +97,15 @@ assert(dshot(0) === 158 && dshot(0.5) === 1102 &&
        dshot(1) === DSHOT_MAX,
   "Betaflight motor_idle 5.5% must map Mixer [0,1] to DShot 158..2047");
 
-const header = fs.readFileSync("APP/Inc/algorithms/flight_arming.h", "utf8");
-const source = fs.readFileSync("APP/Src/algorithms/flight_arming.c", "utf8");
-const state = fs.readFileSync("APP/Inc/app_state.h", "utf8");
-const flight = fs.readFileSync("APP/Src/rtos/flight_task.c", "utf8");
-const msp = fs.readFileSync("APP/Src/protocol/msp_server.c", "utf8");
-const imuTask = fs.readFileSync("APP/Src/rtos/imu_task.c", "utf8");
-const appStateSource = fs.readFileSync("APP/Src/app_state.c", "utf8");
-const diag = fs.readFileSync("APP/Src/platform/platform_diag.c", "utf8");
-const cmake = fs.readFileSync("CMakeLists.txt", "utf8");
+const header = readSource("APP/Inc/algorithms/flight_arming.h");
+const source = readSource("APP/Src/algorithms/flight_arming.c");
+const state = readSource("APP/Inc/app_state.h");
+const flight = readSource("APP/Src/rtos/flight_task.c");
+const msp = readSource("APP/Src/protocol/msp_server.c");
+const imuTask = readSource("APP/Src/rtos/imu_task.c");
+const appStateSource = readSource("APP/Src/app_state.c");
+const diag = readSource("APP/Src/platform/platform_diag.c");
+const cmake = readSource("CMakeLists.txt");
 
 assert(header.includes("FLIGHT_ARMING_PREARM") &&
        header.includes("FLIGHT_ARMING_FAILSAFE") &&
