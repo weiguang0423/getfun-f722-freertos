@@ -285,18 +285,20 @@ Body→NED四元数和Euler。任何输入边界失效都会撤销姿态READY并
 
 ### 5.2 FlightTask
 
-S4.1已创建静态FlightTask，优先级 `tskIDLE_PRIORITY+5`、周期1 kHz；S4.5因控制快照扩展把
-静态栈从384增加到512 words。
+S4.1已创建静态FlightTask，优先级 `tskIDLE_PRIORITY+5`、周期1 kHz；S4.5扩展到512 words，
+S4.8/S4.9因Angle输出和动态参数快照扩展到768 words。
 当前每次执行：
 
 1. 取得同一发布链的最新IMU和姿态快照。
 2. 检查数据是否READY及是否过期。
 3. 读取RC快照；RC有效且未过期时计算端点、Deadband、Actual Rates和AUX模式请求，
    RC失效时立即把setpoint清零。
-4. 仅在新IMU样本到达且当前为RATE请求时，用滤波Gyro和真实dt更新三轴Rate PID。
+4. 仅在新IMU样本到达时更新控制：RATE直接使用Actual Rates；ANGLE先把Roll/Pitch角度误差
+   经Angle P和Rate限幅转换，Yaw继续使用Actual Rates；模式或参数sequence变化复位PID历史。
 5. 把有界PID修正送入实测板级顺序Quad-X Mixer，保持Throttle并按上下余量缩放修正到`[0,1]`。
 6. 汇总既有解锁抑制、DShot/系统/Configurator/控制状态和ARM低位PREARM握手。
-7. 仅ARMED按Betaflight默认`motor_idle=5.5%`把Mixer `[0,1]`映射到DShot 158～2047；否则只允许停止值或与ARM互斥的显式无桨测试值。
+7. 仅ARMED按已提交的`motor_idle`把Mixer `[0,1]`映射到DShot；默认5.5%即158～2047，
+   否则只允许停止值或与ARM互斥的显式无桨测试值。
 
 姿态随新IMU样本在ImuTask中更新，未来FlightTask只消费，不在另一周期重复积分。
 
@@ -313,7 +315,9 @@ S3.7快照保留最后合法帧和接收tick，但不按超时撤销valid；S3.8
 
 ### 5.4 MspTask
 
-MspTask 负责 Betaflight App 和 CLI。App 查询数据时读取系统快照，修改参数时通过参数接口提交，不直接改正在运行的驱动寄存器。
+MspTask使用1024 words静态栈，负责Betaflight App和CLI。S4.9标准SET只修改任务私有的
+1秒暂存副本；`MSP_EEPROM_WRITE`才请求ImuTask同步提交，成功后一次发布完整Profile。
+硬件事实类SET只能原值回写，任何配置SET/EEPROM在ARMED时拒绝。MspTask不直接写Flash或驱动寄存器。
 
 ### 5.5 BlackboxTask
 
@@ -485,8 +489,7 @@ ARM/PREARM/Failsafe和MSP2 `0x4009`，仅ARMED把Mixer接入DShot。完整App PI
 
 ## 10. 参数保存
 
-v0.5.0已经实现第一版参数系统。当前记录不是完整Betaflight PG，而是一个固定48字节
-v1记录：
+v0.5.0实现固定48字节v1；S4.9保存格式升级为v2，但启动仍完整验证并读取v1：
 
 ```c
 typedef struct {
@@ -502,17 +505,19 @@ typedef struct {
 } parameter_record_v1_t;
 ```
 
+v2在同一头部/CRC/commit-last契约上增加RC端点与Rates、ARM/ANGLE ranges、Rate PID、Angle、
+`motor_idle`及Craft/Pilot名称。加载v1时保留加速度偏置，其余字段使用安全默认值并标记
+`migration_pending`；只有下一次显式保存才向非活动槽写v2，不原地迁移。
+
 固定策略：
 
 - Sector 6/7分别保存槽A/B，使用sequence选择较新记录。
 - 每次只擦除非活动槽，记录主体验证后最后写commit。
 - 两槽空白时加载安全默认值；有损坏但无有效槽时加载默认值并设置解锁抑制。
 - 新加速度偏置只有保存和读回成功后才应用。
-- 当前没有真实ARM输出，保存前仍强制Motor GPIO低；未来Armed状态必须拒绝写Flash。
-- 格式变化提升version；兼容扩展优先使用reserved，不能静默改变字段含义。
-
-完整参数分组、运行时修改、统一 `save` 和版本迁移将在后续里程碑增量扩展，不需要
-为了未来字段提前引入Betaflight完整PG系统。
+- Flash仍只由ImuTask写；MspTask排队后，ImuTask在实际擦除前再次检查ARMED。
+- 保存失败、事务超时或ARMED拒绝都不改变FlightTask正在使用的Profile。
+- 格式变化必须提升version并保留显式迁移，不能静默改变字段含义。
 
 ---
 

@@ -18,12 +18,10 @@
 > 通过 USB CDC 虚拟串口正常连接——而 PID、Mixer、ARM/Failsafe、电机安全链等核心
 > 逻辑由本项目自主实现并完全掌握。
 
-> **当前状态（2026-08-11）**：`S4.1 + S4.2 + S4.3` 已通过FlightTask安全门禁、
-> DShot600逻辑分析仪和四路无桨联合验收；`S4.4～S4.6` RC setpoint、Rate PID和Quad-X Mixer
-> 已完成软件和双配置构建，等待真实RC/App、控制方向、Mixer顺序与长时联合验收。
-> 最新冻结基线：[`v1.0.0-motor-output-baseline`](#-已冻结版本历史)。
-> 本固件**尚未飞行**，PID/Mixer目前只发布逻辑诊断，ARM状态机及Mixer到DShot授权仍未实现；
-> 任何后续电机测试仍必须拆桨。
+> **当前状态（2026-08-12）**：S4.5～S4.7已通过联合拆桨验收并冻结为
+> `v1.3.0-flight-safety-baseline`；S4.8 Angle外环和S4.9 Betaflight App四页、参数v2事务
+> 已完成软件与双配置构建，等待[文档35](Docs/35_v1.4.0_S4.8_S4.9软件交付与拆桨联合验收.md)真实板卡/App/掉电联合拆桨验收。
+> 本固件**尚未飞行**；S4出口验收通过前不得安装螺旋桨或进入S5。
 
 ---
 
@@ -122,7 +120,7 @@ UART2 + DMA1 Stream5 循环接收 (IDLE/HT/TC)
   └─ crsf_uart -> crsf 解析 (CRC-8/DVB-S2) -> rc_input (AETR映射) -> RcTask
        └─ app_state.rc (300ms Failsafe / 100ms+5帧恢复)
             └─ FlightTask -> rc_setpoint (端点/Deadband/Actual Rates/AUX请求)
-                 └─ Rate PID -> Quad-X Mixer -> ARM/PREARM/Failsafe
+                 └─ RATE直入或ANGLE(角度P外环) -> Rate PID -> Quad-X Mixer -> ARM/PREARM/Failsafe
                       └─ 仅ARMED把[0,1]映射到DShot 158..2047
                                                      │
 ADC3 PC0..PC3 + DMA2 Stream1/Channel2 单次扫描
@@ -136,7 +134,7 @@ FlightTask (1 kHz，一致快照/新鲜度门禁)
 USB CDC 接收回调 (usbd_cdc_if.c, ISR 上下文)
   └─ usb_cdc_transport_receive_from_isr()        环形缓冲 + 任务通知
        │
-MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
+MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 1024 words 栈)
   ├─ usb_cdc_transport_read()                      从环缓冲取字节
   ├─ msp_parser_process_byte()                     逐字节状态机解析 (MSP V1/V2)
   ├─ msp_server_process()                          按 command 派发，读 app_state 快照
@@ -153,7 +151,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
 | 模块 | 路径 | 职责 |
 |---|---|---|
 | MSP 协议层 | [APP/Src/protocol/msp_transport.c](APP/Src/protocol/msp_transport.c) | 纯协议，无 RTOS 依赖。逐字节状态机解析 `$M<` V1 / `$X<` V2（V2 用 CRC8-DVB-S2），构造回包帧 |
-| MSP 命令派发 | [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) | `MSP_FC_VARIANT` 返回 `"BTFL"`、`MSP_BOARD_INFO` 报 `GF72`；状态命令 + 校准 + Receiver/Power 页面依赖 + GETFUN MSP2 `0x4000` 系列 |
+| MSP 命令派发 | [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) | `MSP_FC_VARIANT` 返回 `"BTFL"`、`MSP_BOARD_INFO` 报 `GF72`；Receiver/Power及PID/Modes/Motors/Configuration页最小标准MSP读写、1秒参数暂存和Armed拒绝 |
 | IMU 总线 | [APP/Src/bsp/imu_bus.c](APP/Src/bsp/imu_bus.c) | SPI1 适配，阻塞初始化 + 14 字节 DMA 采样 |
 | ICM42688P 驱动 | [APP/Src/drivers/icm42688p.c](APP/Src/drivers/icm42688p.c) | 寄存器级驱动，固定 1 kHz / ±2000 dps / ±16 g |
 | 陀螺校准 | [APP/Src/algorithms/gyro_calibration.c](APP/Src/algorithms/gyro_calibration.c) | 上电静态零偏 Welford 状态机，250 预热 + 2000 样本，不持久化 |
@@ -163,12 +161,13 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 768 words 栈)
 | CRSF 解析 | [APP/Src/protocol/crsf.c](APP/Src/protocol/crsf.c) | 长度 2～62 + CRC-8/DVB-S2 `0xD5`，解码 16 路 11-bit 通道与 Link Statistics |
 | RC 输入 | [APP/Src/algorithms/rc_input.c](APP/Src/algorithms/rc_input.c) | AETR→App 逻辑顺序映射 + Failsafe 超时/恢复状态机 |
 | RC Setpoint | [APP/Src/algorithms/rc_setpoint.c](APP/Src/algorithms/rc_setpoint.c) | 端点/Deadband归一化、Actual Rates/Expo和AUX1 ARM/AUX2 ANGLE请求 |
+| Angle外环 | [APP/Src/algorithms/angle_outer_loop.c](APP/Src/algorithms/angle_outer_loop.c) | Roll/Pitch有界角度误差转Rate设定，Yaw保持Actual Rates；无效输入失败关闭 |
 | CRSF UART | [APP/Src/bsp/crsf_uart.c](APP/Src/bsp/crsf_uart.c) | UART2 420000 baud DMA 循环接收 |
 | 电源ADC | [APP/Src/bsp/power_adc.c](APP/Src/bsp/power_adc.c) | ADC3 PC0～PC3单次扫描，DMA2 Stream1/Channel2一致发布 |
 | 电源监测 | [APP/Src/algorithms/power_monitor.c](APP/Src/algorithms/power_monitor.c) | 固定点滤波、VBAT/Current换算、电芯锁存、低压状态与mAh积分 |
 | DShot输出 | [APP/Src/bsp/dshot_motor.c](APP/Src/bsp/dshot_motor.c) | M1～M4 DShot600编码、TIM8_CH1节拍、GPIOA BSRR DMA与故障低电平 |
-| 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、IMU/RC新鲜度、RC setpoint、ARM安全链与无桨测试250 ms超时 |
-| 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7 双槽，48 字节 v1 记录 + magic/version/CRC32/commit，序号选择 |
+| 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、动态RC/Angle/Rate PID/Mixer、ARM安全链与无桨测试250 ms超时 |
+| 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7双槽v2记录、v1加速度偏置迁移、magic/version/CRC32/commit-last与序号选择 |
 | 平台时基 | [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) | DWT 微秒时基，ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展 |
 | 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
 | USB CDC 传输 | [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) | RX 1024 环缓冲 + 任务通知；TX 320 字节轮询 |
@@ -258,7 +257,7 @@ cmake --build build/Release
 S1 硬件基线            🟠 主体完成，并行实测项按依赖补齐
 S2 最小FreeRTOS平台    🟠 v0.1.0 已冻结；App/CLI 软件 DFU 未实现
 S3 IMU、姿态与飞行输入 ✅ v0.9.0 已冻结
-S4 控制与电机          🟡 S4.5～S4.7已冻结；S4.8开发中
+S4 控制与电机          🔵 S4.8/S4.9软件完成，待联合拆桨验收
 S5 基础飞行            ⬜ 已规划
 S6 功能完善            ⬜ 已规划（OSD / Blackbox / 气压计 / CLI）
 S7 RK3568手势RC控制    ⬜ 已规划（摄像头 / RKNN / 虚拟RC / 人工接管）
@@ -267,8 +266,8 @@ S7 RK3568手势RC控制    ⬜ 已规划（摄像头 / RKNN / 虚拟RC / 人工�
 S3.1～S3.9 已全部冻结。S3.9沿用实物验收正确的电源换算参数，不再追加标定改动；
 **S4.1 FlightTask安全骨架**、**S4.2 DShot600 GPIO bitbang** 与
 **S4.3 四路无桨电机测试/超时归零** 已按文档26通过联合实物验收并冻结；
-**S4.4 RC setpoint** 的实物关口并入S4.9；**S4.5～S4.7 Rate PID/Quad-X Mixer/ARM安全链**
-已按文档32通过联合拆桨验收并冻结。Mixer只在ARMED时映射到DShot；上电或
+**S4.4 RC setpoint** 的实物关口并入S4.8/S4.9；**S4.5～S4.7 Rate PID/Quad-X Mixer/ARM安全链**
+已按文档32通过联合拆桨验收并冻结。S4.8/S4.9软件交付及待验步骤见[文档35](Docs/35_v1.4.0_S4.8_S4.9软件交付与拆桨联合验收.md)。Mixer只在ARMED时映射到DShot；上电或
 Failsafe后必须先完成ARM低位PREARM握手，任何输入、控制或DShot故障都会停机且禁止自动重解锁。
 飞控基础飞行稳定后，按[文档33](Docs/33_S7_RK3568_Linux摄像头手势RC控制总体开发计划.md)
 推进Linux手势控制；当前只完成路线规划，不改变S4验收状态。

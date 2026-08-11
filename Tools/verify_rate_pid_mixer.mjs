@@ -236,7 +236,7 @@ assert(stateHeader.includes("rate_pid_output_t rate_pid") &&
        !flight.includes("Keep all motors equal") &&
        flight.includes("state.rc_setpoint.throttle > 0.0f") &&
        flight.includes("rate_pid_reset(&pid_state);") &&
-       flight.includes("if (!rate_pid_update("),
+       flight.includes("control_setpoint_valid && !rate_pid_update("),
   "FlightTask no longer updates control once per fresh filtered IMU sample");
 assert(flight.includes("mixer_to_dshot(") &&
        flight.includes("if (state.armed)") &&

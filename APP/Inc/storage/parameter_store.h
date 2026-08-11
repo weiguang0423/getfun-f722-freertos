@@ -2,8 +2,8 @@
  * parameter_store.h - STM32F722 internal Flash parameter store interface.
  *
  * Purpose:
- *   Exposes the v1 persistent parameter values and the load/save diagnostics for
- *   the dual-sector A/B store. The implementation owns record validation,
+ *   Exposes v2 flight configuration and load/save diagnostics for the
+ *   dual-sector A/B store. The implementation owns v1 migration, validation,
  *   sequence selection, CRC, erase/program/verify and commit ordering.
  *
  * Core flow:
@@ -22,11 +22,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "algorithms/angle_outer_loop.h"
+#include "algorithms/rate_pid.h"
+#include "algorithms/rc_setpoint.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define PARAMETER_STORE_AXIS_COUNT 3U
+#define PARAMETER_STORE_NAME_LENGTH 16U
+#define PARAMETER_STORE_MOTOR_IDLE_DEFAULT 550U
 
 typedef enum
 {
@@ -60,6 +66,12 @@ typedef struct
 {
     bool accel_calibration_valid;
     float accel_bias_m_s2[PARAMETER_STORE_AXIS_COUNT];
+    rc_setpoint_profile_t rc_profile;
+    rate_pid_profile_t rate_pid_profile;
+    angle_outer_loop_profile_t angle_profile;
+    uint16_t motor_idle_percent_x100;
+    char craft_name[PARAMETER_STORE_NAME_LENGTH + 1U];
+    char pilot_name[PARAMETER_STORE_NAME_LENGTH + 1U];
 } parameter_store_values_t;
 
 typedef struct
@@ -72,8 +84,13 @@ typedef struct
     uint32_t sequence;
     uint32_t save_error_count;
     uint32_t last_hal_error;
+    uint16_t loaded_record_version;
+    bool migration_pending;
 } parameter_store_status_t;
 
+void parameter_store_values_set_defaults(parameter_store_values_t *values);
+bool parameter_store_values_are_valid(
+    const parameter_store_values_t *values);
 void parameter_store_init(void);
 void parameter_store_get_values(parameter_store_values_t *values);
 void parameter_store_get_status(parameter_store_status_t *status);

@@ -33,7 +33,7 @@
 #include "rtos/imu_task.h"
 #include "rtos/rc_task.h"
 
-#define MSP_TASK_STACK_WORDS 768U
+#define MSP_TASK_STACK_WORDS 1024U
 #define MSP_TASK_PRIORITY (tskIDLE_PRIORITY + 2U)
 #define MSP_TX_TIMEOUT_MS 50U
 

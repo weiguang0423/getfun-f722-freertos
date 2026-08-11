@@ -63,7 +63,7 @@ SPI1 + PA4 CS + DMA2 Stream 0/3
 USB CDC 接收回调 (usbd_cdc_if.c, ISR 上下文)
   └─ usb_cdc_transport_receive_from_isr()        环形缓冲 + 任务通知
        │
-MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
+MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 1024 words 栈)
   ├─ usb_cdc_transport_read()                      从环缓冲取字节
   ├─ msp_parser_process_byte()                     逐字节状态机解析 (MSP V1/V2)
   ├─ msp_server_process()                          按 command 派发，读 app_state 快照
@@ -73,15 +73,15 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
 模块职责：
 
 - [APP/Inc/protocol/msp_transport.h](APP/Inc/protocol/msp_transport.h) / [msp_transport.c](APP/Src/protocol/msp_transport.c) — 纯协议层，无 RTOS 依赖。`msp_parser_t` 是逐字节状态机（`$M<` V1 / `$X<` V2，V2 用 CRC8-DVB-S2）；`msp_transport_build_response()` 构造回包帧。`MSP_MAX_PAYLOAD_SIZE=256`。
-- [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) — MSP 命令派发。`MSP_FC_VARIANT` 返回 `"BTFL"`（Configurator 只对 BTFL 开正常 UI），但 `MSP_BOARD_INFO` 仍报 `GF72`/`GETFUN_F722` 保持板子身份。除状态命令外，实现标准 `MSP_ACC_CALIBRATION`（205）向ImuTask排队请求，以及GETFUN MSP2 `0x4000`参数/校准、`0x4001`时间/低通诊断。
+- [APP/Src/protocol/msp_server.c](APP/Src/protocol/msp_server.c) — MSP 命令派发。`MSP_FC_VARIANT` 返回 `"BTFL"`，`MSP_BOARD_INFO` 保持 `GF72`/`GETFUN_F722`。除既有状态/校准外，S4.9实现PID/Modes/Motors/Configuration页最小标准读写：SET只更新1秒私有事务，EEPROM通过ImuTask提交，所有配置写和标准Motor非零写均有Armed/安全门禁。
 - [APP/Src/bsp/imu_bus.c](APP/Src/bsp/imu_bus.c) / [APP/Src/drivers/icm42688p.c](APP/Src/drivers/icm42688p.c) — SPI1 总线适配和 ICM42688P 寄存器驱动。初始化与 DRDY 状态读取使用阻塞事务，14 字节样本使用 DMA2 Stream 0/3、Channel 3 和两个 32 字节对齐静态槽位；CS PA4、Mode 0、1.6875 MHz，器件固定为 1 kHz、±2000 dps、±16 g。
 - [APP/Src/algorithms/gyro_calibration.c](APP/Src/algorithms/gyro_calibration.c) — 不依赖 HAL/RTOS 的上电陀螺静态零偏状态机。输入为 SI 换算和 CW90 后的机体系数据；连续 250 样本预热、2000 样本 Welford 均值/方差，运动或异常时重置窗口，READY 后冻结并扣除三轴零偏。每次上电或 IMU 完整恢复都重新校准，不持久化。
 - [APP/Src/algorithms/accel_calibration.c](APP/Src/algorithms/accel_calibration.c) — 不依赖HAL/RTOS的水平单面加速度校准。使用250预热、2000样本Welford窗口以及运动、水平、方差和偏置门限；候选值持久化成功前不切换。
 - [APP/Src/algorithms/imu_filter.c](APP/Src/algorithms/imu_filter.c) — 不依赖HAL/RTOS的三轴PT1低通。按真实dt更新，Gyro固定100 Hz、Accel固定30 Hz；首样本只播种，dt超界或非有限值会重置并保持未READY。
-- [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) — STM32F722 Sector 6/7双槽参数存储。48字节v1记录包含magic/version/length/sequence/flags/CRC32/commit；只擦除非活动槽且commit最后写入，支持空白默认、损坏恢复和序号选择。
+- [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) — STM32F722 Sector 6/7双槽参数存储。当前保存v2（加速度偏置、RC、Rate PID、Angle、motor_idle和名称），兼容读取48字节v1并迁移偏置；只擦除非活动槽且commit最后写入。
 - [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) — Cortex-M7 DWT微秒时基。ISR只读CYCCNT；ImuTask单写者执行32位回绕扩展、周期余数累计和离线维护。216 MHz下必须严格短于约19.88秒维护一次。
 - [APP/Src/rtos/imu_task.c](APP/Src/rtos/imu_task.c) — ImuTask 是 IMU/时间扩展/低通/参数保存单写者，静态栈512 words、优先级idle+4；负责初始化/重试、1 kHz门控DMA、DMA完成取时、SI/CW90、校准、真实dt、PT1、参数提交和app_state发布。当前板级资料未定义IMU INT外部引脚，不得把PC4/PINIO1猜作DRDY EXTI。
-- [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) / [APP/Src/algorithms/flight_arming.c](APP/Src/algorithms/flight_arming.c) — FlightTask以1 kHz消费一致快照并更新RC setpoint、Rate PID和Quad-X Mixer；四态ARM/PREARM/Failsafe汇总全部安全原因，只有ARMED把Mixer映射到DShot 158～2047，Motor Test保持独立互斥门禁。
+- [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) / [APP/Src/algorithms/angle_outer_loop.c](APP/Src/algorithms/angle_outer_loop.c) / [flight_arming.c](APP/Src/algorithms/flight_arming.c) — 768 words FlightTask以1 kHz消费动态RC/PID/Angle参数；ANGLE把Roll/Pitch角误差转换为Rate设定、Yaw透传，模式/参数切换复位PID；四态安全链只有ARMED才把Mixer映射到动态motor_idle端点。
 - [APP/Inc/app_state.h](APP/Inc/app_state.h) / [APP/Src/app_state.c](APP/Src/app_state.c) — 全局运行态快照 `app_state_snapshot_t`（含IMU时间/dt、未滤波/滤波数据、两种校准、参数槽状态、解锁抑制、姿态/电池/运行信息）。多任务安全靠 **PRIMASK关中断 + DMB** 做短临界区。
 - [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) — USB CDC 上的一层收发适配。RX 是 1024 字节环形缓冲，ISR 写入后 `vTaskNotifyGiveFromISR` 唤醒绑定任务；`usb_cdc_transport_bind_current_task()` 必须在 MspTask 启动时调用一次。TX 320 字节缓冲，`tx_idle` 标志 + 轮询等待 `CDC_Transmit_FS` 完成（`usb_cdc_transport_transmit_complete_from_isr()` 在发送完成时置位）。
 - [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) — 平台基线诊断与安全停机。UART4 1 Hz输出IMU时间/dt、低通、两种校准、参数槽和偏置摘要；致命故障或参数保存前强制Motor 1～8低电平。
@@ -93,7 +93,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 768 words 栈)
 - 陀螺和加速度校准必须在SI换算和CW90之后执行；新加速度偏置必须持久化验证成功后才应用。IMU、校准或参数无效时对应 `arming_inhibit_flags` 必须保持置位。
 - DWT周期扩展只能由ImuTask更新；DMA ISR只捕获原始CYCCNT。`dt`不在500～2000 µs、首样本或滤波未READY时，`APP_ARMING_INHIBIT_IMU_TIMING_INVALID`必须保持置位，后续Mahony不得积分。
 - `MSP_RAW_IMU`继续使用校准后未滤波数据；`filtered_acceleration_m_s2`和`filtered_angular_rate_rad_s`专供后续姿态链，不能静默交换两条支路语义。
-- 参数Flash只能由ImuTask在安全状态写入；MSP校准入口、ImuTask校准启动和最终保存点都必须拒绝ARMED擦写Sector 6/7。
+- 参数Flash只能由ImuTask在安全状态写入；MSP事务入口、ImuTask校准启动和最终保存点都必须拒绝ARMED擦写Sector 6/7。不得复用ImuTask的DMA任务通知唤醒参数请求。
 - `usb_cdc_transport_receive_from_isr()` 跑在 USB ISR 上下文，**不能阻塞**；它只写环缓冲并发通知。
 - `app_state` 临界区是关中断而非互斥量，发布者要短小、不得在临界区内调任何可能阻塞的 API。
 

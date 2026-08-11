@@ -195,5 +195,5 @@ console.log(JSON.stringify({
   motorTestTimeoutMs: TEST_TIMEOUT_MS,
   statusPayloadBytes: flightMotorStatusBytes,
   dma: "TIM8_CH1 pacer; DMA2 Stream2/Channel7 -> GPIOA BSRR",
-  deferred: ["Betaflight Motors page", "configurable motor/arming parameters"],
+  deferred: ["physical Betaflight Motors page acceptance"],
 }, null, 2));

@@ -83,6 +83,12 @@ static imu_filter_t imu_filter;
 static attitude_estimator_t attitude_estimator;
 static parameter_store_values_t parameter_values;
 static bool accel_calibration_request_pending;
+static parameter_store_values_t parameter_save_request_values;
+static bool parameter_save_request_active;
+static bool parameter_save_request_pending;
+static uint32_t parameter_save_request_id;
+static uint32_t parameter_save_completed_id;
+static imu_parameter_save_result_t parameter_save_result;
 static bool attitude_input_was_valid;
 static bool have_previous_sample_timestamp;
 static uint32_t previous_sample_timestamp_us;
@@ -398,6 +404,9 @@ static void publish_parameter_state(void)
     destination.sequence = source.sequence;
     destination.save_error_count = source.save_error_count;
     destination.last_hal_error = source.last_hal_error;
+    destination.loaded_record_version = source.loaded_record_version;
+    destination.migration_pending = source.migration_pending;
+    destination.values = parameter_values;
     app_state_publish_parameters(&destination);
 }
 
@@ -464,6 +473,50 @@ static void persist_accel_calibration_candidate(void)
         accel_calibration_mark_save_failed(&accel_calibration);
     }
     publish_parameter_state();
+}
+
+static void complete_parameter_save_request(
+    uint32_t request_id,
+    imu_parameter_save_result_t result)
+{
+    taskENTER_CRITICAL();
+    parameter_save_result = result;
+    parameter_save_completed_id = request_id;
+    parameter_save_request_active = false;
+    taskEXIT_CRITICAL();
+}
+
+static void process_parameter_save_request(void)
+{
+    parameter_store_values_t candidate;
+    uint32_t request_id;
+    bool pending;
+
+    taskENTER_CRITICAL();
+    pending = parameter_save_request_pending;
+    if (pending) {
+        candidate = parameter_save_request_values;
+        request_id = parameter_save_request_id;
+        parameter_save_request_pending = false;
+    }
+    taskEXIT_CRITICAL();
+    if (!pending) {
+        return;
+    }
+    if (app_state_is_armed()) {
+        complete_parameter_save_request(request_id,
+                                        IMU_PARAMETER_SAVE_ARMED);
+        return;
+    }
+    if (parameter_store_save(&candidate) == PARAMETER_STORE_SAVE_OK) {
+        parameter_values = candidate;
+        publish_parameter_state();
+        complete_parameter_save_request(request_id, IMU_PARAMETER_SAVE_OK);
+    } else {
+        publish_parameter_state();
+        complete_parameter_save_request(
+            request_id, IMU_PARAMETER_SAVE_FLASH_FAILED);
+    }
 }
 
 static void imu_dma_completion_from_isr(void *context)
@@ -613,6 +666,7 @@ static void imu_task(void *argument)
         TickType_t last_wake_time;
         uint32_t maintained_timestamp_us;
 
+        process_parameter_save_request();
         sample.timing_source_ready =
             platform_time_maintain(&maintained_timestamp_us);
 
@@ -635,6 +689,7 @@ static void imu_task(void *argument)
             vTaskDelayUntil(&last_wake_time, IMU_TASK_PERIOD_TICKS);
             sample.timing_source_ready =
                 platform_time_maintain(&maintained_timestamp_us);
+            process_parameter_save_request();
             start_requested_accel_calibration(&sample);
             now = xTaskGetTickCount();
             if ((TickType_t)(now - last_wake_time) > 0U) {
@@ -756,6 +811,59 @@ bool imu_task_request_accel_calibration(void)
     }
     taskEXIT_CRITICAL();
     return accepted;
+}
+
+imu_parameter_save_result_t imu_task_save_parameters(
+    const parameter_store_values_t *values,
+    uint32_t timeout_ms)
+{
+    TickType_t start;
+    TickType_t timeout_ticks;
+    uint32_t request_id;
+
+    if (!parameter_store_values_are_valid(values) || (timeout_ms == 0U)) {
+        return IMU_PARAMETER_SAVE_BAD_ARGUMENT;
+    }
+    if (app_state_is_armed()) {
+        return IMU_PARAMETER_SAVE_ARMED;
+    }
+    timeout_ticks = pdMS_TO_TICKS(timeout_ms);
+    if (timeout_ticks == 0U) {
+        timeout_ticks = 1U;
+    }
+
+    taskENTER_CRITICAL();
+    if ((imu_task_handle == NULL) || parameter_save_request_active) {
+        taskEXIT_CRITICAL();
+        return IMU_PARAMETER_SAVE_BUSY;
+    }
+    ++parameter_save_request_id;
+    if (parameter_save_request_id == 0U) {
+        parameter_save_request_id = 1U;
+    }
+    request_id = parameter_save_request_id;
+    parameter_save_request_values = *values;
+    parameter_save_result = IMU_PARAMETER_SAVE_BUSY;
+    parameter_save_request_active = true;
+    parameter_save_request_pending = true;
+    taskEXIT_CRITICAL();
+    start = xTaskGetTickCount();
+    for (;;) {
+        uint32_t completed_id;
+        imu_parameter_save_result_t result;
+
+        taskENTER_CRITICAL();
+        completed_id = parameter_save_completed_id;
+        result = parameter_save_result;
+        taskEXIT_CRITICAL();
+        if (completed_id == request_id) {
+            return result;
+        }
+        if ((TickType_t)(xTaskGetTickCount() - start) >= timeout_ticks) {
+            return IMU_PARAMETER_SAVE_TIMEOUT;
+        }
+        vTaskDelay(1U);
+    }
 }
 
 uint32_t imu_task_stack_high_water_mark(void)

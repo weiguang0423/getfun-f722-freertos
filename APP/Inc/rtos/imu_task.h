@@ -21,12 +21,27 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "storage/parameter_store.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef enum
+{
+    IMU_PARAMETER_SAVE_OK = 0,
+    IMU_PARAMETER_SAVE_BAD_ARGUMENT,
+    IMU_PARAMETER_SAVE_ARMED,
+    IMU_PARAMETER_SAVE_BUSY,
+    IMU_PARAMETER_SAVE_TIMEOUT,
+    IMU_PARAMETER_SAVE_FLASH_FAILED
+} imu_parameter_save_result_t;
+
 void imu_task_create(void);
 bool imu_task_request_accel_calibration(void);
+imu_parameter_save_result_t imu_task_save_parameters(
+    const parameter_store_values_t *values,
+    uint32_t timeout_ms);
 uint32_t imu_task_stack_high_water_mark(void);
 
 #ifdef __cplusplus

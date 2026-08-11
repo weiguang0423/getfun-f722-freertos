@@ -34,6 +34,7 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/algorithms/accel_calibration.c
+    APP/Src/algorithms/angle_outer_loop.c
     APP/Src/algorithms/attitude_estimator.c
     APP/Src/algorithms/flight_arming.c
     APP/Src/algorithms/gyro_calibration.c

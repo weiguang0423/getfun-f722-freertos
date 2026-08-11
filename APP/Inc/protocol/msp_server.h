@@ -12,9 +12,9 @@
  *
  * 设计说明：本层只关心"每个命令该回什么数据"，不碰帧的字节级拆/拼（那是
  * msp_transport的职责），也不直接接触USB收发。标准MSP_ACC_CALIBRATION由本层
- * 检查快照后交给ImuTask；GETFUN MSP2 0x4000～0x4009分别提供校准参数、
+ * 检查快照后交给ImuTask；GETFUN MSP2 0x4000～0x400A分别提供校准参数、
  * IMU时间/低通、Mahony姿态、RC Failsafe、ADC电源、Flight/DShot、RC setpoint和
- * Rate PID/Quad-X Mixer、ARM/Failsafe诊断，
+ * Rate PID/Quad-X Mixer、ARM/Failsafe和Angle外环诊断，
  * 详见msp_server.c的命令列表。
  */
 #ifndef MSP_SERVER_H

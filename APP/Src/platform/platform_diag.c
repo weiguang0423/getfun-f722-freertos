@@ -219,6 +219,35 @@ void platform_diag_heartbeat(void)
     length = snprintf(
         line,
         sizeof(line),
+        "angle valid=%u target_mdeg=[%ld,%ld] current_mdeg=[%ld,%ld] "
+        "error_mdeg=[%ld,%ld] rate_mdps=[%ld,%ld,%ld] updates=%lu "
+        "errors=%lu\r\n",
+        snapshot.flight.angle_outer_loop.valid ? 1U : 0U,
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.target_angle_deg[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.target_angle_deg[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.current_angle_deg[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.current_angle_deg[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.error_angle_deg[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.error_angle_deg[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.target_rate_dps[0]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.target_rate_dps[1]),
+        (long)diag_float_to_milli(
+            snapshot.flight.angle_outer_loop.target_rate_dps[2]),
+        (unsigned long)snapshot.flight.angle_outer_loop_update_count,
+        (unsigned long)snapshot.flight.angle_outer_loop_error_count);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
         "arming state=%u armed=%u arm_req=%u block=0x%08lX "
         "last_fs=0x%08lX count=%lu/%lu/%lu inhibit=0x%08lX\r\n",
         (unsigned int)snapshot.flight.arming_state,
@@ -236,13 +265,22 @@ void platform_diag_heartbeat(void)
         line,
         sizeof(line),
         "params valid=%u load=%u save=%u slot=%u invalid=0x%02X "
-        "seq=%lu save_err=%lu hal=0x%08lX\r\n",
+        "seq=%lu ver=%u migrate=%u idle=%u angle=[%ld,%ld] "
+        "save_err=%lu hal=0x%08lX\r\n",
         snapshot.parameters.storage_valid ? 1U : 0U,
         (unsigned int)snapshot.parameters.load_result,
         (unsigned int)snapshot.parameters.last_save_result,
         (unsigned int)snapshot.parameters.active_slot,
         snapshot.parameters.invalid_slot_mask,
         (unsigned long)snapshot.parameters.sequence,
+        (unsigned int)snapshot.parameters.loaded_record_version,
+        snapshot.parameters.migration_pending ? 1U : 0U,
+        (unsigned int)
+            snapshot.parameters.values.motor_idle_percent_x100,
+        (long)diag_float_to_milli(
+            snapshot.parameters.values.angle_profile.angle_limit_deg),
+        (long)diag_float_to_milli(
+            snapshot.parameters.values.angle_profile.angle_p),
         (unsigned long)snapshot.parameters.save_error_count,
         (unsigned long)snapshot.parameters.last_hal_error);
     diag_write_formatted(line, sizeof(line), length);

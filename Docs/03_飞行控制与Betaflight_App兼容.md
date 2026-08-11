@@ -284,9 +284,11 @@ Angle 模式采用角度外环 + Rate 内环：
 Rate PID
 ```
 
-Yaw 第一版仍使用 Rate 控制。
+S4.8已实现：Roll/Pitch目标角为归一化摇杆乘最大倾角，角误差乘Angle P后按外环Rate上限
+裁剪；Yaw继续透传Actual Rates。默认最大倾角60°、Angle P 5.0 s^-1、外环Rate上限
+670 deg/s。Profile或输入非有限/越界时整条控制输出无效，并由S4.7停机路径提交0。
 
-第一版只需提供：
+当前提供：
 
 - 最大倾角。
 - Angle P。
@@ -426,17 +428,21 @@ BlackboxConfig
 
 Betaflight App 写入参数时，MSP 层转换到这些内部结构。
 
-参数修改分两种：
-
-- 可即时生效：PID、Rates、Expo、部分 OSD 设置。
-- 保存并重启生效：串口、传感器总线、控制周期、电机协议等。
+S4.9控制参数统一采用“SET暂存、EEPROM原子提交”：PID、Rates、Expo、Modes和motor_idle
+在保存成功后无需重启即整体生效；串口、传感器、电机协议等本阶段是硬件事实，只允许
+App把读取到的原值写回。
 
 v0.5.0已建立参数持久化底座：程序区限制为前256 KB，Sector 6/7作为A/B槽；记录带
 magic、版本、长度、sequence、CRC32和最后提交标记。空白区加载安全默认值，损坏时
 回退有效旧槽或默认值并设置抑制。
 
-当前只有加速度偏置接入参数记录，并在校准成功后自动保存。后续PID、Rates等参数仍
-按上述分组扩展，并最终增加显式统一 `save`；不得绕过参数接口直接在MSP层写Flash。
+S4.9把保存记录升级为v2：包含加速度偏置、RC端点/Deadband/Actual Rates、ARM/ANGLE
+ranges、Rate PID、Angle、`motor_idle`和Craft/Pilot名称。启动仍兼容v1：只迁移旧加速度
+偏置，其余采用安全默认值，下一次成功保存才写v2。
+
+标准MSP SET只修改MspTask私有的1秒暂存副本，`MSP_EEPROM_WRITE`才请求ImuTask提交。
+ImuTask在擦除前再次检查ARMED，保存成功后一次发布完整Profile；失败、超时或拒绝不改变
+FlightTask运行参数。硬件事实类SET只能原值回写，不得绕过参数接口直接写Flash。
 
 ---
 
@@ -447,7 +453,7 @@ magic、版本、长度、sequence、CRC32和最后提交标记。空白区加�
 ```text
 Betaflight App：2025.12.2
 MSP API：1.48
-参考 Betaflight commit：4146538b5
+参考 Betaflight App commit：a2d0f50623cbb4fd492bc94eac2aec3acc8b2c5a
 ```
 
 该 App 版本应保留安装包。未来升级 App 时，如果页面无法使用，优先对照这个固定版本。
@@ -543,9 +549,9 @@ OK/WARNING/CRITICAL状态；比例、偏置、容量和阈值写入留给后续�
 
 ### 14.5 Configuration 与 Ports
 
-实现本项目实际使用的：
+S4.9实现本项目实际使用的最小投影：
 
-- UART1～UART6
+- USART2
 - MSP
 - Serial RX
 - Mixer
@@ -556,7 +562,7 @@ OK/WARNING/CRITICAL状态；比例、偏置、容量和阈值写入留给后续�
 
 ### 14.6 PID Tuning
 
-实现：
+S4.9已实现：
 
 - Roll/Pitch/Yaw Rate PID
 - Angle P
@@ -568,13 +574,15 @@ Betaflight 参数与内部算法不完全一致时，在 MSP 适配层做明确�
 
 ### 14.7 Motors
 
-实现：
+S4.9已实现：
 
 - Motor 1～4 当前值。
 - 电机测试值写入。
 - DShot 配置。
 
-Armed 时拒绝 App 电机测试；App 命令超时或断开后立即归零。
+标准1000映射停止，1001～2000线性映射DShot 48～2047。非零写要求DISARMED、
+Configurator已禁止解锁、RC ARM低、输入新鲜且DShot/系统健康；Armed时拒绝，250 ms
+未刷新或断开后沿既有测试超时归零。
 
 ### 14.8 OSD 与 Blackbox
 
@@ -639,7 +647,7 @@ CLI 输出不必逐字符复制 Betaflight，但常用命令和含义尽量保�
 - [ ] Rate 模式控制方向正确。
 - [ ] Angle 模式控制方向正确。
 - [ ] Quad-X Mixer 与 Motor 1～4 顺序正确。
-- [ ] DShot300 四路无桨测试通过。
+- [ ] DShot600 四路无桨测试通过。
 - [ ] App Motors 页面断开后电机自动停止。
 - [ ] 无人机可以正常起飞、悬停、操纵和降落。
 - [ ] 基础飞行后 OSD 和 Blackbox 可以在 App 中配置。

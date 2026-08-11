@@ -30,6 +30,7 @@
  *   - S4.4：GETFUN MSP2 0x4007返回归一化摇杆、Actual Rates设定值和AUX模式请求。
  *   - S4.5/S4.6：GETFUN MSP2 0x4008返回Rate PID和Quad-X Mixer诊断。
  *   - S4.7：GETFUN MSP2 0x4009返回ARM/Failsafe状态、原因和转换计数。
+ *   - S4.8：GETFUN MSP2 0x400A返回Angle目标、姿态、误差和Rate设定。
  *
  * 数据来源：所有只读数据来自 app_state_get_snapshot() 拿到的快照，本层不持有状态。
  */
@@ -39,6 +40,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "FreeRTOS.h"
+#include "task.h"
 #include "algorithms/imu_filter.h"
 #include "algorithms/quad_x_mixer.h"
 #include "algorithms/rate_pid.h"
@@ -54,33 +57,83 @@
 #define MSP_BOARD_INFO 4U
 #define MSP_BUILD_INFO 5U
 #define MSP_NAME 10U
+#define MSP_SET_NAME 11U
 #define MSP_BATTERY_CONFIG 32U
+#define MSP_MODE_RANGES 34U
+#define MSP_SET_MODE_RANGE 35U
 #define MSP_FEATURE_CONFIG 36U
+#define MSP_SET_FEATURE_CONFIG 37U
+#define MSP_BOARD_ALIGNMENT_CONFIG 38U
+#define MSP_SET_BOARD_ALIGNMENT_CONFIG 39U
 #define MSP_CURRENT_METER_CONFIG 40U
 #define MSP_MIXER_CONFIG 42U
+#define MSP_SET_MIXER_CONFIG 43U
 #define MSP_RX_CONFIG 44U
+#define MSP_SET_RX_CONFIG 45U
 #define MSP_RSSI_CONFIG 50U
+#define MSP_SET_RSSI_CONFIG 51U
 #define MSP_VOLTAGE_METER_CONFIG 56U
+#define MSP_PID_CONTROLLER 59U
+#define MSP_SET_PID_CONTROLLER 60U
+#define MSP_ARMING_CONFIG 61U
+#define MSP_SET_ARMING_CONFIG 62U
 #define MSP_RX_MAP 64U
+#define MSP_SET_RX_MAP 65U
 #define MSP_FAILSAFE_CONFIG 75U
+#define MSP_SET_FAILSAFE_CONFIG 76U
+#define MSP_ADVANCED_CONFIG 90U
+#define MSP_SET_ADVANCED_CONFIG 91U
+#define MSP_FILTER_CONFIG 92U
+#define MSP_SET_FILTER_CONFIG 93U
+#define MSP_PID_ADVANCED 94U
+#define MSP_SET_PID_ADVANCED 95U
+#define MSP_SENSOR_CONFIG 96U
+#define MSP_SET_SENSOR_CONFIG 97U
 #define MSP_SET_ARMING_DISABLED 99U
 #define MSP_STATUS 101U
 #define MSP_RAW_IMU 102U
+#define MSP_MOTOR 104U
 #define MSP_RC 105U
 #define MSP_ATTITUDE 108U
 #define MSP_ANALOG 110U
 #define MSP_RC_TUNING 111U
+#define MSP_PID 112U
 #define MSP_BOXNAMES 116U
+#define MSP_PIDNAMES 117U
+#define MSP_BOXIDS 119U
+#define MSP_MOTOR_3D_CONFIG 124U
 #define MSP_RC_DEADBAND 125U
+#define MSP_SENSOR_ALIGNMENT 126U
 #define MSP_VOLTAGE_METERS 128U
 #define MSP_CURRENT_METERS 129U
 #define MSP_BATTERY_STATE 130U
+#define MSP_MOTOR_CONFIG 131U
+#define MSP_SIMPLIFIED_TUNING 140U
+#define MSP_SET_SIMPLIFIED_TUNING 141U
 #define MSP_STATUS_EX 150U
 #define MSP_UID 160U
+#define MSP_BEEPER_CONFIG 184U
+#define MSP_SET_BEEPER_CONFIG 185U
+#define MSP_SET_PID 202U
+#define MSP_SET_RC_TUNING 204U
 #define MSP_ACC_CALIBRATION 205U
+#define MSP_SET_MOTOR 214U
+#define MSP_SET_MOTOR_3D_CONFIG 217U
+#define MSP_SET_RC_DEADBAND 218U
+#define MSP_SET_SENSOR_ALIGNMENT 220U
+#define MSP_SET_MOTOR_CONFIG 222U
+#define MSP_MODE_RANGES_EXTRA 238U
+#define MSP_SET_ACC_TRIM 239U
+#define MSP_ACC_TRIM 240U
 #define MSP_SET_RTC 246U
+#define MSP_EEPROM_WRITE 250U
 
+#define MSP2_COMMON_SERIAL_CONFIG 0x1009U
+#define MSP2_COMMON_SET_SERIAL_CONFIG 0x100AU
+#define MSP2_MOTOR_OUTPUT_REORDERING 0x3001U
+#define MSP2_SET_MOTOR_OUTPUT_REORDERING 0x3002U
 #define MSP2_GET_TEXT 0x3006U
+#define MSP2_SET_TEXT 0x3007U
 #define MSP2_MCU_INFO 0x300CU
 #define MSP2_GETFUN_CALIBRATION_STATUS 0x4000U
 #define MSP2_GETFUN_IMU_FILTER_STATUS 0x4001U
@@ -92,9 +145,12 @@
 #define MSP2_GETFUN_RC_SETPOINT_STATUS 0x4007U
 #define MSP2_GETFUN_CONTROL_STATUS 0x4008U
 #define MSP2_GETFUN_ARMING_STATUS 0x4009U
+#define MSP2_GETFUN_ANGLE_STATUS 0x400AU
 
 #define MSP2TEXT_PILOT_NAME 1U
 #define MSP2TEXT_CRAFT_NAME 2U
+#define MSP2TEXT_PID_PROFILE_NAME 3U
+#define MSP2TEXT_RATE_PROFILE_NAME 4U
 #define MSP2TEXT_BUILD_KEY 5U
 
 #define MSP_PROTOCOL_VERSION 0U
@@ -127,6 +183,22 @@
 #define BETAFLIGHT_CURRENT_METER_ADC 1U
 #define BETAFLIGHT_BATTERY_METER_ID 10U
 #define BETAFLIGHT_ADC_SENSOR_TYPE 0U
+#define BETAFLIGHT_SERIAL_PORT_USART2 1U
+#define BETAFLIGHT_SERIAL_FUNCTION_RX_SERIAL (1UL << 6U)
+#define BETAFLIGHT_DSHOT600_PROTOCOL 8U
+#define MSP_CONFIGURATION_TIMEOUT_TICKS pdMS_TO_TICKS(1000U)
+#define MSP_PARAMETER_SAVE_TIMEOUT_MS 3000U
+#define MSP_STANDARD_MOTOR_STOP 1000U
+#define MSP_STANDARD_MOTOR_MAX 2000U
+
+typedef struct
+{
+    bool active;
+    TickType_t last_command_tick;
+    parameter_store_values_t values;
+} msp_configuration_transaction_t;
+
+static msp_configuration_transaction_t configuration_transaction;
 
 typedef struct
 {
@@ -220,6 +292,13 @@ static void writer_pstring(payload_writer_t *writer, const char *text)
     }
     writer_u8(writer, (uint8_t)length);
     writer_data(writer, text, (uint16_t)length);
+}
+
+static void writer_zeros(payload_writer_t *writer, uint16_t count)
+{
+    while (count-- > 0U) {
+        writer_u8(writer, 0U);
+    }
 }
 
 static uint16_t active_sensor_mask(const app_state_snapshot_t *state)
@@ -394,10 +473,11 @@ static void handle_rc(payload_writer_t *writer,
     }
 }
 
-static void handle_rc_tuning(payload_writer_t *writer)
+static void handle_rc_tuning(payload_writer_t *writer,
+                             const app_state_snapshot_t *state)
 {
     const rc_setpoint_profile_t *profile =
-        rc_setpoint_default_profile();
+        &state->parameters.values.rc_profile;
 
     writer_u8(writer, profile->actual_center_sensitivity[0]);
     writer_u8(writer, profile->expo_percent[0]);
@@ -421,10 +501,11 @@ static void handle_rc_tuning(payload_writer_t *writer)
     writer_u8(writer, 50U);
 }
 
-static void handle_rx_config(payload_writer_t *writer)
+static void handle_rx_config(payload_writer_t *writer,
+                             const app_state_snapshot_t *state)
 {
     const rc_setpoint_profile_t *profile =
-        rc_setpoint_default_profile();
+        &state->parameters.values.rc_profile;
 
     writer_u8(writer, BETAFLIGHT_SERIALRX_CRSF);
     writer_u16(writer, 1900U);
@@ -451,6 +532,205 @@ static void handle_rx_config(payload_writer_t *writer)
     writer_u8(writer, 1U);
     writer_u32(writer, 0U);
     writer_u16(writer, 0U);
+    writer_u8(writer, 0U);
+}
+
+static uint8_t rounded_float_to_u8(float value, float scale)
+{
+    const float scaled = value * scale;
+
+    if (!isfinite(scaled) || (scaled <= 0.0f)) {
+        return 0U;
+    }
+    if (scaled >= 255.0f) {
+        return 255U;
+    }
+    return (uint8_t)(scaled + 0.5f);
+}
+
+static void handle_pid(payload_writer_t *writer,
+                       const app_state_snapshot_t *state)
+{
+    const rate_pid_profile_t *profile =
+        &state->parameters.values.rate_pid_profile;
+    uint32_t axis;
+
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        writer_u8(writer, rounded_float_to_u8(profile->kp[axis], 1000.0f));
+        writer_u8(writer, rounded_float_to_u8(profile->ki[axis], 1000.0f));
+        writer_u8(writer, rounded_float_to_u8(profile->kd[axis], 1000.0f));
+    }
+    writer_u8(writer, rounded_float_to_u8(
+        state->parameters.values.angle_profile.angle_p, 10.0f));
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+}
+
+static void handle_pid_advanced(payload_writer_t *writer,
+                                const app_state_snapshot_t *state)
+{
+    writer_zeros(writer, 17U);
+    writer_u8(writer, rounded_float_to_u8(
+        state->parameters.values.angle_profile.angle_limit_deg, 1.0f));
+    writer_u8(writer, rounded_float_to_u8(
+        state->parameters.values.angle_profile.angle_p, 10.0f));
+    writer_zeros(writer, 42U);
+}
+
+static void handle_filter_config(payload_writer_t *writer)
+{
+    writer_u8(writer, 100U);
+    writer_u16(writer, 75U);
+    writer_u16(writer, 0U);
+    writer_zeros(writer, 14U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u16(writer, 100U);
+    writer_u16(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u16(writer, 150U);
+    writer_u8(writer, 0U);
+    writer_zeros(writer, 20U);
+}
+
+static void handle_simplified_tuning(payload_writer_t *writer)
+{
+    writer_u8(writer, 0U);
+    writer_u8(writer, 100U);
+    writer_zeros(writer, 7U);
+    writer_u32(writer, 0U);
+    writer_u32(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 100U);
+    writer_u16(writer, 75U);
+    writer_u16(writer, 150U);
+    writer_u16(writer, 75U);
+    writer_u16(writer, 150U);
+    writer_u32(writer, 0U);
+    writer_u32(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 100U);
+    writer_u16(writer, 100U);
+    writer_u16(writer, 0U);
+    writer_u16(writer, 100U);
+    writer_u16(writer, 100U);
+    writer_u32(writer, 0U);
+    writer_u32(writer, 0U);
+}
+
+static uint16_t standard_motor_from_dshot(uint16_t value)
+{
+    if (value < DSHOT_MIN_THROTTLE_VALUE) {
+        return MSP_STANDARD_MOTOR_STOP;
+    }
+    return (uint16_t)(1001U +
+        (((uint32_t)(value - DSHOT_MIN_THROTTLE_VALUE) * 999U + 999U) /
+         (DSHOT_MAX_VALUE - DSHOT_MIN_THROTTLE_VALUE)));
+}
+
+static uint16_t dshot_from_standard_motor(uint16_t value)
+{
+    if (value == MSP_STANDARD_MOTOR_STOP) {
+        return 0U;
+    }
+    return (uint16_t)(DSHOT_MIN_THROTTLE_VALUE +
+        (((uint32_t)(value - 1001U) *
+          (DSHOT_MAX_VALUE - DSHOT_MIN_THROTTLE_VALUE) + 499U) /
+         999U));
+}
+
+static void handle_motor(payload_writer_t *writer,
+                         const app_state_snapshot_t *state)
+{
+    uint32_t motor;
+
+    for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
+        writer_u16(writer, standard_motor_from_dshot(
+            state->flight.output_motor_value[motor]));
+    }
+    for (; motor < 8U; ++motor) {
+        writer_u16(writer, MSP_STANDARD_MOTOR_STOP);
+    }
+}
+
+static void handle_motor_config(payload_writer_t *writer)
+{
+    writer_u16(writer, 1070U);
+    writer_u16(writer, MSP_STANDARD_MOTOR_MAX);
+    writer_u16(writer, MSP_STANDARD_MOTOR_STOP);
+    writer_u8(writer, DSHOT_MOTOR_COUNT);
+    writer_u8(writer, 14U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+}
+
+static void handle_advanced_config(payload_writer_t *writer,
+                                   const app_state_snapshot_t *state)
+{
+    writer_u8(writer, 1U);
+    writer_u8(writer, 1U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, BETAFLIGHT_DSHOT600_PROTOCOL);
+    writer_u16(writer, 0U);
+    writer_u16(writer,
+               state->parameters.values.motor_idle_percent_x100);
+    writer_zeros(writer, 4U);
+    writer_u8(writer, 48U);
+    writer_u16(writer, 1250U);
+    writer_u16(writer, 0U);
+    writer_u8(writer, 1U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 1U);
+}
+
+static uint8_t mode_range_step(uint16_t value)
+{
+    if (value <= 900U) {
+        return 0U;
+    }
+    if (value >= 2100U) {
+        return 48U;
+    }
+    return (uint8_t)((value - 900U) / 25U);
+}
+
+static void handle_mode_ranges(payload_writer_t *writer,
+                               const app_state_snapshot_t *state)
+{
+    const rc_setpoint_profile_t *profile =
+        &state->parameters.values.rc_profile;
+
+    writer_u8(writer, 0U);
+    writer_u8(writer, (uint8_t)(profile->arm_aux_channel - 4U));
+    writer_u8(writer, mode_range_step(profile->arm_range_min_us));
+    writer_u8(writer, mode_range_step(profile->arm_range_max_us));
+    writer_u8(writer, 1U);
+    writer_u8(writer, (uint8_t)(profile->angle_aux_channel - 4U));
+    writer_u8(writer, mode_range_step(profile->angle_range_min_us));
+    writer_u8(writer, mode_range_step(profile->angle_range_max_us));
+}
+
+static void handle_mode_ranges_extra(payload_writer_t *writer)
+{
+    writer_u8(writer, 2U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 1U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
+}
+
+static void handle_serial_config(payload_writer_t *writer)
+{
+    writer_u8(writer, 1U);
+    writer_u8(writer, BETAFLIGHT_SERIAL_PORT_USART2);
+    writer_u32(writer, BETAFLIGHT_SERIAL_FUNCTION_RX_SERIAL);
+    writer_u8(writer, 5U);
+    writer_u8(writer, 0U);
+    writer_u8(writer, 0U);
     writer_u8(writer, 0U);
 }
 
@@ -907,8 +1187,38 @@ static void handle_getfun_arming_status(
     }
 }
 
+static void handle_getfun_angle_status(
+    payload_writer_t *writer,
+    const app_state_snapshot_t *state)
+{
+    uint32_t axis;
+
+    writer_u8(writer, state->flight.angle_outer_loop.valid ? 1U : 0U);
+    writer_u8(writer, (uint8_t)state->flight.rc_setpoint.mode);
+    writer_u16(writer, 0U);
+    writer_u32(writer, state->flight.angle_outer_loop_update_count);
+    writer_u32(writer, state->flight.angle_outer_loop_error_count);
+    for (axis = 0U; axis < ANGLE_OUTER_LOOP_LEVEL_AXIS_COUNT; ++axis) {
+        writer_i32(writer, scaled_float_to_i32(
+            state->flight.angle_outer_loop.target_angle_deg[axis],
+            1000.0f));
+        writer_i32(writer, scaled_float_to_i32(
+            state->flight.angle_outer_loop.current_angle_deg[axis],
+            1000.0f));
+        writer_i32(writer, scaled_float_to_i32(
+            state->flight.angle_outer_loop.error_angle_deg[axis],
+            1000.0f));
+    }
+    for (axis = 0U; axis < ANGLE_OUTER_LOOP_AXIS_COUNT; ++axis) {
+        writer_i32(writer, scaled_float_to_i32(
+            state->flight.angle_outer_loop.target_rate_dps[axis],
+            1000.0f));
+    }
+}
+
 static void handle_get_text(const msp_request_t *request,
-                            payload_writer_t *writer)
+                            payload_writer_t *writer,
+                            const app_state_snapshot_t *state)
 {
     const uint8_t text_type =
         request->payload_length > 0U ? request->payload[0] : 0U;
@@ -916,9 +1226,11 @@ static void handle_get_text(const msp_request_t *request,
     writer_u8(writer, text_type);
     switch (text_type) {
     case MSP2TEXT_CRAFT_NAME:
-        writer_pstring(writer, "GETFUN F722");
+        writer_pstring(writer, state->parameters.values.craft_name);
         break;
     case MSP2TEXT_PILOT_NAME:
+        writer_pstring(writer, state->parameters.values.pilot_name);
+        break;
     case MSP2TEXT_BUILD_KEY:
     default:
         writer_pstring(writer, "");
@@ -1058,8 +1370,285 @@ static uint16_t request_u16(const msp_request_t *request, uint16_t offset)
            ((uint16_t)request->payload[offset + 1U] << 8U);
 }
 
+static void expected_writer_init(payload_writer_t *writer,
+                                 uint8_t data[MSP_MAX_PAYLOAD_SIZE])
+{
+    writer->data = data;
+    writer->capacity = MSP_MAX_PAYLOAD_SIZE;
+    writer->length = 0U;
+    writer->overflow = false;
+}
+
+static bool request_matches_writer(const msp_request_t *request,
+                                   const payload_writer_t *writer)
+{
+    return !writer->overflow &&
+           (request->payload_length == writer->length) &&
+           (memcmp(request->payload, writer->data, writer->length) == 0);
+}
+
+static bool configuration_candidate(
+    const app_state_snapshot_t *state,
+    parameter_store_values_t *candidate)
+{
+    const TickType_t now = xTaskGetTickCount();
+
+    if (state->flight.armed) {
+        return false;
+    }
+    if (configuration_transaction.active &&
+        ((TickType_t)(now - configuration_transaction.last_command_tick) <
+         MSP_CONFIGURATION_TIMEOUT_TICKS)) {
+        *candidate = configuration_transaction.values;
+    } else {
+        configuration_transaction.active = false;
+        *candidate = state->parameters.values;
+    }
+    return true;
+}
+
+static bool configuration_stage(
+    const parameter_store_values_t *candidate)
+{
+    if (!parameter_store_values_are_valid(candidate)) {
+        return false;
+    }
+    configuration_transaction.values = *candidate;
+    configuration_transaction.last_command_tick = xTaskGetTickCount();
+    configuration_transaction.active = true;
+    return true;
+}
+
+static void configuration_stage_unchecked(
+    const parameter_store_values_t *candidate)
+{
+    configuration_transaction.values = *candidate;
+    configuration_transaction.last_command_tick = xTaskGetTickCount();
+    configuration_transaction.active = true;
+}
+
+static bool configuration_transaction_is_current(void)
+{
+    if (!configuration_transaction.active ||
+        ((TickType_t)(xTaskGetTickCount() -
+                      configuration_transaction.last_command_tick) >=
+         MSP_CONFIGURATION_TIMEOUT_TICKS)) {
+        configuration_transaction.active = false;
+        return false;
+    }
+    return true;
+}
+
+static bool stage_pid(const msp_request_t *request,
+                      const app_state_snapshot_t *state)
+{
+    parameter_store_values_t candidate;
+    uint32_t axis;
+
+    if ((request->payload_length != 12U) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+        candidate.rate_pid_profile.kp[axis] =
+            (float)request->payload[axis * 3U] / 1000.0f;
+        candidate.rate_pid_profile.ki[axis] =
+            (float)request->payload[axis * 3U + 1U] / 1000.0f;
+        candidate.rate_pid_profile.kd[axis] =
+            (float)request->payload[axis * 3U + 2U] / 1000.0f;
+    }
+    candidate.angle_profile.angle_p =
+        (float)request->payload[9] / 10.0f;
+    return (request->payload[10] == 0U) &&
+           (request->payload[11] == 0U) &&
+           configuration_stage(&candidate);
+}
+
+static bool stage_pid_advanced(const msp_request_t *request,
+                               const app_state_snapshot_t *state)
+{
+    parameter_store_values_t candidate;
+    uint32_t index;
+
+    if ((request->payload_length != 61U) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    for (index = 0U; index < request->payload_length; ++index) {
+        if ((index != 17U) && (index != 18U) &&
+            (request->payload[index] != 0U)) {
+            return false;
+        }
+    }
+    candidate.angle_profile.angle_limit_deg =
+        (float)request->payload[17U];
+    candidate.angle_profile.angle_p =
+        (float)request->payload[18U] / 10.0f;
+    return configuration_stage(&candidate);
+}
+
+static bool stage_rc_tuning(const msp_request_t *request,
+                            const app_state_snapshot_t *state)
+{
+    parameter_store_values_t candidate;
+    rc_setpoint_profile_t *profile;
+
+    if ((request->payload_length != 24U) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    if ((request->payload[5] != 0U) || (request->payload[6] != 50U) ||
+        (request->payload[7] != 0U) || (request_u16(request, 8U) != 0U) ||
+        (request->payload[14] != 0U) || (request->payload[15] != 100U) ||
+        (request_u16(request, 16U) != BETAFLIGHT_RATE_LIMIT_DPS) ||
+        (request_u16(request, 18U) != BETAFLIGHT_RATE_LIMIT_DPS) ||
+        (request_u16(request, 20U) != BETAFLIGHT_RATE_LIMIT_DPS) ||
+        (request->payload[22] != RC_SETPOINT_RATE_TYPE_ACTUAL) ||
+        (request->payload[23] != 50U)) {
+        return false;
+    }
+    profile = &candidate.rc_profile;
+    profile->actual_center_sensitivity[0] = request->payload[0];
+    profile->expo_percent[0] = request->payload[1];
+    profile->actual_max_rate[0] = request->payload[2];
+    profile->actual_max_rate[1] = request->payload[3];
+    profile->actual_max_rate[2] = request->payload[4];
+    profile->expo_percent[2] = request->payload[10];
+    profile->actual_center_sensitivity[2] = request->payload[11];
+    profile->actual_center_sensitivity[1] = request->payload[12];
+    profile->expo_percent[1] = request->payload[13];
+    return configuration_stage(&candidate);
+}
+
+static bool stage_rc_deadband(const msp_request_t *request,
+                              const app_state_snapshot_t *state)
+{
+    parameter_store_values_t candidate;
+
+    if ((request->payload_length != 5U) ||
+        (request->payload[2] != 0U) ||
+        (request_u16(request, 3U) != 50U) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    candidate.rc_profile.deadband_us = request->payload[0];
+    candidate.rc_profile.yaw_deadband_us = request->payload[1];
+    return configuration_stage(&candidate);
+}
+
+static bool stage_rx_config(const msp_request_t *request,
+                            const app_state_snapshot_t *state)
+{
+    uint8_t expected[MSP_MAX_PAYLOAD_SIZE];
+    payload_writer_t expected_writer;
+    parameter_store_values_t candidate;
+    uint32_t index;
+
+    expected_writer_init(&expected_writer, expected);
+    handle_rx_config(&expected_writer, state);
+    if ((request->payload_length != expected_writer.length) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    for (index = 0U; index < request->payload_length; ++index) {
+        if ((index < 3U) || ((index > 4U) && (index < 8U)) ||
+            (index > 11U)) {
+            if (request->payload[index] != expected[index]) {
+                return false;
+            }
+        }
+    }
+    candidate.rc_profile.input_mid_us = request_u16(request, 3U);
+    candidate.rc_profile.input_min_us = request_u16(request, 8U);
+    candidate.rc_profile.input_max_us = request_u16(request, 10U);
+    return configuration_stage(&candidate);
+}
+
+static bool stage_mode_range(const msp_request_t *request,
+                             const app_state_snapshot_t *state)
+{
+    parameter_store_values_t candidate;
+    const uint8_t slot = request->payload_length > 0U
+                             ? request->payload[0]
+                             : UINT8_MAX;
+    uint16_t minimum;
+    uint16_t maximum;
+
+    if ((request->payload_length != 7U) || (slot > 1U) ||
+        (request->payload[1] != slot) ||
+        (request->payload[2] >= (RC_INPUT_CHANNEL_COUNT - 4U)) ||
+        (request->payload[5] != 0U) || (request->payload[6] != 0U) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    minimum = (uint16_t)(900U + (uint16_t)request->payload[3] * 25U);
+    maximum = (uint16_t)(900U + (uint16_t)request->payload[4] * 25U);
+    if (minimum >= maximum) {
+        return false;
+    }
+    if (slot == 0U) {
+        candidate.rc_profile.arm_aux_channel =
+            (uint8_t)(request->payload[2] + 4U);
+        candidate.rc_profile.arm_range_min_us = minimum;
+        candidate.rc_profile.arm_range_max_us = maximum;
+    } else {
+        candidate.rc_profile.angle_aux_channel =
+            (uint8_t)(request->payload[2] + 4U);
+        candidate.rc_profile.angle_range_min_us = minimum;
+        candidate.rc_profile.angle_range_max_us = maximum;
+    }
+    configuration_stage_unchecked(&candidate);
+    return true;
+}
+
+static bool stage_motor_idle(const msp_request_t *request,
+                             const app_state_snapshot_t *state)
+{
+    static const uint8_t expected_prefix[6] = {1U, 1U, 0U, 8U, 0U, 0U};
+    static const uint8_t expected_suffix[11] = {
+        0U, 0U, 0U, 0U, 48U, 0xE2U, 0x04U, 0U, 0U, 1U, 0U};
+    parameter_store_values_t candidate;
+
+    if ((request->payload_length != 19U) ||
+        (memcmp(request->payload, expected_prefix,
+                sizeof(expected_prefix)) != 0) ||
+        (memcmp(&request->payload[8], expected_suffix,
+                sizeof(expected_suffix)) != 0) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    candidate.motor_idle_percent_x100 = request_u16(request, 6U);
+    return configuration_stage(&candidate);
+}
+
+static bool stage_name(const uint8_t *text,
+                       uint16_t length,
+                       const app_state_snapshot_t *state,
+                       bool craft)
+{
+    parameter_store_values_t candidate;
+    uint16_t index;
+    char *target;
+
+    if ((length > PARAMETER_STORE_NAME_LENGTH) ||
+        !configuration_candidate(state, &candidate)) {
+        return false;
+    }
+    for (index = 0U; index < length; ++index) {
+        if ((text[index] < 0x20U) || (text[index] > 0x7EU)) {
+            return false;
+        }
+    }
+    target = craft ? candidate.craft_name : candidate.pilot_name;
+    memset(target, 0, PARAMETER_STORE_NAME_LENGTH + 1U);
+    memcpy(target, text, length);
+    return configuration_stage(&candidate);
+}
+
 void msp_server_init(void)
 {
+    memset(&configuration_transaction, 0,
+           sizeof(configuration_transaction));
 }
 
 void msp_server_process(const msp_request_t *request,
@@ -1110,7 +1699,16 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP_NAME:
-        writer_data(&writer, "GETFUN F722", 10U);
+        writer_data(&writer, state.parameters.values.craft_name,
+                    (uint16_t)strlen(state.parameters.values.craft_name));
+        break;
+
+    case MSP_MODE_RANGES:
+        handle_mode_ranges(&writer, &state);
+        break;
+
+    case MSP_MODE_RANGES_EXTRA:
+        handle_mode_ranges_extra(&writer);
         break;
 
     case MSP_STATUS:
@@ -1150,6 +1748,16 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP_BOXNAMES:
+        writer_data(&writer, "ARM;ANGLE;", 10U);
+        break;
+
+    case MSP_BOXIDS:
+        writer_u8(&writer, 0U);
+        writer_u8(&writer, 1U);
+        break;
+
+    case MSP_PIDNAMES:
+        writer_data(&writer, "ROLL;PITCH;YAW;LEVEL;", 21U);
         break;
 
     case MSP_FEATURE_CONFIG:
@@ -1162,8 +1770,40 @@ void msp_server_process(const msp_request_t *request,
         writer_u8(&writer, 0U);
         break;
 
+    case MSP_BOARD_ALIGNMENT_CONFIG:
+        writer_zeros(&writer, 6U);
+        break;
+
     case MSP_RX_CONFIG:
-        handle_rx_config(&writer);
+        handle_rx_config(&writer, &state);
+        break;
+
+    case MSP_PID_CONTROLLER:
+        writer_u8(&writer, 1U);
+        break;
+
+    case MSP_ARMING_CONFIG:
+        writer_u8(&writer, 5U);
+        writer_u8(&writer, 0U);
+        writer_u8(&writer, 25U);
+        writer_u8(&writer, 0U);
+        break;
+
+    case MSP_ADVANCED_CONFIG:
+        handle_advanced_config(&writer, &state);
+        break;
+
+    case MSP_FILTER_CONFIG:
+        handle_filter_config(&writer);
+        break;
+
+    case MSP_PID_ADVANCED:
+        handle_pid_advanced(&writer, &state);
+        break;
+
+    case MSP_SENSOR_CONFIG:
+        writer_u8(&writer, 1U);
+        writer_zeros(&writer, 4U);
         break;
 
     case MSP_RSSI_CONFIG:
@@ -1186,16 +1826,65 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP_RC_TUNING:
-        handle_rc_tuning(&writer);
+        handle_rc_tuning(&writer, &state);
+        break;
+
+    case MSP_PID:
+        handle_pid(&writer, &state);
         break;
 
     case MSP_RC_DEADBAND:
+        writer_u8(&writer, state.parameters.values.rc_profile.deadband_us);
         writer_u8(&writer,
-                  rc_setpoint_default_profile()->deadband_us);
-        writer_u8(&writer,
-                  rc_setpoint_default_profile()->yaw_deadband_us);
+                  state.parameters.values.rc_profile.yaw_deadband_us);
         writer_u8(&writer, 0U);
         writer_u16(&writer, 50U);
+        break;
+
+    case MSP_MOTOR:
+        handle_motor(&writer, &state);
+        break;
+
+    case MSP_MOTOR_3D_CONFIG:
+        writer_u16(&writer, 1406U);
+        writer_u16(&writer, 1514U);
+        writer_u16(&writer, 1460U);
+        break;
+
+    case MSP_MOTOR_CONFIG:
+        handle_motor_config(&writer);
+        break;
+
+    case MSP_SIMPLIFIED_TUNING:
+        handle_simplified_tuning(&writer);
+        break;
+
+    case MSP_SENSOR_ALIGNMENT:
+        writer_zeros(&writer, 4U);
+        writer_u8(&writer, 1U);
+        writer_zeros(&writer, 6U);
+        break;
+
+    case MSP_ACC_TRIM:
+        writer_zeros(&writer, 4U);
+        break;
+
+    case MSP_BEEPER_CONFIG:
+        writer_u32(&writer, 0U);
+        writer_u8(&writer, 1U);
+        writer_u32(&writer, 0U);
+        break;
+
+    case MSP2_COMMON_SERIAL_CONFIG:
+        handle_serial_config(&writer);
+        break;
+
+    case MSP2_MOTOR_OUTPUT_REORDERING:
+        writer_u8(&writer, DSHOT_MOTOR_COUNT);
+        writer_u8(&writer, 0U);
+        writer_u8(&writer, 1U);
+        writer_u8(&writer, 2U);
+        writer_u8(&writer, 3U);
         break;
 
     case MSP_BATTERY_CONFIG:
@@ -1214,6 +1903,306 @@ void msp_server_process(const msp_request_t *request,
         writer_u32(&writer, *(const uint32_t *)(UID_BASE));
         writer_u32(&writer, *(const uint32_t *)(UID_BASE + 4U));
         writer_u32(&writer, *(const uint32_t *)(UID_BASE + 8U));
+        break;
+
+    case MSP_SET_PID:
+        if (!stage_pid(request, &state)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_PID_ADVANCED:
+        if (!stage_pid_advanced(request, &state)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_RC_TUNING:
+        if (!stage_rc_tuning(request, &state)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_RC_DEADBAND:
+        if (!stage_rc_deadband(request, &state)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_RX_CONFIG:
+        if (!stage_rx_config(request, &state)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_MODE_RANGE:
+        if (!stage_mode_range(request, &state)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_ADVANCED_CONFIG:
+        if (!stage_motor_idle(request, &state)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_NAME:
+        if (!stage_name(request->payload, request->payload_length,
+                        &state, true)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP2_SET_TEXT:
+        if ((request->payload_length < 2U) || state.flight.armed ||
+            (request->payload_length !=
+             (uint16_t)(2U + request->payload[1])) ||
+            (((request->payload[0] == MSP2TEXT_CRAFT_NAME) ||
+              (request->payload[0] == MSP2TEXT_PILOT_NAME))
+                 ? !stage_name(
+                       &request->payload[2], request->payload[1], &state,
+                       request->payload[0] == MSP2TEXT_CRAFT_NAME)
+                 : (((request->payload[0] != MSP2TEXT_PID_PROFILE_NAME) &&
+                     (request->payload[0] != MSP2TEXT_RATE_PROFILE_NAME)) ||
+                    (request->payload[1] != 0U)))) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_FEATURE_CONFIG:
+        if (state.flight.armed || (request->payload_length != 4U) ||
+            (request_u32(request, 0U) != FEATURE_RX_SERIAL)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_RSSI_CONFIG:
+        if (state.flight.armed || (request->payload_length != 1U) ||
+            (request->payload[0] != 0U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_RX_MAP:
+        if (state.flight.armed ||
+            (request->payload_length != RC_INPUT_MAPPABLE_CHANNEL_COUNT) ||
+            (memcmp(request->payload, rc_input_aetr_map,
+                    RC_INPUT_MAPPABLE_CHANNEL_COUNT) != 0)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_FAILSAFE_CONFIG:
+        if (state.flight.armed || (request->payload_length != 8U) ||
+            (request->payload[0] != RC_INPUT_TIMEOUT_MS / 100U) ||
+            (request->payload[1] != 0U) ||
+            (request_u16(request, 2U) != 1000U) ||
+            (request->payload[4] != 0U) ||
+            (request_u16(request, 5U) != 0U) ||
+            (request->payload[7] != 1U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_MIXER_CONFIG:
+        if (state.flight.armed || (request->payload_length != 2U) ||
+            (request->payload[0] != 3U) ||
+            (request->payload[1] != 0U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_PID_CONTROLLER:
+        if (state.flight.armed || (request->payload_length != 1U) ||
+            (request->payload[0] != 1U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_BOARD_ALIGNMENT_CONFIG:
+    case MSP_SET_ACC_TRIM:
+        if (state.flight.armed ||
+            (request->payload_length !=
+             (request->command == MSP_SET_ACC_TRIM ? 4U : 6U))) {
+            response->supported = false;
+        } else {
+            uint16_t index;
+
+            for (index = 0U; index < request->payload_length; ++index) {
+                if (request->payload[index] != 0U) {
+                    response->supported = false;
+                    break;
+                }
+            }
+        }
+        break;
+
+    case MSP_SET_ARMING_CONFIG:
+        if (state.flight.armed || (request->payload_length != 4U) ||
+            (request->payload[0] != 5U) ||
+            (request->payload[1] != 0U) ||
+            (request->payload[2] != 25U) ||
+            (request->payload[3] != 0U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_SENSOR_CONFIG:
+        if (state.flight.armed || (request->payload_length != 5U) ||
+            (request->payload[0] != 1U) ||
+            (request->payload[1] != 0U) ||
+            (request->payload[2] != 0U) ||
+            (request->payload[3] != 0U) ||
+            (request->payload[4] != 0U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_SENSOR_ALIGNMENT:
+        if (state.flight.armed || (request->payload_length != 10U) ||
+            (request->payload[0] != 0U) ||
+            (request->payload[1] != 0U) ||
+            (request->payload[2] != 0U) ||
+            (request->payload[3] != 1U) ||
+            (request_u16(request, 4U) != 0U) ||
+            (request_u16(request, 6U) != 0U) ||
+            (request_u16(request, 8U) != 0U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_BEEPER_CONFIG:
+        if (state.flight.armed || (request->payload_length != 9U) ||
+            (request_u32(request, 0U) != 0U) ||
+            (request->payload[4] != 1U) ||
+            (request_u32(request, 5U) != 0U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_MOTOR_3D_CONFIG:
+        if (state.flight.armed || (request->payload_length != 6U) ||
+            (request_u16(request, 0U) != 1406U) ||
+            (request_u16(request, 2U) != 1514U) ||
+            (request_u16(request, 4U) != 1460U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_MOTOR_CONFIG:
+        if (state.flight.armed || (request->payload_length != 8U) ||
+            (request_u16(request, 0U) != 1070U) ||
+            (request_u16(request, 2U) != MSP_STANDARD_MOTOR_MAX) ||
+            (request_u16(request, 4U) != MSP_STANDARD_MOTOR_STOP) ||
+            (request->payload[6] != 14U) ||
+            (request->payload[7] != 0U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_FILTER_CONFIG:
+    case MSP_SET_SIMPLIFIED_TUNING:
+        {
+            uint8_t expected[MSP_MAX_PAYLOAD_SIZE];
+            payload_writer_t expected_writer;
+
+            expected_writer_init(&expected_writer, expected);
+            if (request->command == MSP_SET_FILTER_CONFIG) {
+                handle_filter_config(&expected_writer);
+            } else {
+                handle_simplified_tuning(&expected_writer);
+            }
+            if (state.flight.armed ||
+                !request_matches_writer(request, &expected_writer)) {
+                response->supported = false;
+            }
+        }
+        break;
+
+    case MSP2_COMMON_SET_SERIAL_CONFIG:
+        {
+            uint8_t expected[MSP_MAX_PAYLOAD_SIZE];
+            payload_writer_t expected_writer;
+
+            expected_writer_init(&expected_writer, expected);
+            handle_serial_config(&expected_writer);
+            if (state.flight.armed ||
+                !request_matches_writer(request, &expected_writer)) {
+                response->supported = false;
+            }
+        }
+        break;
+
+    case MSP2_SET_MOTOR_OUTPUT_REORDERING:
+        if (state.flight.armed || (request->payload_length != 5U) ||
+            (request->payload[0] != DSHOT_MOTOR_COUNT) ||
+            (request->payload[1] != 0U) ||
+            (request->payload[2] != 1U) ||
+            (request->payload[3] != 2U) ||
+            (request->payload[4] != 3U)) {
+            response->supported = false;
+        }
+        break;
+
+    case MSP_SET_MOTOR:
+        {
+            uint16_t values[DSHOT_MOTOR_COUNT];
+            uint32_t motor;
+            bool requests_output = false;
+            bool valid_length =
+                (request->payload_length == DSHOT_MOTOR_COUNT * 2U) ||
+                (request->payload_length == 16U);
+
+            memset(values, 0, sizeof(values));
+            if (valid_length) {
+                for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
+                    const uint16_t standard = request_u16(
+                        request, (uint16_t)(motor * 2U));
+
+                    if ((standard < MSP_STANDARD_MOTOR_STOP) ||
+                        (standard > MSP_STANDARD_MOTOR_MAX)) {
+                        valid_length = false;
+                        break;
+                    }
+                    values[motor] = dshot_from_standard_motor(standard);
+                    requests_output = requests_output ||
+                                      (standard > MSP_STANDARD_MOTOR_STOP);
+                }
+            }
+            if (valid_length && (request->payload_length == 16U)) {
+                for (motor = DSHOT_MOTOR_COUNT; motor < 8U; ++motor) {
+                    if (request_u16(request,
+                                    (uint16_t)(motor * 2U)) !=
+                        MSP_STANDARD_MOTOR_STOP) {
+                        valid_length = false;
+                        break;
+                    }
+                }
+            }
+            if (!valid_length || state.flight.armed ||
+                (requests_output &&
+                 (!state.configurator_arming_disabled ||
+                  state.flight.rc_setpoint.arm_requested ||
+                  !state.flight.dshot_ready || !state.flight.inputs_ready ||
+                  (state.fault_flags != 0U))) ||
+                !flight_task_request_motor_test(values)) {
+                response->supported = false;
+            }
+        }
+        break;
+
+    case MSP_EEPROM_WRITE:
+        if ((request->payload_length != 0U) || state.flight.armed ||
+            state.flight.motor_test_active ||
+            state.flight.rc_setpoint.arm_requested ||
+            !configuration_transaction_is_current() ||
+            (imu_task_save_parameters(
+                 &configuration_transaction.values,
+                 MSP_PARAMETER_SAVE_TIMEOUT_MS) != IMU_PARAMETER_SAVE_OK)) {
+            response->supported = false;
+        }
+        configuration_transaction.active = false;
         break;
 
     case MSP_ACC_CALIBRATION:
@@ -1250,7 +2239,7 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP2_GET_TEXT:
-        handle_get_text(request, &writer);
+        handle_get_text(request, &writer, &state);
         break;
 
     case MSP2_MCU_INFO:
@@ -1316,6 +2305,10 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP2_GETFUN_ARMING_STATUS:
         handle_getfun_arming_status(&writer, &state);
+        break;
+
+    case MSP2_GETFUN_ANGLE_STATUS:
+        handle_getfun_angle_status(&writer, &state);
         break;
 
     default:

@@ -7,13 +7,14 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "algorithms/angle_outer_loop.h"
 #include "algorithms/flight_arming.h"
 #include "algorithms/quad_x_mixer.h"
 #include "algorithms/rate_pid.h"
 #include "algorithms/rc_setpoint.h"
 #include "app_state.h"
 
-#define FLIGHT_TASK_STACK_WORDS 512U
+#define FLIGHT_TASK_STACK_WORDS 768U
 #define FLIGHT_TASK_PRIORITY (tskIDLE_PRIORITY + 5U)
 #define FLIGHT_TASK_PERIOD_TICKS pdMS_TO_TICKS(1U)
 #define FLIGHT_IMU_TIMEOUT_TICKS pdMS_TO_TICKS(5U)
@@ -23,7 +24,6 @@
 #define FLIGHT_MAX_CONSECUTIVE_SUBMIT_ERRORS 2U
 #define FLIGHT_DEGREES_TO_RADIANS 0.01745329251994329577f
 #define FLIGHT_ARM_THROTTLE_MAX 0.0f
-#define FLIGHT_DSHOT_MOTOR_IDLE_PERCENT 0.055f
 
 typedef struct
 {
@@ -97,6 +97,8 @@ static void reset_control(rate_pid_state_t *pid_state,
                           app_flight_state_t *state)
 {
     rate_pid_reset(pid_state);
+    memset(&state->angle_outer_loop, 0,
+           sizeof(state->angle_outer_loop));
     memset(&state->rate_pid, 0, sizeof(state->rate_pid));
     memset(&state->mixer, 0, sizeof(state->mixer));
     state->rate_pid_integrator_enabled = false;
@@ -104,18 +106,20 @@ static void reset_control(rate_pid_state_t *pid_state,
 }
 
 static bool mixer_to_dshot(const quad_x_mixer_output_t *mixer,
+                           uint16_t motor_idle_percent_x100,
                            uint16_t output[DSHOT_MOTOR_COUNT])
 {
-    /* Betaflight dshotInitEndpoints(), default motor_idle = 550 (5.5%). */
+    /* Betaflight motorIdle uses hundredths of one percent: 550 = 5.5%. */
     const float dshot_output_low =
         (float)DSHOT_MIN_THROTTLE_VALUE +
-        FLIGHT_DSHOT_MOTOR_IDLE_PERCENT *
+        ((float)motor_idle_percent_x100 / 10000.0f) *
             (float)(DSHOT_MAX_VALUE - DSHOT_MIN_THROTTLE_VALUE);
     const float dshot_output_range =
         (float)DSHOT_MAX_VALUE - dshot_output_low;
     uint32_t motor;
 
-    if ((mixer == NULL) || (output == NULL) || !mixer->valid) {
+    if ((mixer == NULL) || (output == NULL) || !mixer->valid ||
+        (motor_idle_percent_x100 > 2000U)) {
         return false;
     }
     for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
@@ -148,13 +152,13 @@ static void flight_task(void *argument)
     app_flight_state_t state;
     flight_arming_t arming;
     rate_pid_state_t pid_state;
-    const rc_setpoint_profile_t *setpoint_profile =
-        rc_setpoint_default_profile();
-    const rate_pid_profile_t *pid_profile =
-        rate_pid_default_profile();
     TickType_t last_wake_time;
     uint32_t last_control_sample_count = 0U;
     uint32_t consecutive_submit_errors = 0U;
+    rc_setpoint_mode_t previous_mode = RC_SETPOINT_MODE_RATE;
+    bool previous_mode_valid = false;
+    uint32_t previous_parameter_sequence = 0U;
+    bool parameter_sequence_valid = false;
 
     (void)argument;
     memset(&state, 0, sizeof(state));
@@ -180,8 +184,12 @@ static void flight_task(void *argument)
         uint32_t arming_block_flags;
         uint32_t failsafe_flags;
         bool control_output_valid;
+        bool control_setpoint_valid;
         bool requested_active;
         bool timed_out;
+        const rc_setpoint_profile_t *setpoint_profile;
+        const angle_outer_loop_profile_t *angle_profile;
+        const rate_pid_profile_t *pid_profile;
 
         vTaskDelayUntil(&last_wake_time, FLIGHT_TASK_PERIOD_TICKS);
         now = xTaskGetTickCount();
@@ -190,6 +198,21 @@ static void flight_task(void *argument)
                 (uint32_t)(now - last_wake_time);
         }
         app_state_get_snapshot(&snapshot);
+        if (snapshot.parameters.storage_valid) {
+            if (!parameter_sequence_valid ||
+                (snapshot.parameters.sequence !=
+                 previous_parameter_sequence)) {
+                reset_control(&pid_state, &state);
+                previous_mode_valid = false;
+                previous_parameter_sequence = snapshot.parameters.sequence;
+                parameter_sequence_valid = true;
+            }
+        } else {
+            parameter_sequence_valid = false;
+        }
+        setpoint_profile = &snapshot.parameters.values.rc_profile;
+        angle_profile = &snapshot.parameters.values.angle_profile;
+        pid_profile = &snapshot.parameters.values.rate_pid_profile;
         dshot_motor_get_diagnostics(&dshot);
         state.dshot_ready = dshot.ready;
         state.dshot_busy = dshot.busy;
@@ -220,13 +243,14 @@ static void flight_task(void *argument)
                    sizeof(state.rc_setpoint));
         }
 
-        if (!state.inputs_ready || !state.rc_setpoint.valid ||
-            (state.rc_setpoint.mode != RC_SETPOINT_MODE_RATE)) {
+        if (!state.inputs_ready || !state.rc_setpoint.valid) {
             reset_control(&pid_state, &state);
+            previous_mode_valid = false;
             last_control_sample_count = snapshot.imu.sample_count;
         } else if (snapshot.imu.sample_count !=
                    last_control_sample_count) {
             float setpoint_rad_s[RATE_PID_AXIS_COUNT];
+            float setpoint_dps[RATE_PID_AXIS_COUNT];
             uint32_t axis;
 
             last_control_sample_count = snapshot.imu.sample_count;
@@ -236,13 +260,51 @@ static void flight_task(void *argument)
                 flight_arming_is_armed(&arming) &&
                 state.rc_setpoint.arm_requested &&
                 (state.rc_setpoint.throttle > 0.0f);
-            for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
-                setpoint_rad_s[axis] =
-                    state.rc_setpoint.rate_dps[axis] *
-                    FLIGHT_DEGREES_TO_RADIANS;
+            control_setpoint_valid = true;
+            if (!previous_mode_valid ||
+                (previous_mode != state.rc_setpoint.mode)) {
+                rate_pid_reset(&pid_state);
+                previous_mode = state.rc_setpoint.mode;
+                previous_mode_valid = true;
             }
 
-            if (!rate_pid_update(
+            if (state.rc_setpoint.mode == RC_SETPOINT_MODE_ANGLE) {
+                const float attitude_deg[ANGLE_OUTER_LOOP_LEVEL_AXIS_COUNT] = {
+                    snapshot.attitude.roll_deg,
+                    snapshot.attitude.pitch_deg,
+                };
+
+                if (angle_outer_loop_compute(
+                        angle_profile,
+                        state.rc_setpoint.normalized_stick,
+                        state.rc_setpoint.rate_dps[2],
+                        attitude_deg,
+                        &state.angle_outer_loop)) {
+                    memcpy(setpoint_dps,
+                           state.angle_outer_loop.target_rate_dps,
+                           sizeof(setpoint_dps));
+                    ++state.angle_outer_loop_update_count;
+                } else {
+                    memset(&state.rate_pid, 0,
+                           sizeof(state.rate_pid));
+                    memset(&state.mixer, 0, sizeof(state.mixer));
+                    ++state.angle_outer_loop_error_count;
+                    control_setpoint_valid = false;
+                }
+            } else {
+                memset(&state.angle_outer_loop, 0,
+                       sizeof(state.angle_outer_loop));
+                memcpy(setpoint_dps, state.rc_setpoint.rate_dps,
+                       sizeof(setpoint_dps));
+            }
+            if (control_setpoint_valid) {
+                for (axis = 0U; axis < RATE_PID_AXIS_COUNT; ++axis) {
+                    setpoint_rad_s[axis] =
+                        setpoint_dps[axis] * FLIGHT_DEGREES_TO_RADIANS;
+                }
+            }
+
+            if (control_setpoint_valid && !rate_pid_update(
                     pid_profile,
                     &pid_state,
                     setpoint_rad_s,
@@ -270,7 +332,9 @@ static void flight_task(void *argument)
 
         control_output_valid =
             state.rate_pid.valid && mixer_to_dshot(
-                &state.mixer, flight_output);
+                &state.mixer,
+                snapshot.parameters.values.motor_idle_percent_x100,
+                flight_output);
 
         requested_active = take_motor_test_request(
             now, requested, &request_tick, &timed_out);

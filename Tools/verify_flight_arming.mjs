@@ -120,7 +120,8 @@ assert(state.includes("APP_FLIGHT_SAFETY_DSHOT_NOT_READY") &&
   "unified S4.7 blocker/failsafe flags are incomplete");
 assert(flight.includes("mixer_to_dshot(") &&
        flight.includes("if (state.armed)") &&
-       flight.includes("FLIGHT_DSHOT_MOTOR_IDLE_PERCENT 0.055f") &&
+       flight.includes("motor_idle_percent_x100") &&
+       flight.includes("/ 10000.0f") &&
        flight.includes("dshot_output_low + normalized * dshot_output_range") &&
        flight.includes("memcpy(output, flight_output") &&
        flight.includes("!state.rc_setpoint.arm_requested && !state.armed") &&
@@ -135,7 +136,7 @@ assert(msp.includes("MSP2_GETFUN_ARMING_STATUS 0x4009U") &&
        cmake.includes("APP/Src/algorithms/flight_arming.c"),
   "S4.7 diagnostics, motor-test exclusion or build wiring is missing");
 assert(msp.includes("state.flight.armed ||\n            !state.imu.present") &&
-       imuTask.match(/if \(app_state_is_armed\(\)\)/g)?.length === 2 &&
+       imuTask.match(/if \(app_state_is_armed\(\)\)/g)?.length >= 3 &&
        appStateSource.includes("bool app_state_is_armed(void)"),
   "ARMED calibration start and parameter Flash writes need owner-side gates");
 
@@ -149,5 +150,5 @@ console.log(JSON.stringify({
   prearm: "ARM low and no blockers required after boot/failsafe",
   dshotFlightRange: [dshot(0), DSHOT_MAX],
   armingStatusBytes,
-  deferred: ["configurable PREARM AUX", "Angle outer loop", "App mode writes"],
+  deferred: ["physical S4.8/S4.9 prop-off acceptance"],
 }, null, 2));

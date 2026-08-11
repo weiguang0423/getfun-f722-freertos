@@ -149,7 +149,7 @@ function writerBytes(source) {
 }
 
 const rcTuningBody = functionBody(mspSource, "handle_rc_tuning", "handle_rx_config");
-const rxConfigBody = functionBody(mspSource, "handle_rx_config", "handle_getfun_rc_status");
+const rxConfigBody = functionBody(mspSource, "handle_rx_config", "handle_pid");
 assert(writerBytes(rcTuningBody) === 24,
   "MSP_RC_TUNING payload must remain 24 bytes for API 1.48");
 assert(writerBytes(rxConfigBody) === 39,

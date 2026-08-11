@@ -33,12 +33,14 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
+#include "algorithms/angle_outer_loop.h"
 #include "algorithms/flight_arming.h"
 #include "algorithms/power_monitor.h"
 #include "algorithms/quad_x_mixer.h"
 #include "algorithms/rate_pid.h"
 #include "algorithms/rc_input.h"
 #include "algorithms/rc_setpoint.h"
+#include "storage/parameter_store.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,6 +127,9 @@ typedef struct
     uint32_t sequence;
     uint32_t save_error_count;
     uint32_t last_hal_error;
+    uint16_t loaded_record_version;
+    bool migration_pending;
+    parameter_store_values_t values;
 } app_parameter_state_t;
 
 typedef struct
@@ -278,6 +283,7 @@ typedef struct
     uint16_t requested_motor_value[APP_STATE_MOTOR_COUNT];
     uint16_t output_motor_value[APP_STATE_MOTOR_COUNT];
     rc_setpoint_output_t rc_setpoint;
+    angle_outer_loop_output_t angle_outer_loop;
     rate_pid_output_t rate_pid;
     quad_x_mixer_output_t mixer;
     uint32_t control_sample_count;
@@ -291,6 +297,8 @@ typedef struct
     uint32_t dshot_dma_error_count;
     uint32_t rc_setpoint_update_count;
     uint32_t rc_setpoint_error_count;
+    uint32_t angle_outer_loop_update_count;
+    uint32_t angle_outer_loop_error_count;
     uint32_t rate_pid_update_count;
     uint32_t rate_pid_error_count;
     uint32_t mixer_update_count;

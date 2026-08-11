@@ -180,7 +180,7 @@ assert(flight.includes("mixer_to_dshot(") &&
   "S4.7 must keep RC flight output and motor test behind exclusive gates");
 assert(msp.includes("MSP2_GETFUN_RC_SETPOINT_STATUS 0x4007U") &&
        msp.includes("handle_getfun_rc_setpoint_status(&writer, &state)") &&
-       msp.includes("rc_setpoint_default_profile()->deadband_us"),
+       msp.includes("state.parameters.values.rc_profile.deadband_us"),
   "S4.4 MSP diagnostics or shared deadband projection changed");
 assert(diag.includes("setpoint valid=%u mode=%u arm_req=%u") &&
        cmake.includes("APP/Src/algorithms/rc_setpoint.c"),
@@ -206,5 +206,5 @@ console.log(JSON.stringify({
     default: "RATE",
   },
   statusPayloadBytes: setpointStatusBytes,
-  deferred: ["configurable PREARM AUX", "Angle outer loop", "App writes"],
+  deferred: ["physical App write and Angle direction acceptance"],
 }, null, 2));
