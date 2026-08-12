@@ -9,6 +9,7 @@
 /RelWithDebInfo/
 /MinSizeRel/
 /cmake-build-*/
+/build/
 
 # Accidental in-source CMake / Ninja output
 /CMakeCache.txt
