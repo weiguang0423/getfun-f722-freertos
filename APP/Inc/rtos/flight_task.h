@@ -15,6 +15,7 @@ extern "C" {
 void flight_task_create(void);
 bool flight_task_request_motor_test(
     const uint16_t values[DSHOT_MOTOR_COUNT]);
+bool flight_task_motor_test_request_pending(void);
 uint32_t flight_task_stack_high_water_mark(void);
 
 #ifdef __cplusplus

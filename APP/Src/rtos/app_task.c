@@ -28,10 +28,12 @@
 #include "bsp/usb_cdc_transport.h"
 #include "protocol/msp_server.h"
 #include "protocol/msp_transport.h"
+#include "platform/platform_boot.h"
 #include "rtos/battery_task.h"
 #include "rtos/flight_task.h"
 #include "rtos/imu_task.h"
 #include "rtos/rc_task.h"
+#include "usb_device.h"
 
 #define MSP_TASK_STACK_WORDS 1024U
 #define MSP_TASK_PRIORITY (tskIDLE_PRIORITY + 2U)
@@ -62,18 +64,26 @@ static void msp_task(void *argument)
 
             for (index = 0U; index < count; ++index) {
                 if (msp_parser_process_byte(&parser, input[index], &request)) {
+                    bool reboot_to_rom_dfu;
                     size_t frame_length;
 
                     msp_server_process(&request, &response);
+                    reboot_to_rom_dfu =
+                        msp_server_take_rom_dfu_request();
                     frame_length = msp_transport_build_response(&request,
                                                                 &response,
                                                                 output,
                                                                 sizeof(output));
 
                     if (frame_length != 0U) {
-                        (void)usb_cdc_transport_write(output,
-                                                      frame_length,
-                                                      MSP_TX_TIMEOUT_MS);
+                        const bool sent = usb_cdc_transport_write(
+                            output, frame_length, MSP_TX_TIMEOUT_MS);
+
+                        if (sent && reboot_to_rom_dfu) {
+                            MX_USB_DEVICE_DeInit();
+                            vTaskDelay(pdMS_TO_TICKS(20U));
+                            platform_boot_request_rom_dfu();
+                        }
                     }
                 }
             }

@@ -28,6 +28,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "platform/platform_boot.h"
 #include "platform/platform_diag.h"
 
 /* USER CODE END Includes */
@@ -74,6 +75,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
+  platform_boot_enter_rom_dfu_if_requested();
 
   /* USER CODE END 1 */
 

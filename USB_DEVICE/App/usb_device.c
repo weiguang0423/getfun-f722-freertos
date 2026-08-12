@@ -90,6 +90,12 @@ void MX_USB_DEVICE_Init(void)
   /* USER CODE END USB_DEVICE_Init_PostTreatment */
 }
 
+void MX_USB_DEVICE_DeInit(void)
+{
+  (void)USBD_Stop(&hUsbDeviceFS);
+  (void)USBD_DeInit(&hUsbDeviceFS);
+}
+
 /**
   * @}
   */

@@ -52,6 +52,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/bsp/usb_cdc_transport.c
     APP/Src/drivers/icm42688p.c
     APP/Src/platform/platform_diag.c
+    APP/Src/platform/platform_boot.c
     APP/Src/platform/platform_time.c
     APP/Src/protocol/crsf.c
     APP/Src/protocol/msp_transport.c

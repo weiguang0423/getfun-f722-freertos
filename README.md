@@ -18,9 +18,11 @@
 > 通过 USB CDC 虚拟串口正常连接——而 PID、Mixer、ARM/Failsafe、电机安全链等核心
 > 逻辑由本项目自主实现并完全掌握。
 
-> **当前状态（2026-08-12）**：S4.4/S4.8/S4.9已按[文档35](Docs/35_v1.4.0_S4.8_S4.9软件交付与拆桨联合验收.md)
+> **当前状态（2026-08-13）**：S4.4/S4.8/S4.9已按[文档35](Docs/35_v1.4.0_S4.8_S4.9软件交付与拆桨联合验收.md)
 > 通过真实板卡/App/掉电联合拆桨验收，冻结为`v1.4.0-angle-app-config-baseline`。
-> 本固件**尚未飞行**；S1.10～S1.12和S2.7关闭前不得安装螺旋桨或进入S5。
+> S2.7 App软件DFU已按[文档36](Docs/36_S2.7_App软件ROM_DFU开发与实物验收.md)通过实物验收，
+> 冻结为`v1.4.1-rom-dfu-recovery-baseline`。本固件**尚未飞行**；S1.10～S1.12关闭前
+> 不得安装螺旋桨或进入S5。
 
 ---
 
@@ -236,7 +238,7 @@ cmake --build build/Release
 
 - **SWD 调试**：`.elf` 可用 OpenOCD + J-Link / ST-Link 加载调试，或在 IDE 中加载。
 - **ROM DFU 恢复**：可通过 BOOT 引脚进入 STM32 ROM DFU 恢复烧录（已验收）；
-  软件 DFU 跳转（App/CLI 命令）尚未实现。
+  App标准`MSP_REBOOT`模式1、真实DFU枚举与恢复烧录均已验收；CLI入口留到S2.8。
 - **验证 MSP 连通**（最快路径）：
   1. 烧录 `.hex` / `.bin`
   2. USB 连板子，打开 **Betaflight Configurator**
@@ -254,7 +256,7 @@ cmake --build build/Release
 
 ```text
 S1 硬件基线            🟠 主体完成，并行实测项按依赖补齐
-S2 最小FreeRTOS平台    🟠 v0.1.0 已冻结；App/CLI 软件 DFU 未实现
+S2 最小FreeRTOS平台    🟠 App软件DFU已验收；完整CLI留待S6
 S3 IMU、姿态与飞行输入 ✅ v0.9.0 已冻结
 S4 控制与电机          ✅ v1.4.0 已冻结
 S5 基础飞行            ⬜ 已规划
@@ -286,6 +288,8 @@ Failsafe后必须先完成ARM低位PREARM握手，任何输入、控制或DShot�
 | `v0.9.0-flight-input-baseline` | 见标签 | 2026-08-08 | RC Failsafe/Receiver、ADC3电源监测与实物验收冻结 |
 | `v1.0.0-motor-output-baseline` | 见标签 | 2026-08-10 | 1 kHz FlightTask安全门禁、四路DShot600 GPIO bitbang与无桨验收冻结 |
 | `v1.3.0-flight-safety-baseline` | 见标签 | 2026-08-12 | P-only Rate控制、实测Quad-X顺序、ARM/PREARM/Failsafe及拆桨联合验收冻结 |
+| `v1.4.0-angle-app-config-baseline` | 见标签 | 2026-08-12 | Angle外环、App配置页面、参数v2迁移与掉电联合验收冻结 |
+| `v1.4.1-rom-dfu-recovery-baseline` | 见标签 | 2026-08-13 | App软件ROM DFU、安全拒绝、USB枚举、烧录Verify与恢复验收冻结 |
 
 ---
 

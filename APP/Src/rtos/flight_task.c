@@ -469,6 +469,16 @@ bool flight_task_request_motor_test(
     return true;
 }
 
+bool flight_task_motor_test_request_pending(void)
+{
+    bool pending;
+
+    taskENTER_CRITICAL();
+    pending = motor_test_request.pending;
+    taskEXIT_CRITICAL();
+    return pending;
+}
+
 uint32_t flight_task_stack_high_water_mark(void)
 {
     if (flight_task_handle == NULL) {

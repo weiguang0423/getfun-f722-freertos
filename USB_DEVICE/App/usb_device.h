@@ -74,8 +74,9 @@
   * @{
   */
 
-/** USB Device initialization function. */
+/** USB Device lifecycle functions. */
 void MX_USB_DEVICE_Init(void);
+void MX_USB_DEVICE_DeInit(void);
 
 /*
  * -- Insert functions declaration here --

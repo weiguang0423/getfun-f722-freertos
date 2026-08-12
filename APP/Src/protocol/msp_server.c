@@ -79,6 +79,7 @@
 #define MSP_SET_ARMING_CONFIG 62U
 #define MSP_RX_MAP 64U
 #define MSP_SET_RX_MAP 65U
+#define MSP_REBOOT 68U
 #define MSP_FAILSAFE_CONFIG 75U
 #define MSP_SET_FAILSAFE_CONFIG 76U
 #define MSP_ADVANCED_CONFIG 90U
@@ -190,6 +191,7 @@
 #define MSP_PARAMETER_SAVE_TIMEOUT_MS 3000U
 #define MSP_STANDARD_MOTOR_STOP 1000U
 #define MSP_STANDARD_MOTOR_MAX 2000U
+#define MSP_REBOOT_BOOTLOADER_ROM 1U
 
 typedef struct
 {
@@ -199,6 +201,7 @@ typedef struct
 } msp_configuration_transaction_t;
 
 static msp_configuration_transaction_t configuration_transaction;
+static bool rom_dfu_request_pending;
 
 typedef struct
 {
@@ -1649,6 +1652,15 @@ void msp_server_init(void)
 {
     memset(&configuration_transaction, 0,
            sizeof(configuration_transaction));
+    rom_dfu_request_pending = false;
+}
+
+bool msp_server_take_rom_dfu_request(void)
+{
+    const bool pending = rom_dfu_request_pending;
+
+    rom_dfu_request_pending = false;
+    return pending;
 }
 
 void msp_server_process(const msp_request_t *request,
@@ -2203,6 +2215,22 @@ void msp_server_process(const msp_request_t *request,
             response->supported = false;
         }
         configuration_transaction.active = false;
+        break;
+
+    case MSP_REBOOT:
+        if ((request->payload_length != 1U) ||
+            (request->payload[0] != MSP_REBOOT_BOOTLOADER_ROM) ||
+            state.flight.armed || state.flight.motor_test_active ||
+            flight_task_motor_test_request_pending() ||
+            state.flight.rc_setpoint.arm_requested ||
+            (state.fault_flags != 0U) || rom_dfu_request_pending) {
+            response->supported = false;
+        } else {
+            configuration_transaction.active = false;
+            app_state_set_configurator_arming_disabled(true);
+            rom_dfu_request_pending = true;
+            writer_u8(&writer, MSP_REBOOT_BOOTLOADER_ROM);
+        }
         break;
 
     case MSP_ACC_CALIBRATION:

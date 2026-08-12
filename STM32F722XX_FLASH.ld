@@ -204,6 +204,13 @@ SECTIONS
   PROVIDE( __data_source = LOADADDR(.data) );
   PROVIDE( __data_source_end = __tdata_source_end );
   PROVIDE( __data_source_size = __data_source_end - __data_source );
+  /* One-shot software-DFU request retained across NVIC_SystemReset(). */
+  .noinit (NOLOAD) : ALIGN(4)
+  {
+    *(.noinit*)
+    . = ALIGN(4);
+  } >RAM
+
   /* Uninitialized data section */
   .tbss (NOLOAD) : ALIGN(4)
   {
