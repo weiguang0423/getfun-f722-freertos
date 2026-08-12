@@ -53,7 +53,7 @@ typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE END Variables */
 /* Definitions for InitTask */
 osThreadId_t InitTaskHandle;
-uint32_t InitTaskBuffer[ 512 ];
+uint32_t InitTaskBuffer[ 768 ];
 osStaticThreadDef_t InitTaskControlBlock;
 const osThreadAttr_t InitTask_attributes = {
   .name = "InitTask",

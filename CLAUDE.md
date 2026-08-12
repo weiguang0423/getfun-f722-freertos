@@ -102,7 +102,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 1024 words 栈)
 - [Docs/00_项目开发路线与统一进度.md](Docs/00_项目开发路线与统一进度.md) — 项目唯一实时进度源：阶段坐标、细分里程碑、依赖、验收门槛、版本基线和下一步
 - [GETFUN_F722_FreeRTOS.ioc](GETFUN_F722_FreeRTOS.ioc) — STM32CubeMX 项目配置，双击用 CubeMX 编辑引脚/时钟/外设
 - [Core/Src/main.c](Core/Src/main.c) — 程序入口: MPU → Cache → HAL → 时钟 → GPIO/DMA/SPI1/UART 初始化 → FreeRTOS 调度启动
-- [Core/Src/freertos.c](Core/Src/freertos.c) — FreeRTOS 任务创建: InitTask(栈 2KB, osPriorityIdle) + APP 静态任务；InitTask 初始化 USB 并每秒输出维护诊断
+- [Core/Src/freertos.c](Core/Src/freertos.c) — FreeRTOS 任务创建: InitTask(栈 3KB, osPriorityIdle) + APP 静态任务；InitTask 初始化 USB 并每秒输出维护诊断
 - [Core/Inc/FreeRTOSConfig.h](Core/Inc/FreeRTOSConfig.h) — FreeRTOS 配置（优先级 56 级, 抢占使能, 静态/动态分配, 栈溢出检测, 软件定时器）
 - [USB_DEVICE/App/usbd_cdc_if.c](USB_DEVICE/App/usbd_cdc_if.c) — CDC 收发实现, `CDC_Transmit_FS()` 发送, `CDC_Receive_FS()` 接收回调
 - [STM32F722XX_FLASH.ld](STM32F722XX_FLASH.ld) — 链接脚本：程序FLASH `0x08000000`前256 KB；Sector 6/7各128 KB保留为参数槽A/B；RAM 256 KB
