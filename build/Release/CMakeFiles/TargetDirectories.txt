@@ -1,8 +1,0 @@
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/CMakeFiles/GETFUN_F722_FreeRTOS.dir
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/CMakeFiles/edit_cache.dir
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/CMakeFiles/rebuild_cache.dir
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/cmake/stm32cubemx/CMakeFiles/USB_Device_Library.dir
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/cmake/stm32cubemx/CMakeFiles/FreeRTOS.dir
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/cmake/stm32cubemx/CMakeFiles/edit_cache.dir
-E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/build/Release/cmake/stm32cubemx/CMakeFiles/rebuild_cache.dir
