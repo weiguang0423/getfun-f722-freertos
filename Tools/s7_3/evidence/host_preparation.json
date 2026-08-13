@@ -1,0 +1,87 @@
+{
+  "status": "host_ready_board_acceptance_pending",
+  "date": "2026-08-13",
+  "scope": "S7.3 offline RK3568 two-stage hand inference only",
+  "toolkit": {
+    "version": "1.3.0.post11912",
+    "compiler": "1.3.0 (9b36d4d74@2022-05-04T20:21:47)",
+    "python": "3.8.20",
+    "target": "rk3568",
+    "wheel": "/home/user123/rk3568_sdk/external/rknn-toolkit2/packages/rknn_toolkit2-1.3.0_11912b58-cp38-cp38-linux_x86_64.whl",
+    "wheel_sha256": "7d8b5533f176dca4df88a74fc2cb1915503ae8b4fa9a614e903e5de3440dafb7",
+    "environment": "/home/user123/s7_3_toolkit"
+  },
+  "source_models": {
+    "hand_detector_tflite_sha256": "60d1bf8d70a80aba35b36290bb2a0e52e784ca2e524937d49ea80e8161a8a384",
+    "hand_landmarks_detector_tflite_sha256": "6acda74af3fbf40e68265c20c7394b2bad81a16a481dcd79ad7a081887c3d6b9"
+  },
+  "fp16": {
+    "directory": "/home/user123/s7_3_models_final_fp16",
+    "hand_detector": {
+      "bytes": 2601524,
+      "sha256": "aafe382686646bc858f5f90c399a20bb01d9b66dec1e34d19002fa6bf4400f64"
+    },
+    "hand_landmarks_detector": {
+      "bytes": 5819761,
+      "sha256": "f34abcd8ab87e972dfb18357d3bb894eea1764fa26da3942ae8bcc2be91c9fba"
+    }
+  },
+  "int8": {
+    "directory": "/home/user123/s7_3_models_final_int8",
+    "calibration": {
+      "detector_images": 100,
+      "landmark_rois": 28,
+      "selection": "deterministic evenly-spaced fixed-corpus samples"
+    },
+    "hand_detector": {
+      "bytes": 1484443,
+      "sha256": "4ab89b23f3a52b18395e812e990767fdd021801929607be9ab3f69ba414f9391"
+    },
+    "hand_landmarks_detector": {
+      "bytes": 3092210,
+      "sha256": "eeb46a0769eb32fe14836bb25f70b18d95771f3fe5b4a70d955ce91e13466dcc"
+    }
+  },
+  "fixed_corpus": {
+    "directory": "C:/Users/user/AppData/Local/Temp/s7_3_fixed_testset",
+    "records": 2859,
+    "manifest_sha256": "f819f54b745eecabf148c111115174aabd9fef763dd47d0901b399c1ff37f9ed",
+    "excluded_invalid_source_records": 1
+  },
+  "pc_reference": {
+    "directory": "C:/Users/user/AppData/Local/Temp/s7_3_pc_fixed",
+    "records": 2859,
+    "valid": 723,
+    "rejected": 2136,
+    "results_sha256": "c08aa45e3c5574ed216f332b0a93848f190679a9fc51aa3d68082180fe4e7777"
+  },
+  "board_program": {
+    "path": "Tools/s7_3/s7_3_board_infer",
+    "format": "ELF 64-bit ARM aarch64",
+    "sha256": "ee8befa51d8341e2eeb313620d389e10d6ef114ea31eaa5e94ddaaf8456d0cfd",
+    "private_opencv": "/home/user123/s7_3_opencv/install/lib",
+    "modules": ["opencv_core 4.5.5", "opencv_imgproc 4.5.5", "opencv_imgcodecs 4.5.5"]
+  },
+  "deployment_bundle": {
+    "path": "/home/user123/s7_3_deploy_20260813.tar.gz",
+    "bytes": 1404366742,
+    "entries": 2885,
+    "sha256": "bfe5d236914b3c5ed7543d78fa4516360851792729a804e5ecf7742493ce31b4",
+    "gzip_test": "passed"
+  },
+  "frozen_acceptance_limits": {
+    "validity_agreement_min": 0.99,
+    "detector_score_p95_abs_max": 0.05,
+    "bbox_normalized_p95_abs_max": 0.02,
+    "detector_keypoints_normalized_p95_abs_max": 0.02,
+    "presence_score_p95_abs_max": 0.05,
+    "handedness_score_p95_abs_max": 0.05,
+    "landmarks_image_normalized_p95_abs_max": 0.03,
+    "stability_seconds": 1800,
+    "rss_growth_allowed": false,
+    "fd_growth_allowed": false,
+    "device_reset_allowed": false,
+    "frozen_result_allowed": false
+  },
+  "pending_reason": "RK3568 direct Ethernet responds at 169.254.89.120, but the S7.1 one-time SSH key was intentionally removed and COM8 is not present. Restore authorized access through COM8 or a user-approved credential before deployment."
+}
