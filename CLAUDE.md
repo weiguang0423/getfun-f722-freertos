@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-STM32F722RETx (Cortex-M7) 固件项目，基于 STM32CubeMX 生成，使用 FreeRTOS + CMSIS-RTOS V2，支持 USB CDC 虚拟串口。
+本仓库同时管理STM32F722RETx飞控固件和RK3568 Linux伴随计算机。STM32侧基于STM32CubeMX生成，使用FreeRTOS + CMSIS-RTOS V2；RK3568侧源码、交叉构建脚本和验收摘要统一位于`Linux/RK3568/`。
 
 - **MCU**: STM32F722RETx, Cortex-M7 @ 216MHz, FPv5-SP-D16, 512KB Flash / 256KB RAM
 - **RTOS**: FreeRTOS Kernel V10.2.1 (heap_4, 15KB 堆)
@@ -44,6 +44,7 @@ cmake --preset Release && cmake --build build/Release
 | **HAL 驱动** | `Drivers/STM32F7xx_HAL_Driver/` | STM32 HAL/LL 驱动层 |
 | **CMSIS** | `Drivers/CMSIS/` | Cortex-M 核心头文件和启动文件 |
 | **CubeMX** | `cmake/stm32cubemx/` | CMake 构建配置（CubeMX 生成的源/头/宏，**不含 APP/**） |
+| **RK3568 Linux** | `Linux/RK3568/` | S7模型参考、RKNN转换、ARM64板端程序、交叉构建脚本和验收摘要 |
 
 ## APP 应用层架构（自研，核心）
 
@@ -99,6 +100,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 1024 words 栈)
 
 ## 关键文件
 
+- [Linux/RK3568/README.md](Linux/RK3568/README.md) — RK3568源码、WSL构建环境、部署产物和板端副本的边界及当前S7状态
 - [Docs/00_项目开发路线与统一进度.md](Docs/00_项目开发路线与统一进度.md) — 项目唯一实时进度源：阶段坐标、细分里程碑、依赖、验收门槛、版本基线和下一步
 - [GETFUN_F722_FreeRTOS.ioc](GETFUN_F722_FreeRTOS.ioc) — STM32CubeMX 项目配置，双击用 CubeMX 编辑引脚/时钟/外设
 - [Core/Src/main.c](Core/Src/main.c) — 程序入口: MPU → Cache → HAL → 时钟 → GPIO/DMA/SPI1/UART 初始化 → FreeRTOS 调度启动

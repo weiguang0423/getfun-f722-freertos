@@ -5,10 +5,13 @@ import argparse
 import csv
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import cv2
 
+# Reuse the frozen S7.2 reference without requiring a caller-specific PYTHONPATH.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "s7_2"))
 from s7_2_pc_reference import Reference
 
 

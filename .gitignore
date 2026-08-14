@@ -52,6 +52,14 @@
 *.gcov
 coverage/
 
+# Python bytecode caches
+__pycache__/
+*.py[cod]
+
+# RK3568 generated deployment artifacts
+/Linux/RK3568/s7_3/s7_3_board_infer
+*.rknn
+
 # STM32CubeIDE / Eclipse local workspace state
 /.metadata/
 /.settings/

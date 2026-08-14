@@ -344,7 +344,7 @@ def run(args: argparse.Namespace) -> int:
         "manifest_errors_sha256": sha256(root / "manifest_errors.csv"),
         "config": CONFIG,
         "tensor_contract": reference.contract,
-        "command": "python Tools/s7_2/s7_2_pc_reference.py --testset <gesture_testset> --detector <hand_detector.tflite> --landmark <hand_landmarks_detector.tflite> --output <run>",
+        "command": "python Linux/RK3568/s7_2/s7_2_pc_reference.py --testset <gesture_testset> --detector <hand_detector.tflite> --landmark <hand_landmarks_detector.tflite> --output <run>",
     }
     (output / "environment.json").write_text(json.dumps(environment, ensure_ascii=False, indent=2), encoding="utf-8")
     jsonl = "".join(json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n" for record in records)
