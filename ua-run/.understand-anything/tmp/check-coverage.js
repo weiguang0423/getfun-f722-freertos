@@ -1,0 +1,11 @@
+const fs = require('fs');
+const root = 'E:/getfun-f722-freertos/GETFUN_F722_FreeRTOS/ua-run';
+const scan = JSON.parse(fs.readFileSync(root + '/.understand-anything/intermediate/scan-result.json', 'utf8'));
+const inv = new Set(scan.files.map(f => f.path));
+const changed = fs.readFileSync(root + '/.understand-anything/tmp/changed-files.txt', 'utf8').split(/\r?\n/).filter(Boolean);
+const missing = changed.filter(p => !inv.has(p));
+console.log('scan inventory:', inv.size, '| changed:', changed.length, '| missing from inventory:', missing.length);
+console.log('--- missing files ---');
+console.log(missing.join('\n'));
+console.log('importMap entries:', Object.keys(scan.importMap || {}).length);
+console.log('scan keys:', Object.keys(scan).join(','));
