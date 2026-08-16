@@ -1,0 +1,28 @@
+{
+  "date": "2026-08-14",
+  "scope": "S7.4 屏上实时显示 + 真人手部关键点可视确认",
+  "board": "ATK-DLRK3568 169.254.151.86, DSI 720x1280@60Hz (connector type=16)",
+  "display": "s7_4_drm_smoke KMS 冒烟通过：渐变 15 s、exit 0；随后 killall weston 释放 DRM master",
+  "run": {
+    "program": "s7_4_live --camera ... /dev/video0 800 600 20 180 200 4776 /userdata/annot2 5 /dev/dri/card0",
+    "duration_s": 180,
+    "exit_code": 0,
+    "records": 2832,
+    "valid": 773,
+    "no_hand": 2012,
+    "low_presence": 44,
+    "presence_min_max": [
+      0.501,
+      0.994
+    ],
+    "latency_mean_ms": 84.1,
+    "latency_max_ms": 207.7,
+    "annotate_frames_board": "/userdata/annot2/ (150 jpg)",
+    "annotate_samples_archived": "Linux/RK3568/s7_4/evidence/live_20260814/annot_*.jpg (7)"
+  },
+  "binaries": {
+    "s7_4_live_sha256": "6926c31d336b761290bcec2fc74705c028100380eab73f172da2bacbe71b6f8a",
+    "s7_4_drm_smoke_sha256": "4af1ee0a13195f063703e99c39da1d97bf08a846b069111d6e8d6c9336526c36"
+  },
+  "conclusion": "真人手部关键点方向与位置可视确认通过：屏上实时显示带检测框/骨架/置信度的画面，773 帧 valid 手部识别（presence 最高 0.994），无手移出后正常失效。S7.4 实物关口全部关闭。"
+}
