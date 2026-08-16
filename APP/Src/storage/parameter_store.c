@@ -1,7 +1,7 @@
 /*
  * parameter_store.c - Power-loss-tolerant S4.9 parameter persistence.
  *
- * Sector 6/7 remain an A/B, commit-last store. New saves write a fixed v2
+ * Sector 6/7 remain an A/B, commit-last store. New saves write a fixed v3
  * record containing accel calibration plus RC, Rate PID, Angle, motor idle and
  * App names. The loader still accepts the frozen 48-byte v1 record, keeps its
  * accel bias, fills every new field from safe defaults and marks migration
@@ -22,6 +22,7 @@
 #define PARAMETER_RECORD_MAGIC 0x47465052UL
 #define PARAMETER_RECORD_VERSION_V1 1U
 #define PARAMETER_RECORD_VERSION_V2 2U
+#define PARAMETER_RECORD_VERSION_V3 3U
 #define PARAMETER_RECORD_COMMIT 0x434F4D54UL
 #define PARAMETER_RECORD_FLAG_ACCEL_CALIBRATED (1UL << 0U)
 #define PARAMETER_RECORD_KNOWN_FLAGS PARAMETER_RECORD_FLAG_ACCEL_CALIBRATED
@@ -64,11 +65,33 @@ typedef struct
     uint32_t commit;
 } parameter_record_v2_t;
 
+typedef struct
+{
+    uint32_t magic;
+    uint16_t version;
+    uint16_t length;
+    uint32_t sequence;
+    uint32_t flags;
+    float accel_bias_m_s2[PARAMETER_STORE_AXIS_COUNT];
+    rc_setpoint_profile_t rc_profile;
+    rate_pid_profile_t rate_pid_profile;
+    angle_outer_loop_profile_t angle_profile;
+    uint16_t motor_idle_percent_x100;
+    uint8_t yaw_motors_reversed;
+    uint8_t reserved_u8;
+    char craft_name[PARAMETER_STORE_NAME_LENGTH];
+    char pilot_name[PARAMETER_STORE_NAME_LENGTH];
+    uint32_t reserved[2];
+    uint32_t crc32;
+    uint32_t commit;
+} parameter_record_v3_t;
+
 typedef union
 {
     parameter_record_v1_t v1;
     parameter_record_v2_t v2;
-    uint8_t bytes[sizeof(parameter_record_v2_t)];
+    parameter_record_v3_t v3;
+    uint8_t bytes[sizeof(parameter_record_v3_t)];
 } parameter_record_any_t;
 
 typedef struct
@@ -96,6 +119,8 @@ _Static_assert((sizeof(parameter_record_v2_t) % sizeof(uint32_t)) == 0U,
 _Static_assert((offsetof(parameter_record_v2_t, commit) %
                 sizeof(uint32_t)) == 0U,
                "parameter record v2 commit must be word aligned");
+_Static_assert(sizeof(parameter_record_v3_t) == sizeof(parameter_record_v2_t),
+               "parameter record v3 must preserve the slot footprint");
 
 static parameter_store_values_t current_values;
 static parameter_store_status_t current_status;
@@ -289,11 +314,59 @@ static bool record_v2_body_is_valid(const parameter_record_v2_t *record)
             crc32_ieee(record, offsetof(parameter_record_v2_t, crc32)));
 }
 
+static void values_from_v3(const parameter_record_v3_t *record,
+                           parameter_store_values_t *values)
+{
+    parameter_store_values_set_defaults(values);
+    values->accel_calibration_valid =
+        (record->flags & PARAMETER_RECORD_FLAG_ACCEL_CALIBRATED) != 0U;
+    memcpy(values->accel_bias_m_s2, record->accel_bias_m_s2,
+           sizeof(values->accel_bias_m_s2));
+    values->rc_profile = record->rc_profile;
+    values->rate_pid_profile = record->rate_pid_profile;
+    values->angle_profile = record->angle_profile;
+    values->motor_idle_percent_x100 = record->motor_idle_percent_x100;
+    values->yaw_motors_reversed = record->yaw_motors_reversed != 0U;
+    memset(values->craft_name, 0, sizeof(values->craft_name));
+    memset(values->pilot_name, 0, sizeof(values->pilot_name));
+    memcpy(values->craft_name, record->craft_name,
+           sizeof(record->craft_name));
+    memcpy(values->pilot_name, record->pilot_name,
+           sizeof(record->pilot_name));
+}
+
+static bool record_v3_body_is_valid(const parameter_record_v3_t *record)
+{
+    parameter_store_values_t values;
+    uint32_t reserved_index;
+
+    if ((record->magic != PARAMETER_RECORD_MAGIC) ||
+        (record->version != PARAMETER_RECORD_VERSION_V3) ||
+        (record->length != sizeof(*record)) ||
+        (record->sequence == 0U) ||
+        ((record->flags & ~PARAMETER_RECORD_KNOWN_FLAGS) != 0U) ||
+        (record->yaw_motors_reversed > 1U) ||
+        (record->reserved_u8 != 0U)) {
+        return false;
+    }
+    for (reserved_index = 0U;
+         reserved_index < sizeof(record->reserved) / sizeof(record->reserved[0]);
+         ++reserved_index) {
+        if (record->reserved[reserved_index] != 0U) {
+            return false;
+        }
+    }
+    values_from_v3(record, &values);
+    return parameter_store_values_are_valid(&values) &&
+           (record->crc32 ==
+            crc32_ieee(record, offsetof(parameter_record_v3_t, crc32)));
+}
+
 static void invalidate_record_cache(parameter_store_slot_t slot)
 {
     const uint32_t address =
         slot_address(slot) & ~(PARAMETER_CACHE_LINE_SIZE - 1U);
-    const int32_t length = (int32_t)((sizeof(parameter_record_v2_t) +
+    const int32_t length = (int32_t)((sizeof(parameter_record_v3_t) +
                                       PARAMETER_CACHE_LINE_SIZE - 1U) &
                                      ~(PARAMETER_CACHE_LINE_SIZE - 1U));
 
@@ -310,6 +383,7 @@ static void read_slot(parameter_store_slot_t slot,
     const uint32_t address = slot_address(slot);
     const parameter_record_v1_t *v1 = &slot_record->record.v1;
     const parameter_record_v2_t *v2 = &slot_record->record.v2;
+    const parameter_record_v3_t *v3 = &slot_record->record.v3;
 
     memset(slot_record, 0, sizeof(*slot_record));
     invalidate_record_cache(slot);
@@ -317,7 +391,13 @@ static void read_slot(parameter_store_slot_t slot,
            sizeof(slot_record->record.bytes));
     slot_record->blank = bytes_are_erased(slot_record->record.bytes,
                                           sizeof(slot_record->record.bytes));
-    if ((v2->version == PARAMETER_RECORD_VERSION_V2) &&
+    if ((v3->version == PARAMETER_RECORD_VERSION_V3) &&
+        (v3->commit == PARAMETER_RECORD_COMMIT) &&
+        record_v3_body_is_valid(v3)) {
+        slot_record->valid = true;
+        slot_record->version = PARAMETER_RECORD_VERSION_V3;
+        slot_record->sequence = v3->sequence;
+    } else if ((v2->version == PARAMETER_RECORD_VERSION_V2) &&
         (v2->commit == PARAMETER_RECORD_COMMIT) &&
         record_v2_body_is_valid(v2)) {
         slot_record->valid = true;
@@ -341,7 +421,9 @@ static void values_from_slot(const parameter_slot_record_t *slot,
                              parameter_store_values_t *values)
 {
     parameter_store_values_set_defaults(values);
-    if (slot->version == PARAMETER_RECORD_VERSION_V2) {
+    if (slot->version == PARAMETER_RECORD_VERSION_V3) {
+        values_from_v3(&slot->record.v3, values);
+    } else if (slot->version == PARAMETER_RECORD_VERSION_V2) {
         values_from_v2(&slot->record.v2, values);
     } else if ((slot->record.v1.flags &
                 PARAMETER_RECORD_FLAG_ACCEL_CALIBRATED) != 0U) {
@@ -360,7 +442,7 @@ static void select_slot(const parameter_slot_record_t *slot,
     current_status.sequence = slot->sequence;
     current_status.loaded_record_version = slot->version;
     current_status.migration_pending =
-        slot->version == PARAMETER_RECORD_VERSION_V1;
+        slot->version != PARAMETER_RECORD_VERSION_V3;
     current_status.storage_valid = true;
     values_from_slot(slot, &current_values);
 }
@@ -450,11 +532,11 @@ void parameter_store_get_status(parameter_store_status_t *status)
 
 static void build_record(const parameter_store_values_t *values,
                          uint32_t sequence,
-                         parameter_record_v2_t *record)
+                         parameter_record_v3_t *record)
 {
     memset(record, 0, sizeof(*record));
     record->magic = PARAMETER_RECORD_MAGIC;
-    record->version = PARAMETER_RECORD_VERSION_V2;
+    record->version = PARAMETER_RECORD_VERSION_V3;
     record->length = sizeof(*record);
     record->sequence = sequence;
     if (values->accel_calibration_valid) {
@@ -466,12 +548,13 @@ static void build_record(const parameter_store_values_t *values,
     record->rate_pid_profile = values->rate_pid_profile;
     record->angle_profile = values->angle_profile;
     record->motor_idle_percent_x100 = values->motor_idle_percent_x100;
+    record->yaw_motors_reversed = values->yaw_motors_reversed ? 1U : 0U;
     memcpy(record->craft_name, values->craft_name,
            sizeof(record->craft_name));
     memcpy(record->pilot_name, values->pilot_name,
            sizeof(record->pilot_name));
     record->crc32 =
-        crc32_ieee(record, offsetof(parameter_record_v2_t, crc32));
+        crc32_ieee(record, offsetof(parameter_record_v3_t, crc32));
     record->commit = PARAMETER_RECORD_COMMIT;
 }
 
@@ -489,12 +572,12 @@ static bool erase_slot(parameter_store_slot_t slot)
 }
 
 static bool program_record_body(parameter_store_slot_t slot,
-                                const parameter_record_v2_t *record)
+                                const parameter_record_v3_t *record)
 {
     const uint32_t address = slot_address(slot);
     const uint32_t *words = (const uint32_t *)record;
     const size_t word_count =
-        offsetof(parameter_record_v2_t, commit) / sizeof(uint32_t);
+        offsetof(parameter_record_v3_t, commit) / sizeof(uint32_t);
     size_t index;
 
     for (index = 0U; index < word_count; ++index) {
@@ -511,14 +594,14 @@ static bool program_commit(parameter_store_slot_t slot)
 {
     return HAL_FLASH_Program(
                FLASH_TYPEPROGRAM_WORD,
-               slot_address(slot) + offsetof(parameter_record_v2_t, commit),
+               slot_address(slot) + offsetof(parameter_record_v3_t, commit),
                PARAMETER_RECORD_COMMIT) == HAL_OK;
 }
 
 parameter_store_save_result_t parameter_store_save(
     const parameter_store_values_t *values)
 {
-    parameter_record_v2_t record;
+    parameter_record_v3_t record;
     parameter_slot_record_t verify;
     const parameter_store_slot_t target_slot =
         current_status.active_slot == PARAMETER_STORE_SLOT_A
@@ -551,10 +634,10 @@ parameter_store_save_result_t parameter_store_save(
         return current_status.last_save_result;
     }
     invalidate_record_cache(target_slot);
-    memcpy(&verify.record.v2, (const void *)(uintptr_t)slot_address(target_slot),
-           sizeof(verify.record.v2));
-    if (!record_v2_body_is_valid(&verify.record.v2) ||
-        (verify.record.v2.commit != UINT32_MAX)) {
+    memcpy(&verify.record.v3, (const void *)(uintptr_t)slot_address(target_slot),
+           sizeof(verify.record.v3));
+    if (!record_v3_body_is_valid(&verify.record.v3) ||
+        (verify.record.v3.commit != UINT32_MAX)) {
         (void)HAL_FLASH_Lock();
         note_save_failure(PARAMETER_STORE_SAVE_VERIFY_FAILED);
         return current_status.last_save_result;
@@ -568,7 +651,7 @@ parameter_store_save_result_t parameter_store_save(
     (void)HAL_FLASH_Lock();
     read_slot(target_slot, &verify);
     if (!verify.valid ||
-        (verify.version != PARAMETER_RECORD_VERSION_V2) ||
+        (verify.version != PARAMETER_RECORD_VERSION_V3) ||
         (verify.sequence != next_sequence)) {
         note_save_failure(PARAMETER_STORE_SAVE_VERIFY_FAILED);
         return current_status.last_save_result;
@@ -578,7 +661,7 @@ parameter_store_save_result_t parameter_store_save(
     current_status.storage_valid = true;
     current_status.active_slot = target_slot;
     current_status.sequence = next_sequence;
-    current_status.loaded_record_version = PARAMETER_RECORD_VERSION_V2;
+    current_status.loaded_record_version = PARAMETER_RECORD_VERSION_V3;
     current_status.migration_pending = false;
     current_status.invalid_slot_mask &=
         target_slot == PARAMETER_STORE_SLOT_A

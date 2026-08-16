@@ -79,6 +79,7 @@
 #define MSP_SET_ARMING_CONFIG 62U
 #define MSP_RX_MAP 64U
 #define MSP_SET_RX_MAP 65U
+#define MSP_REBOOT 68U
 #define MSP_FAILSAFE_CONFIG 75U
 #define MSP_SET_FAILSAFE_CONFIG 76U
 #define MSP_ADVANCED_CONFIG 90U
@@ -132,6 +133,7 @@
 #define MSP2_COMMON_SET_SERIAL_CONFIG 0x100AU
 #define MSP2_MOTOR_OUTPUT_REORDERING 0x3001U
 #define MSP2_SET_MOTOR_OUTPUT_REORDERING 0x3002U
+#define MSP2_SEND_DSHOT_COMMAND 0x3003U
 #define MSP2_GET_TEXT 0x3006U
 #define MSP2_SET_TEXT 0x3007U
 #define MSP2_MCU_INFO 0x300CU
@@ -188,6 +190,7 @@
 #define BETAFLIGHT_DSHOT600_PROTOCOL 8U
 #define MSP_CONFIGURATION_TIMEOUT_TICKS pdMS_TO_TICKS(1000U)
 #define MSP_PARAMETER_SAVE_TIMEOUT_MS 3000U
+#define MSP_DSHOT_COMMAND_TIMEOUT_MS 250U
 #define MSP_STANDARD_MOTOR_STOP 1000U
 #define MSP_STANDARD_MOTOR_MAX 2000U
 
@@ -199,6 +202,12 @@ typedef struct
 } msp_configuration_transaction_t;
 
 static msp_configuration_transaction_t configuration_transaction;
+static bool reboot_requested;
+
+/* App Quad-X M1 RR, M2 FR, M3 RL, M4 FL -> board M1 FL..M4 RR. */
+static const uint8_t app_motor_to_board[DSHOT_MOTOR_COUNT] = {
+    3U, 2U, 1U, 0U
+};
 
 typedef struct
 {
@@ -648,7 +657,7 @@ static void handle_motor(payload_writer_t *writer,
 
     for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
         writer_u16(writer, standard_motor_from_dshot(
-            state->flight.output_motor_value[motor]));
+            state->flight.output_motor_value[app_motor_to_board[motor]]));
     }
     for (; motor < 8U; ++motor) {
         writer_u16(writer, MSP_STANDARD_MOTOR_STOP);
@@ -1649,6 +1658,18 @@ void msp_server_init(void)
 {
     memset(&configuration_transaction, 0,
            sizeof(configuration_transaction));
+    reboot_requested = false;
+}
+
+bool msp_server_take_reboot_request(void)
+{
+    bool requested;
+
+    taskENTER_CRITICAL();
+    requested = reboot_requested;
+    reboot_requested = false;
+    taskEXIT_CRITICAL();
+    return requested;
 }
 
 void msp_server_process(const msp_request_t *request,
@@ -1765,9 +1786,10 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP_MIXER_CONFIG:
-        /* Betaflight mixerMode_e: 3 = Quad X; reverseMotorDir = false. */
+        /* Betaflight mixerMode_e: 3 = Quad X. */
         writer_u8(&writer, 3U);
-        writer_u8(&writer, 0U);
+        writer_u8(&writer,
+                  state.parameters.values.yaw_motors_reversed ? 1U : 0U);
         break;
 
     case MSP_BOARD_ALIGNMENT_CONFIG:
@@ -1881,10 +1903,7 @@ void msp_server_process(const msp_request_t *request,
 
     case MSP2_MOTOR_OUTPUT_REORDERING:
         writer_u8(&writer, DSHOT_MOTOR_COUNT);
-        writer_u8(&writer, 0U);
-        writer_u8(&writer, 1U);
-        writer_u8(&writer, 2U);
-        writer_u8(&writer, 3U);
+        writer_data(&writer, app_motor_to_board, DSHOT_MOTOR_COUNT);
         break;
 
     case MSP_BATTERY_CONFIG:
@@ -2006,10 +2025,33 @@ void msp_server_process(const msp_request_t *request,
         break;
 
     case MSP_SET_MIXER_CONFIG:
-        if (state.flight.armed || (request->payload_length != 2U) ||
-            (request->payload[0] != 3U) ||
-            (request->payload[1] != 0U)) {
+        {
+            parameter_store_values_t candidate;
+
+            if ((request->payload_length != 2U) ||
+                (request->payload[0] != 3U) ||
+                (request->payload[1] > 1U) ||
+                !configuration_candidate(&state, &candidate)) {
+                response->supported = false;
+                break;
+            }
+            candidate.yaw_motors_reversed = request->payload[1] != 0U;
+            if (!configuration_stage(&candidate)) {
+                response->supported = false;
+            }
+        }
+        break;
+
+    case MSP_REBOOT:
+        if (state.flight.armed || state.flight.motor_test_active ||
+            state.flight.rc_setpoint.arm_requested ||
+            (request->payload_length > 1U) ||
+            ((request->payload_length == 1U) &&
+             (request->payload[0] != 0U))) {
             response->supported = false;
+        } else {
+            writer_u8(&writer, 0U);
+            reboot_requested = true;
         }
         break;
 
@@ -2137,11 +2179,47 @@ void msp_server_process(const msp_request_t *request,
     case MSP2_SET_MOTOR_OUTPUT_REORDERING:
         if (state.flight.armed || (request->payload_length != 5U) ||
             (request->payload[0] != DSHOT_MOTOR_COUNT) ||
-            (request->payload[1] != 0U) ||
-            (request->payload[2] != 1U) ||
-            (request->payload[3] != 2U) ||
-            (request->payload[4] != 3U)) {
+            (memcmp(&request->payload[1], app_motor_to_board,
+                    DSHOT_MOTOR_COUNT) != 0)) {
             response->supported = false;
+        }
+        break;
+
+    case MSP2_SEND_DSHOT_COMMAND:
+        {
+            uint8_t motor_index;
+            uint8_t command_count;
+            uint8_t commands[FLIGHT_DSHOT_COMMAND_MAX_COUNT];
+            uint32_t index;
+            bool valid = request->payload_length >= 4U;
+
+            motor_index = valid ? request->payload[1] : DSHOT_ALL_MOTORS;
+            command_count = valid ? request->payload[2] : 0U;
+            valid = valid && (request->payload[0] == 1U) &&
+                    (command_count > 0U) &&
+                    (command_count <= FLIGHT_DSHOT_COMMAND_MAX_COUNT) &&
+                    (request->payload_length ==
+                     (uint16_t)(3U + command_count)) &&
+                    ((motor_index < DSHOT_MOTOR_COUNT) ||
+                     (motor_index == DSHOT_ALL_MOTORS));
+            for (index = 0U; valid && (index < command_count); ++index) {
+                commands[index] = request->payload[3U + index];
+                valid = (commands[index] == 7U) ||
+                        (commands[index] == 8U) ||
+                        (commands[index] == 12U);
+            }
+            if (valid && (motor_index < DSHOT_MOTOR_COUNT)) {
+                motor_index = app_motor_to_board[motor_index];
+            }
+            if (!valid || state.flight.armed ||
+                state.flight.rc_setpoint.arm_requested ||
+                !state.configurator_arming_disabled ||
+                !state.flight.dshot_ready || (state.fault_flags != 0U) ||
+                !flight_task_execute_dshot_commands(
+                    motor_index, commands, command_count,
+                    MSP_DSHOT_COMMAND_TIMEOUT_MS)) {
+                response->supported = false;
+            }
         }
         break;
 
@@ -2165,7 +2243,8 @@ void msp_server_process(const msp_request_t *request,
                         valid_length = false;
                         break;
                     }
-                    values[motor] = dshot_from_standard_motor(standard);
+                    values[app_motor_to_board[motor]] =
+                        dshot_from_standard_motor(standard);
                     requests_output = requests_output ||
                                       (standard > MSP_STANDARD_MOTOR_STOP);
                 }

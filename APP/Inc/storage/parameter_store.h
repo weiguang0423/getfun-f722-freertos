@@ -2,7 +2,7 @@
  * parameter_store.h - STM32F722 internal Flash parameter store interface.
  *
  * Purpose:
- *   Exposes v2 flight configuration and load/save diagnostics for the
+ *   Exposes v3 flight configuration and load/save diagnostics for the
  *   dual-sector A/B store. The implementation owns v1 migration, validation,
  *   sequence selection, CRC, erase/program/verify and commit ordering.
  *
@@ -70,6 +70,7 @@ typedef struct
     rate_pid_profile_t rate_pid_profile;
     angle_outer_loop_profile_t angle_profile;
     uint16_t motor_idle_percent_x100;
+    bool yaw_motors_reversed;
     char craft_name[PARAMETER_STORE_NAME_LENGTH + 1U];
     char pilot_name[PARAMETER_STORE_NAME_LENGTH + 1U];
 } parameter_store_values_t;

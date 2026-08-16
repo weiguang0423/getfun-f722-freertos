@@ -24,6 +24,8 @@
 #define FLIGHT_MAX_CONSECUTIVE_SUBMIT_ERRORS 2U
 #define FLIGHT_DEGREES_TO_RADIANS 0.01745329251994329577f
 #define FLIGHT_ARM_THROTTLE_MAX 0.0f
+#define FLIGHT_DSHOT_INITIAL_DELAY_LOOPS 10U
+#define FLIGHT_DSHOT_COMMAND_REPEATS 10U
 
 typedef struct
 {
@@ -32,10 +34,83 @@ typedef struct
     uint16_t values[DSHOT_MOTOR_COUNT];
 } motor_test_request_t;
 
+typedef struct
+{
+    bool pending;
+    bool active;
+    bool completed;
+    bool success;
+    uint8_t motor_index;
+    uint8_t commands[FLIGHT_DSHOT_COMMAND_MAX_COUNT];
+    uint8_t command_count;
+    uint8_t command_index;
+    uint8_t repeats_remaining;
+    uint8_t delay_loops;
+} dshot_command_request_t;
+
 static StaticTask_t flight_task_control_block;
 static StackType_t flight_task_stack[FLIGHT_TASK_STACK_WORDS];
 static TaskHandle_t flight_task_handle;
 static motor_test_request_t motor_test_request;
+static dshot_command_request_t dshot_command_request;
+
+static bool dshot_command_step(bool can_run)
+{
+    bool owns_output = false;
+
+    taskENTER_CRITICAL();
+    if (dshot_command_request.pending && !dshot_command_request.active) {
+        dshot_command_request.active = true;
+        dshot_command_request.command_index = 0U;
+        dshot_command_request.repeats_remaining =
+            FLIGHT_DSHOT_COMMAND_REPEATS;
+        dshot_command_request.delay_loops =
+            FLIGHT_DSHOT_INITIAL_DELAY_LOOPS;
+    }
+    owns_output = dshot_command_request.active;
+    if (owns_output && !can_run) {
+        dshot_command_request.pending = false;
+        dshot_command_request.active = false;
+        dshot_command_request.completed = true;
+        dshot_command_request.success = false;
+    }
+    taskEXIT_CRITICAL();
+
+    if (!owns_output || !can_run) {
+        return owns_output;
+    }
+    if (dshot_command_request.delay_loops != 0U) {
+        --dshot_command_request.delay_loops;
+        return true;
+    }
+    if (dshot_command_request.command_index >=
+        dshot_command_request.command_count) {
+        taskENTER_CRITICAL();
+        dshot_command_request.pending = false;
+        dshot_command_request.active = false;
+        dshot_command_request.completed = true;
+        dshot_command_request.success = true;
+        taskEXIT_CRITICAL();
+        return true;
+    }
+    if (!dshot_motor_submit_command(
+            dshot_command_request.motor_index,
+            dshot_command_request.commands[
+                dshot_command_request.command_index])) {
+        return true;
+    }
+    if (--dshot_command_request.repeats_remaining != 0U) {
+        return true;
+    }
+    ++dshot_command_request.command_index;
+    if (dshot_command_request.command_index <
+        dshot_command_request.command_count) {
+        dshot_command_request.repeats_remaining =
+            FLIGHT_DSHOT_COMMAND_REPEATS;
+        return true;
+    }
+    return true;
+}
 
 static uint32_t flight_safety_flags(const app_state_snapshot_t *snapshot,
                                     TickType_t now)
@@ -186,6 +261,7 @@ static void flight_task(void *argument)
         bool control_output_valid;
         bool control_setpoint_valid;
         bool requested_active;
+        bool dshot_command_active;
         bool timed_out;
         const rc_setpoint_profile_t *setpoint_profile;
         const angle_outer_loop_profile_t *angle_profile;
@@ -317,10 +393,17 @@ static void flight_task(void *argument)
             }
 
             if (state.rate_pid.valid) {
+                float mixer_correction[RATE_PID_AXIS_COUNT];
+
                 ++state.rate_pid_update_count;
+                memcpy(mixer_correction, state.rate_pid.correction,
+                       sizeof(mixer_correction));
+                if (snapshot.parameters.values.yaw_motors_reversed) {
+                    mixer_correction[2] = -mixer_correction[2];
+                }
                 if (quad_x_mixer_compute(
                         state.rc_setpoint.throttle,
-                        state.rate_pid.correction,
+                        mixer_correction,
                         &state.mixer)) {
                     ++state.mixer_update_count;
                 } else {
@@ -365,6 +448,13 @@ static void flight_task(void *argument)
         if (requested_active) {
             arming_block_flags |= APP_FLIGHT_SAFETY_MOTOR_TEST_ACTIVE;
         }
+        taskENTER_CRITICAL();
+        dshot_command_active = dshot_command_request.pending ||
+                               dshot_command_request.active;
+        taskEXIT_CRITICAL();
+        if (dshot_command_active) {
+            arming_block_flags |= APP_FLIGHT_SAFETY_MOTOR_TEST_ACTIVE;
+        }
         failsafe_flags = arming_block_flags &
             ~APP_FLIGHT_SAFETY_ARMING_ONLY_MASK;
         state.safety_flags = failsafe_flags;
@@ -388,7 +478,12 @@ static void flight_task(void *argument)
             memcpy(output, requested, sizeof(output));
         }
 
-        if (dshot.ready && !dshot.fault_latched &&
+        dshot_command_active = dshot_command_step(
+            !state.armed && !requested_active && dshot.ready &&
+            !dshot.fault_latched && !state.rc_setpoint.arm_requested &&
+            snapshot.configurator_arming_disabled &&
+            (snapshot.fault_flags == 0U));
+        if (!dshot_command_active && dshot.ready && !dshot.fault_latched &&
             !dshot_motor_submit(output)) {
             ++state.dshot_submit_error_count;
             ++consecutive_submit_errors;
@@ -429,6 +524,7 @@ static void flight_task(void *argument)
 void flight_task_create(void)
 {
     memset(&motor_test_request, 0, sizeof(motor_test_request));
+    memset(&dshot_command_request, 0, sizeof(dshot_command_request));
     flight_task_handle = xTaskCreateStatic(
         flight_task,
         "FlightTask",
@@ -438,6 +534,73 @@ void flight_task_create(void)
         flight_task_stack,
         &flight_task_control_block);
     configASSERT(flight_task_handle != NULL);
+}
+
+bool flight_task_execute_dshot_commands(
+    uint8_t motor_index,
+    const uint8_t *commands,
+    uint8_t command_count,
+    uint32_t timeout_ms)
+{
+    TickType_t start;
+    TickType_t timeout;
+    bool completed;
+    bool success;
+    uint32_t index;
+
+    if ((commands == NULL) || (command_count == 0U) ||
+        (command_count > FLIGHT_DSHOT_COMMAND_MAX_COUNT) ||
+        ((motor_index >= DSHOT_MOTOR_COUNT) &&
+         (motor_index != DSHOT_ALL_MOTORS)) || app_state_is_armed()) {
+        return false;
+    }
+    for (index = 0U; index < command_count; ++index) {
+        if (commands[index] > DSHOT_MAX_COMMAND) {
+            return false;
+        }
+    }
+    taskENTER_CRITICAL();
+    if (motor_test_request.pending) {
+        for (index = 0U; index < DSHOT_MOTOR_COUNT; ++index) {
+            if (motor_test_request.values[index] != 0U) {
+                taskEXIT_CRITICAL();
+                return false;
+            }
+        }
+        motor_test_request.pending = false;
+    }
+    if (dshot_command_request.pending || dshot_command_request.active) {
+        taskEXIT_CRITICAL();
+        return false;
+    }
+    dshot_command_request.motor_index = motor_index;
+    memcpy(dshot_command_request.commands, commands, command_count);
+    dshot_command_request.command_count = command_count;
+    dshot_command_request.completed = false;
+    dshot_command_request.success = false;
+    dshot_command_request.pending = true;
+    taskEXIT_CRITICAL();
+
+    start = xTaskGetTickCount();
+    timeout = pdMS_TO_TICKS(timeout_ms);
+    do {
+        taskENTER_CRITICAL();
+        completed = dshot_command_request.completed;
+        success = dshot_command_request.success;
+        taskEXIT_CRITICAL();
+        if (completed) {
+            return success;
+        }
+        vTaskDelay(pdMS_TO_TICKS(1U));
+    } while ((TickType_t)(xTaskGetTickCount() - start) < timeout);
+
+    taskENTER_CRITICAL();
+    dshot_command_request.pending = false;
+    dshot_command_request.active = false;
+    dshot_command_request.completed = true;
+    dshot_command_request.success = false;
+    taskEXIT_CRITICAL();
+    return false;
 }
 
 bool flight_task_request_motor_test(

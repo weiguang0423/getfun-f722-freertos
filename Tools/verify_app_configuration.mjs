@@ -55,7 +55,7 @@ assert(migrated?.migrated && migrated.motorIdle === 550 &&
        migrated.angleLimitDeg === 60 && migrated.angleP === 5 &&
        migrated.bias.every((value, axis) =>
          Math.abs(value - [0.1, -0.2, 0.3][axis]) < 1e-6),
-"v1 migration must keep accel bias and fill every v2 field from defaults");
+"v1 migration must keep accel bias and fill every newer field from defaults");
 v1[20] ^= 0x01;
 assert(loadV1(v1) === null, "v1 CRC corruption must be rejected");
 
@@ -108,10 +108,12 @@ assert(storeHeader.includes("parameter_store_values_set_defaults") &&
        storeHeader.includes("motor_idle_percent_x100") &&
        store.includes("PARAMETER_RECORD_VERSION_V1 1U") &&
        store.includes("PARAMETER_RECORD_VERSION_V2 2U") &&
+       store.includes("PARAMETER_RECORD_VERSION_V3 3U") &&
        store.includes("values_from_slot") &&
+       store.includes("record_v3_body_is_valid") &&
        store.includes("migration_pending") &&
        store.includes("program_commit(target_slot)"),
-"v2 record, v1 migration or commit-last persistence is missing");
+"v3 record, legacy migration or commit-last persistence is missing");
 assert(state.includes("parameter_store_values_t values") &&
        imu.includes("process_parameter_save_request();") &&
        imu.includes("parameter_store_save(&candidate)") &&
@@ -155,7 +157,7 @@ assert(msp.includes("MSP_CONFIGURATION_TIMEOUT_TICKS pdMS_TO_TICKS(1000U)") &&
 
 console.log(JSON.stringify({
   result: "PASS",
-  record: "v2 with v1 accel migration and commit-last A/B save",
+  record: "v3 with v1/v2 migration and commit-last A/B save",
   transactionTimeoutMs: 1000,
   owner: "ImuTask",
   pages: ["PID Tuning", "Modes", "Motors", "Configuration"],

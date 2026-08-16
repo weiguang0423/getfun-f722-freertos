@@ -25,13 +25,16 @@
 #include "task.h"
 
 #include "app_state.h"
+#include "bsp/dshot_motor.h"
 #include "bsp/usb_cdc_transport.h"
+#include "platform/platform_diag.h"
 #include "protocol/msp_server.h"
 #include "protocol/msp_transport.h"
 #include "rtos/battery_task.h"
 #include "rtos/flight_task.h"
 #include "rtos/imu_task.h"
 #include "rtos/rc_task.h"
+#include "stm32f7xx.h"
 
 #define MSP_TASK_STACK_WORDS 1024U
 #define MSP_TASK_PRIORITY (tskIDLE_PRIORITY + 2U)
@@ -63,6 +66,7 @@ static void msp_task(void *argument)
             for (index = 0U; index < count; ++index) {
                 if (msp_parser_process_byte(&parser, input[index], &request)) {
                     size_t frame_length;
+                    bool response_sent = false;
 
                     msp_server_process(&request, &response);
                     frame_length = msp_transport_build_response(&request,
@@ -71,9 +75,16 @@ static void msp_task(void *argument)
                                                                 sizeof(output));
 
                     if (frame_length != 0U) {
-                        (void)usb_cdc_transport_write(output,
-                                                      frame_length,
-                                                      MSP_TX_TIMEOUT_MS);
+                        response_sent = usb_cdc_transport_write(
+                            output, frame_length, MSP_TX_TIMEOUT_MS);
+                    }
+                    if (msp_server_take_reboot_request() && response_sent) {
+                        /* Let the host receive the ACK, then reset outputs first. */
+                        vTaskDelay(pdMS_TO_TICKS(20U));
+                        taskENTER_CRITICAL();
+                        dshot_motor_force_safe();
+                        platform_motor_outputs_force_safe();
+                        NVIC_SystemReset();
                     }
                 }
             }

@@ -18,9 +18,9 @@
 > 通过 USB CDC 虚拟串口正常连接——而 PID、Mixer、ARM/Failsafe、电机安全链等核心
 > 逻辑由本项目自主实现并完全掌握。
 
-> **当前状态（2026-08-12）**：S4.4/S4.8/S4.9已按[文档35](Docs/35_v1.4.0_S4.8_S4.9软件交付与拆桨联合验收.md)
+> **当前状态（2026-08-13）**：S4.4/S4.8/S4.9已按[文档35](Docs/35_v1.4.0_S4.8_S4.9软件交付与拆桨联合验收.md)
 > 通过真实板卡/App/掉电联合拆桨验收，冻结为`v1.4.0-angle-app-config-baseline`。
-> 本固件**尚未飞行**；S1.10～S1.12和S2.7关闭前不得安装螺旋桨或进入S5。
+> S5之前的验收已全部通过，本固件**尚未飞行**；当前按[文档39](Docs/39_S5.1首飞前总体验收与放行清单.md)执行S5.1，放行前不得进入首飞。
 
 ---
 
@@ -164,9 +164,9 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 1024 words 栈)
 | CRSF UART | [APP/Src/bsp/crsf_uart.c](APP/Src/bsp/crsf_uart.c) | UART2 420000 baud DMA 循环接收 |
 | 电源ADC | [APP/Src/bsp/power_adc.c](APP/Src/bsp/power_adc.c) | ADC3 PC0～PC3单次扫描，DMA2 Stream1/Channel2一致发布 |
 | 电源监测 | [APP/Src/algorithms/power_monitor.c](APP/Src/algorithms/power_monitor.c) | 固定点滤波、VBAT/Current换算、电芯锁存、低压状态与mAh积分 |
-| DShot输出 | [APP/Src/bsp/dshot_motor.c](APP/Src/bsp/dshot_motor.c) | M1～M4 DShot600编码、TIM8_CH1节拍、GPIOA BSRR DMA与故障低电平 |
+| DShot输出 | [APP/Src/bsp/dshot_motor.c](APP/Src/bsp/dshot_motor.c) | M1～M4 DShot600编码、带遥测位的ESC方向/保存命令、TIM8_CH1节拍、GPIOA BSRR DMA与故障低电平 |
 | 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、动态RC/Angle/Rate PID/Mixer、ARM安全链与无桨测试250 ms超时 |
-| 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7双槽v2记录、v1加速度偏置迁移、magic/version/CRC32/commit-last与序号选择 |
+| 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7双槽v3记录、v1/v2兼容迁移、全局反转桨向持久化、magic/version/CRC32/commit-last与序号选择 |
 | 平台时基 | [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) | DWT 微秒时基，ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展 |
 | 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
 | USB CDC 传输 | [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) | RX 1024 环缓冲 + 任务通知；TX 320 字节轮询 |
@@ -350,6 +350,7 @@ Failsafe后必须先完成ARM低位PREARM握手，任何输入、控制或DShot�
 - `02_*` FreeRTOS 架构、驱动边界、任务、参数系统设计
 - `03_*` 姿态、控制、Mixer、DShot、ARM/Failsafe、App 兼容设计
 - `04_*` 调试方法与按日期追加的开发/测试记录
+- [39_S5.1首飞前总体验收与放行清单.md](Docs/39_S5.1首飞前总体验收与放行清单.md) — S5.1现场清单与放行记录
 - 各版本开发计划与验收文档（编号递增）
 
 工程内开发指引见 [CLAUDE.md](CLAUDE.md)。

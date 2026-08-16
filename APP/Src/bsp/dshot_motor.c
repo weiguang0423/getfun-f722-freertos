@@ -183,7 +183,9 @@ bool dshot_motor_init(void)
     return diagnostics.ready;
 }
 
-bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
+static bool submit_frames(const uint16_t values[DSHOT_MOTOR_COUNT],
+                          bool telemetry,
+                          bool commands)
 {
     uint16_t frames[DSHOT_MOTOR_COUNT];
     uint32_t motor;
@@ -198,12 +200,13 @@ bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
         return false;
     }
     for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
-        if ((values[motor] > DSHOT_MAX_VALUE) ||
-            ((values[motor] != 0U) &&
-             (values[motor] < DSHOT_MIN_THROTTLE_VALUE))) {
+        if (commands ? (values[motor] > DSHOT_MAX_COMMAND) :
+                       ((values[motor] > DSHOT_MAX_VALUE) ||
+                        ((values[motor] != 0U) &&
+                         (values[motor] < DSHOT_MIN_THROTTLE_VALUE)))) {
             return false;
         }
-        frames[motor] = dshot_encode_frame(values[motor], false);
+        frames[motor] = dshot_encode_frame(values[motor], telemetry);
     }
 
     if (!disable_stream()) {
@@ -227,6 +230,32 @@ bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
     DSHOT_DMA_STREAM->CR |= DMA_SxCR_EN;
     TIM8->DIER |= TIM_DIER_CC1DE;
     return true;
+}
+
+bool dshot_motor_submit(const uint16_t values[DSHOT_MOTOR_COUNT])
+{
+    return submit_frames(values, false, false);
+}
+
+bool dshot_motor_submit_command(uint8_t motor_index, uint8_t command)
+{
+    uint16_t values[DSHOT_MOTOR_COUNT] = {0U};
+
+    if ((command > DSHOT_MAX_COMMAND) ||
+        ((motor_index >= DSHOT_MOTOR_COUNT) &&
+         (motor_index != DSHOT_ALL_MOTORS))) {
+        return false;
+    }
+    if (motor_index == DSHOT_ALL_MOTORS) {
+        uint32_t motor;
+
+        for (motor = 0U; motor < DSHOT_MOTOR_COUNT; ++motor) {
+            values[motor] = command;
+        }
+    } else {
+        values[motor_index] = command;
+    }
+    return submit_frames(values, true, true);
 }
 
 void dshot_motor_force_safe(void)
