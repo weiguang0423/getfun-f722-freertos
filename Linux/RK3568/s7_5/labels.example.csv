@@ -1,0 +1,5 @@
+start_sequence,end_sequence,expected_gesture
+100,199,OPEN_PALM
+250,349,FIST
+400,499,POINT
+550,649,V_SIGN

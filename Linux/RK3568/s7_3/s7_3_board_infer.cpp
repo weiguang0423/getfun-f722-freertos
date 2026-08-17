@@ -4,9 +4,13 @@
 #include <opencv2/imgproc.hpp>
 
 #include "s7_4_display.hpp"
+#ifdef S7_5_GESTURE
+#include "../s7_5/s7_5_gesture.hpp"
+#endif
 
 #include <cerrno>
 #include <algorithm>
+#include <charconv>
 #include <chrono>
 #include <cmath>
 #include <csignal>
@@ -460,7 +464,11 @@ static void print_array(std::ostream& out, const float* values, size_t count) {
 static void print_record(const std::string& source, int frame_index, const cv::Mat& bgr,
                          Model& detector, Model& landmark, const LiveMeta* live = nullptr,
                          const char* annotate_dir = nullptr, int annotate_every = 5,
-                         Display* display = nullptr) {
+                         Display* display = nullptr
+#ifdef S7_5_GESTURE
+                         , s7_5::GestureStateMachine* gesture_state = nullptr
+#endif
+                         ) {
     Timings timing;
     auto start = Clock::now();
     cv::Mat rgb;
@@ -482,6 +490,10 @@ static void print_record(const std::string& source, int frame_index, const cv::M
     bool valid = false;
     const char* reject_reason = "no_hand";
     cv::Mat annotated;
+#ifdef S7_5_GESTURE
+    s7_5::GestureObservation gesture_observation;
+    s7_5::GestureSnapshot gesture_snapshot;
+#endif
     if (detections.empty()) {
         timing.postprocess_ms = ms(start);
     } else {
@@ -527,7 +539,12 @@ static void print_record(const std::string& source, int frame_index, const cv::M
         print_array(out, image_landmarks.data(), 63);
         valid = presence >= .5f;
         reject_reason = valid ? "" : "low_presence";
+#ifdef S7_5_GESTURE
+        if (valid) gesture_observation = s7_5::classify(image_landmarks.data(), presence);
+        if (display || (annotate_dir && frame_index % annotate_every == 0)) {
+#else
         if (annotate_dir && frame_index % annotate_every == 0) {
+#endif
             annotated = bgr.clone();
             const cv::Point corner_a(static_cast<int>(d.box[0] * bgr.cols),
                                      static_cast<int>(d.box[1] * bgr.rows));
@@ -551,6 +568,7 @@ static void print_record(const std::string& source, int frame_index, const cv::M
                                    static_cast<int>(image_landmarks[3 * i + 1] * bgr.rows));
                 cv::circle(annotated, pt, 3, {0, 0, 255}, -1);
             }
+#ifndef S7_5_GESTURE
             std::ostringstream label;
             label << "seq=" << frame_index << " valid=" << (valid ? 1 : 0)
                   << " presence=" << std::fixed << std::setprecision(2) << presence
@@ -564,6 +582,7 @@ static void print_record(const std::string& source, int frame_index, const cv::M
             name << "annot_" << std::setw(6) << std::setfill('0') << frame_index << ".jpg";
             if (!cv::imwrite((dir / name.str()).string(), annotated))
                 std::cerr << "annotate write failed: " << name.str() << '\n';
+#endif
         }
     }
     out << ",\"timing_ms\":{\"preprocess\":" << timing.preprocess_ms
@@ -585,9 +604,51 @@ static void print_record(const std::string& source, int frame_index, const cv::M
             << ",\"end_to_end_ms\":" << latency
             << ",\"dropped_frames\":" << live->dropped_frames;
     }
+#ifdef S7_5_GESTURE
+    if (gesture_state) {
+        gesture_snapshot = gesture_state->update(valid, valid ? gesture_observation
+                                                              : s7_5::GestureObservation{},
+                                                 now_us(true));
+        out << ",\"gesture_id\":" << static_cast<unsigned>(gesture_snapshot.observed_id)
+            << ",\"gesture_name\":" << json_string(s7_5::gesture_name(gesture_snapshot.observed_id))
+            << ",\"gesture_confidence\":" << gesture_snapshot.observed_confidence
+            << ",\"gesture_state\":" << json_string(s7_5::state_name(gesture_snapshot.state))
+            << ",\"active_gesture_id\":" << static_cast<unsigned>(gesture_snapshot.active_id)
+            << ",\"active_gesture_name\":" << json_string(s7_5::gesture_name(gesture_snapshot.active_id))
+            << ",\"candidate_frames\":" << gesture_snapshot.candidate_frames;
+    }
+#endif
     out << ",\"valid\":" << (valid ? "true" : "false")
         << ",\"reject_reason\":" << json_string(reject_reason) << "}\n";
     std::cout << out.str() << std::flush;
+#ifdef S7_5_GESTURE
+    if (gesture_state && (display || (annotate_dir && frame_index % annotate_every == 0))) {
+        if (annotated.empty()) annotated = bgr.clone();
+        std::ostringstream label;
+        label << "seq=" << frame_index << " hand=" << (valid ? 1 : 0)
+              << " observed=" << s7_5::gesture_name(gesture_snapshot.observed_id)
+              << " conf=" << std::fixed << std::setprecision(2)
+              << gesture_snapshot.observed_confidence;
+        cv::putText(annotated, label.str(), {8, 20}, cv::FONT_HERSHEY_SIMPLEX, 0.5,
+                    {0, 255, 0}, 1);
+        std::ostringstream state_label;
+        state_label << "state=" << s7_5::state_name(gesture_snapshot.state)
+                    << " active=" << s7_5::gesture_name(gesture_snapshot.active_id)
+                    << " frames=" << gesture_snapshot.candidate_frames;
+        cv::putText(annotated, state_label.str(), {8, 40}, cv::FONT_HERSHEY_SIMPLEX, 0.5,
+                    gesture_snapshot.state == s7_5::GestureState::ACTIVE
+                        ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 165, 255), 1);
+        if (annotate_dir && frame_index % annotate_every == 0) {
+            const fs::path dir(annotate_dir);
+            std::error_code ec;
+            fs::create_directories(dir, ec);
+            std::ostringstream name;
+            name << "annot_" << std::setw(6) << std::setfill('0') << frame_index << ".jpg";
+            if (!cv::imwrite((dir / name.str()).string(), annotated))
+                std::cerr << "annotate write failed: " << name.str() << '\n';
+        }
+    }
+#endif
     if (display) {
         if (annotated.empty())
             display_show(display, bgr.data, bgr.cols, bgr.rows);
@@ -597,25 +658,53 @@ static void print_record(const std::string& source, int frame_index, const cv::M
 }
 
 static void print_invalid(const char* source, const char* reason, uint32_t sequence,
-                          uint64_t dropped_frames) {
-    std::cout << "{\"source\":" << json_string(source) << ",\"frame_index\":" << sequence
-              << ",\"sequence\":" << sequence << ",\"dropped_frames\":" << dropped_frames
-              << ",\"valid\":false,\"reject_reason\":" << json_string(reason) << "}\n" << std::flush;
+                          uint64_t dropped_frames
+#ifdef S7_5_GESTURE
+                          , s7_5::GestureStateMachine* gesture_state = nullptr
+#endif
+                          ) {
+    std::ostringstream out;
+    out << "{\"source\":" << json_string(source) << ",\"frame_index\":" << sequence
+        << ",\"sequence\":" << sequence << ",\"dropped_frames\":" << dropped_frames;
+#ifdef S7_5_GESTURE
+    if (gesture_state) {
+        const auto snapshot = gesture_state->update(false, {}, now_us(true));
+        out << ",\"gesture_id\":0,\"gesture_name\":\"UNKNOWN\",\"gesture_confidence\":0"
+            << ",\"gesture_state\":" << json_string(s7_5::state_name(snapshot.state))
+            << ",\"active_gesture_id\":0,\"active_gesture_name\":\"UNKNOWN\""
+            << ",\"candidate_frames\":0";
+    }
+#endif
+    out << ",\"valid\":false,\"reject_reason\":" << json_string(reason) << "}\n";
+    std::cout << out.str() << std::flush;
+}
+
+static int parse_int(const char* text) {
+    int value{};
+    const char* end = text + std::strlen(text);
+    const auto result = std::from_chars(text, end, value);
+    if (result.ec != std::errc{} || result.ptr != end)
+        throw std::runtime_error("invalid integer argument: " + std::string(text));
+    return value;
 }
 
 static int run_camera(int argc, char** argv) {
     if (argc < 8 || argc > 14) {
+#ifdef S7_5_GESTURE
+        std::cerr << "usage: s7_5_live --camera DETECTOR.rknn LANDMARK.rknn DEVICE WIDTH HEIGHT FPS [SECONDS] [MAX_LATENCY_MS] [VBLANK] [ANNOTATE_DIR] [EVERY_N] [DISPLAY_DEVICE]\n";
+#else
         std::cerr << "usage: s7_4_live --camera DETECTOR.rknn LANDMARK.rknn DEVICE WIDTH HEIGHT FPS [SECONDS] [MAX_LATENCY_MS] [VBLANK] [ANNOTATE_DIR] [EVERY_N] [DISPLAY_DEVICE]\n";
+#endif
         return 2;
     }
-    const int width = std::stoi(argv[5]);
-    const int height = std::stoi(argv[6]);
-    const int fps = std::stoi(argv[7]);
-    const int seconds = argc >= 9 ? std::stoi(argv[8]) : 0;
+    const int width = parse_int(argv[5]);
+    const int height = parse_int(argv[6]);
+    const int fps = parse_int(argv[7]);
+    const int seconds = argc >= 9 ? parse_int(argv[8]) : 0;
     const double max_latency_ms = argc >= 10 ? std::stod(argv[9]) : 200.0;
-    const int vblank = argc >= 11 ? std::stoi(argv[10]) : -1;
+    const int vblank = argc >= 11 ? parse_int(argv[10]) : -1;
     const char* annotate_dir = argc >= 12 ? argv[11] : nullptr;
-    const int annotate_every = argc >= 13 ? std::stoi(argv[12]) : 5;
+    const int annotate_every = argc >= 13 ? parse_int(argv[12]) : 5;
     const char* display_device = argc >= 14 ? argv[13] : nullptr;
     if (width <= 0 || height <= 0 || fps <= 0 || seconds < 0 || max_latency_ms <= 0
         || annotate_every <= 0)
@@ -633,6 +722,9 @@ static int run_camera(int argc, char** argv) {
 
     Model detector(argv[2]), landmark(argv[3]);
     Camera camera(argv[4], width, height, fps, vblank);
+#ifdef S7_5_GESTURE
+    s7_5::GestureStateMachine gesture_state;
+#endif
     std::signal(SIGINT, stop);
     std::signal(SIGTERM, stop);
     const auto deadline = seconds ? Clock::now() + std::chrono::seconds(seconds) : Clock::time_point::max();
@@ -642,16 +734,28 @@ static int run_camera(int argc, char** argv) {
         try {
             captured = camera.latest(frame, 1000);
         } catch (...) {
-            print_invalid(argv[4], "capture_failure", 0, 0);
+            print_invalid(argv[4], "capture_failure", 0, 0
+#ifdef S7_5_GESTURE
+                          , &gesture_state
+#endif
+                          );
             throw;
         }
         if (!captured) {
-            print_invalid(argv[4], "capture_timeout", 0, 0);
+            print_invalid(argv[4], "capture_timeout", 0, 0
+#ifdef S7_5_GESTURE
+                          , &gesture_state
+#endif
+                          );
             continue;
         }
         if (frame.bytes < static_cast<size_t>(camera.width() * camera.height() * 3 / 2)) {
             camera.release(frame);
-            print_invalid(argv[4], "bad_frame", frame.sequence, frame.dropped_frames);
+            print_invalid(argv[4], "bad_frame", frame.sequence, frame.dropped_frames
+#ifdef S7_5_GESTURE
+                          , &gesture_state
+#endif
+                          );
             continue;
         }
         cv::Mat nv12(camera.height() * 3 / 2, camera.width(), CV_8UC1,
@@ -663,10 +767,18 @@ static int run_camera(int argc, char** argv) {
                             frame.dropped_frames, max_latency_ms};
         try {
             print_record(argv[4], static_cast<int>(frame.sequence), bgr, detector, landmark,
-                         &meta, annotate_dir, annotate_every, display);
+                         &meta, annotate_dir, annotate_every, display
+#ifdef S7_5_GESTURE
+                         , &gesture_state
+#endif
+                         );
         } catch (const std::exception& error) {
             std::cerr << "frame " << frame.sequence << ": " << error.what() << '\n';
-            print_invalid(argv[4], "inference_failure", frame.sequence, frame.dropped_frames);
+            print_invalid(argv[4], "inference_failure", frame.sequence, frame.dropped_frames
+#ifdef S7_5_GESTURE
+                          , &gesture_state
+#endif
+                          );
         }
     }
     display_close(display);
@@ -693,6 +805,15 @@ int main(int argc, char** argv) try {
         b.box = {.5f, .5f, 1.5f, 1.5f};
         if (std::abs(iou(a, b) - 1.f / 7.f) > 1e-6f) return 1;
         if (sequence_gap(10, 13) != 2 || sequence_gap(13, 13) != 0) return 1;
+        if (parse_int("20") != 20 || parse_int("-1") != -1) return 1;
+        try {
+            parse_int("20x");
+            return 1;
+        } catch (const std::runtime_error&) {
+        }
+#ifdef S7_5_GESTURE
+        if (!s7_5::self_test()) return 1;
+#endif
         std::cout << "self-test ok\n";
         return 0;
     }
@@ -704,7 +825,7 @@ int main(int argc, char** argv) try {
     Model detector(argv[1]), landmark(argv[2]);
     const fs::path root = fs::canonical(argv[3]);
     const auto paths = media(root);
-    const int seconds = argc == 5 ? std::stoi(argv[4]) : 0;
+    const int seconds = argc == 5 ? parse_int(argv[4]) : 0;
     const auto deadline = Clock::now() + std::chrono::seconds(seconds);
     do {
         for (const auto& path : paths) {

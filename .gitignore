@@ -59,6 +59,7 @@ __pycache__/
 # RK3568 generated deployment artifacts
 /Linux/RK3568/s7_3/s7_3_board_infer
 /Linux/RK3568/s7_4/s7_4_live
+/Linux/RK3568/s7_5/s7_5_live
 *.rknn
 
 # STM32CubeIDE / Eclipse local workspace state
