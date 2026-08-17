@@ -7,6 +7,9 @@
 #ifdef S7_5_GESTURE
 #include "../s7_5/s7_5_gesture.hpp"
 #endif
+#ifdef S7_6_VIRTUAL_RC
+#include "../s7_6/s7_6_serial.hpp"
+#endif
 
 #include <cerrno>
 #include <algorithm>
@@ -15,11 +18,13 @@
 #include <cmath>
 #include <csignal>
 #include <cstring>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <linux/videodev2.h>
+#include <memory>
 #include <poll.h>
 #include <sstream>
 #include <stdexcept>
@@ -468,6 +473,9 @@ static void print_record(const std::string& source, int frame_index, const cv::M
 #ifdef S7_5_GESTURE
                          , s7_5::GestureStateMachine* gesture_state = nullptr
 #endif
+#ifdef S7_6_VIRTUAL_RC
+                         , s7_6::SerialLink* rc_link = nullptr
+#endif
                          ) {
     Timings timing;
     auto start = Clock::now();
@@ -616,6 +624,18 @@ static void print_record(const std::string& source, int frame_index, const cv::M
             << ",\"active_gesture_id\":" << static_cast<unsigned>(gesture_snapshot.active_id)
             << ",\"active_gesture_name\":" << json_string(s7_5::gesture_name(gesture_snapshot.active_id))
             << ",\"candidate_frames\":" << gesture_snapshot.candidate_frames;
+#ifdef S7_6_VIRTUAL_RC
+        if (rc_link && live) {
+            const auto rc = rc_link->send(gesture_snapshot, live->sequence,
+                                          live->monotonic_timestamp ? live->capture_timestamp_us : 0,
+                                          now_us(true));
+            out << ",\"virtual_rc_valid\":" << (rc.valid ? "true" : "false")
+                << ",\"virtual_rc_heartbeat\":" << rc.heartbeat
+                << ",\"virtual_rc_channels\":[" << rc.channels.roll << ',' << rc.channels.pitch
+                << ',' << rc.channels.yaw << ',' << rc.channels.throttle << ',' << rc.channels.aux
+                << ']';
+        }
+#endif
     }
 #endif
     out << ",\"valid\":" << (valid ? "true" : "false")
@@ -662,6 +682,9 @@ static void print_invalid(const char* source, const char* reason, uint32_t seque
 #ifdef S7_5_GESTURE
                           , s7_5::GestureStateMachine* gesture_state = nullptr
 #endif
+#ifdef S7_6_VIRTUAL_RC
+                          , s7_6::SerialLink* rc_link = nullptr
+#endif
                           ) {
     std::ostringstream out;
     out << "{\"source\":" << json_string(source) << ",\"frame_index\":" << sequence
@@ -673,6 +696,14 @@ static void print_invalid(const char* source, const char* reason, uint32_t seque
             << ",\"gesture_state\":" << json_string(s7_5::state_name(snapshot.state))
             << ",\"active_gesture_id\":0,\"active_gesture_name\":\"UNKNOWN\""
             << ",\"candidate_frames\":0";
+#ifdef S7_6_VIRTUAL_RC
+        if (rc_link) {
+            const auto send_timestamp = now_us(true);
+            const auto rc = rc_link->send(snapshot, sequence, send_timestamp, send_timestamp);
+            out << ",\"virtual_rc_valid\":false,\"virtual_rc_heartbeat\":" << rc.heartbeat
+                << ",\"virtual_rc_channels\":[0,0,0,0,0]";
+        }
+#endif
     }
 #endif
     out << ",\"valid\":false,\"reject_reason\":" << json_string(reason) << "}\n";
@@ -690,7 +721,9 @@ static int parse_int(const char* text) {
 
 static int run_camera(int argc, char** argv) {
     if (argc < 8 || argc > 14) {
-#ifdef S7_5_GESTURE
+#ifdef S7_6_VIRTUAL_RC
+        std::cerr << "usage: S7_6_RC_OUTPUT=DEVICE s7_6_live --camera DETECTOR.rknn LANDMARK.rknn DEVICE WIDTH HEIGHT FPS [SECONDS] [MAX_LATENCY_MS] [VBLANK] [ANNOTATE_DIR] [EVERY_N] [DISPLAY_DEVICE]\n";
+#elif defined(S7_5_GESTURE)
         std::cerr << "usage: s7_5_live --camera DETECTOR.rknn LANDMARK.rknn DEVICE WIDTH HEIGHT FPS [SECONDS] [MAX_LATENCY_MS] [VBLANK] [ANNOTATE_DIR] [EVERY_N] [DISPLAY_DEVICE]\n";
 #else
         std::cerr << "usage: s7_4_live --camera DETECTOR.rknn LANDMARK.rknn DEVICE WIDTH HEIGHT FPS [SECONDS] [MAX_LATENCY_MS] [VBLANK] [ANNOTATE_DIR] [EVERY_N] [DISPLAY_DEVICE]\n";
@@ -725,6 +758,14 @@ static int run_camera(int argc, char** argv) {
 #ifdef S7_5_GESTURE
     s7_5::GestureStateMachine gesture_state;
 #endif
+#ifdef S7_6_VIRTUAL_RC
+    const char* rc_device = std::getenv("S7_6_RC_OUTPUT");
+    if (!rc_device || !*rc_device)
+        throw std::runtime_error("set S7_6_RC_OUTPUT to the verified RK3568 serial device or /dev/null");
+    auto rc_link = std::make_unique<s7_6::SerialLink>(rc_device);
+    const auto startup_timestamp = now_us(true);
+    rc_link->send({}, 0, startup_timestamp, startup_timestamp);
+#endif
     std::signal(SIGINT, stop);
     std::signal(SIGTERM, stop);
     const auto deadline = seconds ? Clock::now() + std::chrono::seconds(seconds) : Clock::time_point::max();
@@ -738,6 +779,9 @@ static int run_camera(int argc, char** argv) {
 #ifdef S7_5_GESTURE
                           , &gesture_state
 #endif
+#ifdef S7_6_VIRTUAL_RC
+                          , rc_link.get()
+#endif
                           );
             throw;
         }
@@ -745,6 +789,9 @@ static int run_camera(int argc, char** argv) {
             print_invalid(argv[4], "capture_timeout", 0, 0
 #ifdef S7_5_GESTURE
                           , &gesture_state
+#endif
+#ifdef S7_6_VIRTUAL_RC
+                          , rc_link.get()
 #endif
                           );
             continue;
@@ -754,6 +801,9 @@ static int run_camera(int argc, char** argv) {
             print_invalid(argv[4], "bad_frame", frame.sequence, frame.dropped_frames
 #ifdef S7_5_GESTURE
                           , &gesture_state
+#endif
+#ifdef S7_6_VIRTUAL_RC
+                          , rc_link.get()
 #endif
                           );
             continue;
@@ -771,12 +821,18 @@ static int run_camera(int argc, char** argv) {
 #ifdef S7_5_GESTURE
                          , &gesture_state
 #endif
+#ifdef S7_6_VIRTUAL_RC
+                         , rc_link.get()
+#endif
                          );
         } catch (const std::exception& error) {
             std::cerr << "frame " << frame.sequence << ": " << error.what() << '\n';
             print_invalid(argv[4], "inference_failure", frame.sequence, frame.dropped_frames
 #ifdef S7_5_GESTURE
                           , &gesture_state
+#endif
+#ifdef S7_6_VIRTUAL_RC
+                          , rc_link.get()
 #endif
                           );
         }
@@ -813,6 +869,9 @@ int main(int argc, char** argv) try {
         }
 #ifdef S7_5_GESTURE
         if (!s7_5::self_test()) return 1;
+#endif
+#ifdef S7_6_VIRTUAL_RC
+        if (!s7_6::self_test()) return 1;
 #endif
         std::cout << "self-test ok\n";
         return 0;
