@@ -48,6 +48,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/bsp/crsf_uart.c
     APP/Src/bsp/dshot_motor.c
     APP/Src/bsp/imu_bus.c
+    APP/Src/bsp/linux_rc_monitor.c
     APP/Src/bsp/power_adc.c
     APP/Src/bsp/usb_cdc_transport.c
     APP/Src/drivers/icm42688p.c

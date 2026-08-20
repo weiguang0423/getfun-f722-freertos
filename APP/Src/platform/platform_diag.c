@@ -8,7 +8,7 @@
  * 核心函数：
  *   - platform_motor_outputs_force_safe()：直接配置 GPIO 寄存器并拉低所有 Motor。
  *   - platform_diag_startup()：输出固件身份、构建时间和运行时时钟。
- *   - platform_diag_heartbeat()：输出平台心跳，以及 1 Hz IMU 在线状态、采样率、
+ *   - platform_diag_heartbeat()：通过 UART4 输出平台心跳，以及 1 Hz IMU 在线状态、采样率、
  *       DRDY/DMA计数、DWT时间/dt、低通状态、错误计数、陀螺/加速度校准、
  *       参数Flash、SI物理量、RC Failsafe、ADC电源状态和各任务栈余量。
  *   - platform_fault_halt()：记录故障码、关闭中断、强制安全输出并停止运行。
@@ -30,6 +30,7 @@
 #include "algorithms/imu_filter.h"
 #include "app_state.h"
 #include "bsp/imu_bus.h"
+#include "bsp/linux_rc_monitor.h"
 #include "main.h"
 #include "rtos/battery_task.h"
 #include "rtos/flight_task.h"
@@ -190,6 +191,7 @@ void platform_diag_heartbeat(void)
     static uint32_t previous_sample_count;
     app_state_snapshot_t snapshot;
     dshot_motor_diagnostics_t dshot;
+    linux_rc_monitor_diagnostics_t linux_rc;
     const TickType_t current_tick = xTaskGetTickCount();
     const TickType_t elapsed_ticks = current_tick - previous_tick;
     uint32_t sample_rate_hz = 0U;
@@ -198,6 +200,7 @@ void platform_diag_heartbeat(void)
 
     app_state_get_snapshot(&snapshot);
     dshot_motor_get_diagnostics(&dshot);
+    linux_rc_monitor_get_diagnostics(&linux_rc);
     if (have_previous_sample && (elapsed_ticks != 0U)) {
         const uint32_t sample_delta =
             snapshot.imu.sample_count - previous_sample_count;
@@ -214,6 +217,29 @@ void platform_diag_heartbeat(void)
         (unsigned long)xPortGetFreeHeapSize(),
         (unsigned long)xPortGetMinimumEverFreeHeapSize(),
         (unsigned long)uxTaskGetStackHighWaterMark(NULL));
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "linux_rc rx=%lu frame=%lu valid=%lu crc=%lu fmt=%lu uart=%lu "
+        "last=[v%u g%u c%u seq=%lu hb=%lu ch=%d,%d,%d,%d,%d]\r\n",
+        (unsigned long)linux_rc.received_bytes,
+        (unsigned long)linux_rc.complete_frames,
+        (unsigned long)linux_rc.valid_frames,
+        (unsigned long)linux_rc.crc_errors,
+        (unsigned long)linux_rc.format_errors,
+        (unsigned long)linux_rc.uart_errors,
+        linux_rc.last_frame_valid ? 1U : 0U,
+        (unsigned int)linux_rc.last_gesture_id,
+        (unsigned int)linux_rc.last_confidence_percent,
+        (unsigned long)linux_rc.last_source_sequence,
+        (unsigned long)linux_rc.last_heartbeat,
+        (int)linux_rc.last_channels[0],
+        (int)linux_rc.last_channels[1],
+        (int)linux_rc.last_channels[2],
+        (int)linux_rc.last_channels[3],
+        (int)linux_rc.last_channels[4]);
     diag_write_formatted(line, sizeof(line), length);
 
     length = snprintf(

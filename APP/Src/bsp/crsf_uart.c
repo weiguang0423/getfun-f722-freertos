@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "FreeRTOS.h"
+#include "bsp/linux_rc_monitor.h"
 #include "task.h"
 #include "usart.h"
 
@@ -190,7 +191,16 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-    if ((huart == NULL) || (huart->Instance != USART2)) {
+    if (huart == NULL) {
+        return;
+    }
+
+    if (huart->Instance == USART6) {
+        linux_rc_monitor_uart_error();
+        usart6_receive_restart();
+        return;
+    }
+    if (huart->Instance != USART2) {
         return;
     }
 

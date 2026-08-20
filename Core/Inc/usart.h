@@ -34,6 +34,7 @@ extern "C" {
 
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart4;
+extern UART_HandleTypeDef huart6;
 extern DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN Private defines */
@@ -42,6 +43,8 @@ extern DMA_HandleTypeDef hdma_usart2_rx;
 
 void MX_USART2_UART_Init(void);
 void MX_UART4_Init(void);
+void MX_USART6_UART_Init(void);
+void usart6_receive_restart(void);
 
 /* USER CODE BEGIN Prototypes */
 

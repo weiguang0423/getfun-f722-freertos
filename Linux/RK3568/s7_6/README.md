@@ -1,6 +1,6 @@
 <!--
 文件作用：S7.6 虚拟 RC 映射、固定帧、串口发送和验收入口。
-覆盖范围：S7.5 ACTIVE 快照到有界候选通道；不含 STM32 接收、RC 源仲裁、ARM 或电机。
+覆盖范围：S7.5 ACTIVE 快照到有界候选通道，以及 STM32 USART6 被动接收监视；不含 RC 源仲裁、ARM 或电机。
 关联模块：s7_6_virtual_rc.cpp、s7_6_serial.cpp、复用的 S7.3～S7.5 实时链。
 仍需实物验证：RK3568 实际 UART、电平与接线，串口回环/逻辑分析仪及断线超时。
 -->
@@ -9,7 +9,8 @@
 
 S7.6 复用已验收的 S7.5 `ACTIVE` 快照。Linux 只产生候选 RC 帧，不修改 STM32 固件，也不拥有
 ARM、总授权、Failsafe、PID、Mixer 或 DShot。实际串口设备必须在核对 RK3568 引脚、电平和
-飞控空闲 UART 后通过 `S7_6_RC_OUTPUT` 指定；源码不把两个发送端并接到 UART2/CRSF。
+飞控空闲 UART 已切换为 USART6（PC6=TX、PC7=RX，115200 8N1）；Linux 侧通过 `S7_6_RC_OUTPUT`
+指定实际设备。源码不把两个发送端并接到 UART2/CRSF。
 
 ## 冻结映射与范围
 
@@ -52,7 +53,8 @@ Throttle/AUX 目标始终为释放值 0，ARM 和总授权 AUX 永远不由 Linu
 | 42 | 2 | 前 42 字节 CRC16 |
 
 接收侧契约已在纯逻辑 `decode()` 中冻结：CRC、版本、范围、150 ms 链路新鲜度、250 ms 源
-新鲜度、递增心跳和递增有效源序号任一失败即拒绝。真正的飞控接收和人工授权只在 S7.7 实现。
+新鲜度、递增心跳和递增有效源序号任一失败即拒绝。飞控端现已在 USART6 增加被动接收监视，
+并从 UART4 输出字节/帧/CRC/格式统计和最近帧字段。该监视不发布 RC 输入；真正的源仲裁和人工授权仍在 S7.7 实现。
 
 ## 构建与运行
 
@@ -74,13 +76,21 @@ g++ -std=c++17 -O2 -Wall -Wextra -pedantic \
 # 冻结 SDK 中交叉构建 ARM64 程序
 sh Linux/RK3568/s7_6/build_board.sh
 
-# 板端先自检；/dev/null 只验证实时软件链，不算通信验收
+# 板端先自检；DRM 直显前停止 Weston。/dev/null 只验证实时软件链，不算通信验收。
+cd /userdata
 ./s7_6_live --self-test
-S7_6_RC_OUTPUT=/dev/null ./s7_6_live --camera \
-  hand_detector_fp16.rknn hand_landmarks_detector_fp16.rknn \
-  /dev/video0 800 600 20 180 200 4776 /userdata/s7_6_acceptance/annot 5 \
-  /dev/dri/card0 >/userdata/s7_6_acceptance/results.jsonl \
-  2>/userdata/s7_6_acceptance/runtime.log
+killall weston 2>/dev/null || true
+mkdir -p /userdata/live_annot
+nohup env \
+  LD_LIBRARY_PATH=/userdata/s7_3_acceptance/s7_3_deploy_20260813/lib:/usr/lib \
+  S7_6_RC_OUTPUT=/dev/null \
+  ./s7_6_live --camera \
+  /userdata/s7_3_acceptance/s7_3_deploy_20260813/models/fp16/hand_detector_fp16.rknn \
+  /userdata/s7_3_acceptance/s7_3_deploy_20260813/models/fp16/hand_landmarks_detector_fp16.rknn \
+  /dev/video0 800 600 20 0 200 4776 /userdata/live_annot 5 /dev/dri/card0 \
+  >/userdata/live_display.jsonl 2>/userdata/live_display.log </dev/null &
+
+# 确认 RK3568 实际 UART 设备后，把上面 /dev/null 替换为对应 /dev/tty*，才会同时发送到飞控 USART6。
 
 # 核对 RK3568 物理资源后才把 /dev/null 换成已验证的 /dev/tty*。
 ```

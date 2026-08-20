@@ -70,7 +70,8 @@
 | USB | USB Device CDC（虚拟串口） |
 | IMU | ICM42688P，SPI1 + DMA2，1 kHz / ±2000 dps / ±16 g |
 | RC 接收 | CRSF / ELRS，UART2 @ 420000 baud，DMA 循环接收 |
-| 诊断串口 | UART4，1 Hz 摘要输出 |
+| Linux 通信串口 | USART6（PC6/PC7），115200 8N1；被动校验 44 字节候选 RC 帧，不接入控制 |
+| 诊断串口 | UART4（PA0/PA1），1 Hz 摘要输出，115200 8N1 |
 | 电机输出 | M1～M4 DShot600拆桨验收通过；M5～M8保持GPIO安全低电平 |
 
 ### 关键引脚（定义见 [Core/Inc/main.h](Core/Inc/main.h)）
@@ -80,7 +81,7 @@
 | 电机 1～8 | PA15 / PA10 / PA9 / PA8 / PC9 / PC8 / PB11 / PB10 |
 | ICM42688P SPI1 | SCK=PA5，MISO=PA6，MOSI=PA7，CS=PA4 |
 | CRSF UART2 | PA2 (TX) / PA3 (RX) |
-| 诊断 UART4 | 见 [Core/Inc/usart.h](Core/Inc/usart.h) |
+| 诊断 UART4 | 见 [Core/Inc/usart.h](Core/Inc/usart.h)，PA0=TX、PA1=RX |
 
 > 引脚/电气事实以 [Docs/01_*.md](Docs/)（硬件基线文档）为准；如需修改，先在
 > [GETFUN_F722_FreeRTOS.ioc](GETFUN_F722_FreeRTOS.ioc) 中改，再用 CubeMX 重新生成。
@@ -172,7 +173,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态 1024 words 栈)
 | 飞行任务骨架 | [APP/Src/rtos/flight_task.c](APP/Src/rtos/flight_task.c) | 1 kHz一致快照、动态RC/Angle/Rate PID/Mixer、ARM安全链与无桨测试250 ms超时 |
 | 参数存储 | [APP/Src/storage/parameter_store.c](APP/Src/storage/parameter_store.c) | Sector 6/7双槽v3记录、v1/v2兼容迁移、全局反转桨向持久化、magic/version/CRC32/commit-last与序号选择 |
 | 平台时基 | [APP/Src/platform/platform_time.c](APP/Src/platform/platform_time.c) | DWT 微秒时基，ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展 |
-| 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
+| 平台诊断 | [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) | UART4 1 Hz 摘要 + USART6 Linux 帧校验统计 + 致命故障/参数保存前强制 Motor 1～8 低电平 |
 | USB CDC 传输 | [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) | RX 1024 环缓冲 + 任务通知；TX 320 字节轮询 |
 | 应用状态 | [APP/Src/app_state.c](APP/Src/app_state.c) | 全局快照 `app_state_snapshot_t`，关中断临界区 |
 | RTOS 任务 | [APP/Src/rtos/](APP/Src/rtos/) | `app_task.c`（静态创建任务）、`imu_task.c`、`msp`任务、`rc_task.c`、`battery_task.c` |
@@ -247,7 +248,7 @@ cmake --build build/Release
   2. USB 连板子，打开 **Betaflight Configurator**
   3. 选择对应虚拟串口 → **Connect**
   4. 能读到状态 / 姿态 / 电池 / Receiver 即说明整条 `USB → 解析 → 状态 → 回包` 链路通
-- **运行时观察**：UART4 1 Hz 输出 IMU 时间/dt、低通、校准、参数槽、偏置摘要；
+- **运行时观察**：UART4（PA0/PA1）1 Hz 输出 IMU 时间/dt、低通、校准、参数槽、偏置摘要；
   `usb_cdc_transport_rx_dropped()` 可查 RX 环缓冲溢出丢包计数。
 
 ---

@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **RTOS**: FreeRTOS Kernel V10.2.1 (heap_4, 15KB 堆)
 - **HAL**: STM32F7xx HAL Drivers, CMSIS
 - **USB**: USB Device CDC (Virtual COM Port)
-- **外设**: GPIO (8 路电机安全输出), SPI1 + ICM42688P, UART4, TIM6 (时间基准)
+- **外设**: GPIO (8 路电机安全输出), SPI1 + ICM42688P, UART4 诊断 + USART6 Linux通信, TIM6 (时间基准)
 - **系统时钟**: HSE 8MHz → PLL → 216MHz, OverDrive 开启
 
 ## 构建
@@ -115,7 +115,7 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 1024 words 栈)
 在 [Core/Inc/main.h](Core/Inc/main.h) 中定义:
 - 8 路电机: MOTOR1-8 (PA15, PA10, PA9, PA8, PC9, PC8, PB11, PB10)
 - ICM42688P: SPI1 SCK/MISO/MOSI = PA5/PA6/PA7，CS = PA4
-- USART: UART4 (具体引脚见 usart.h)
+- USART: UART4 诊断（PA0=TX、PA1=RX）；USART6 Linux通信（PC6=TX、PC7=RX）
 
 ## GPIO 引脚见 [Core/Inc/gpio.h](Core/Inc/gpio.h) 和 [Core/Src/gpio.c](Core/Src/gpio.c)
 

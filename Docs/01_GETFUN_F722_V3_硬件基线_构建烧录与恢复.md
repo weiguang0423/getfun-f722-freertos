@@ -134,9 +134,9 @@ B12: OSD_CS
 | UART1 | PB6 | PB7 | 可配置 |
 | UART2 | PA2 | PA3 | 默认 CRSF 接收机 |
 | UART3 | PC10 | PC11 | 可配置 |
-| UART4 | PA0 | PA1 | 自研固件调试串口候选 |
+| UART4 | PA0 | PA1 | 当前飞控调试日志和心跳，115200 8N1 |
 | UART5 | PC12 | PD2 | 可配置 |
-| UART6 | PC6 | PC7 | 可配置 |
+| UART6 | PC6 | PC7 | 当前 Linux 通信串口，115200 8N1 |
 
 CRSF 接线约定：
 
