@@ -98,6 +98,10 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
+# Local scratch output (architecture diagrams, extracted manual pages, host test binaries)
+/tmp/
+/ELSE/
+
 # Local environment files and secrets
 .env
 .env.*

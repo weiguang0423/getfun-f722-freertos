@@ -56,6 +56,8 @@ VirtualRcFrame SerialLink::send(const s7_5::GestureSnapshot& gesture, uint32_t s
         }
         throw std::runtime_error("write RC frame failed: " + std::string(std::strerror(errno)));
     }
+    if (tcdrain(fd_) != 0 && errno != ENOTTY)
+        throw std::runtime_error("drain RC frame failed: " + std::string(std::strerror(errno)));
     return frame;
 }
 

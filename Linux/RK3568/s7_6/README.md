@@ -56,6 +56,13 @@ Throttle/AUX 目标始终为释放值 0，ARM 和总授权 AUX 永远不由 Linu
 新鲜度、递增心跳和递增有效源序号任一失败即拒绝。飞控端现已在 USART6 增加被动接收监视，
 并从 UART4 输出字节/帧/CRC/格式统计和最近帧字段。该监视不发布 RC 输入；真正的源仲裁和人工授权仍在 S7.7 实现。
 
+## 实物接线
+
+正点原子硬件参考手册第 26 页在 RK3568 扩展排针 JP11 上给出 UART9 发送脚：10 号脚是 3.3 V
+`UART9_TX_M1`，21 号脚是地。接飞控时用这一路连到飞控 USART6 的接收脚 PC7。板端设备名通常
+是 `/dev/ttyS9`，运行前仍须用 `ls -l /dev/ttyS*` 核对；飞控 UART2 继续专供 CRSF，UART4
+继续输出调试日志。
+
 ## 构建与运行
 
 ```sh
@@ -80,6 +87,13 @@ sh Linux/RK3568/s7_6/build_board.sh
 cd /userdata
 ./s7_6_live --self-test
 killall weston 2>/dev/null || true
+
+# 不开摄像头，直接向实际串口发送 20 个测试帧；终端逐帧打印完整 44 字节
+./s7_6_live --uart-test /dev/ttyS9 20 cycle
+
+# 连续发送固定单指帧，供 S7.7 授权、接管和超时测试
+./s7_6_live --uart-test /dev/ttyS9 200 point
+
 mkdir -p /userdata/live_annot
 nohup env \
   LD_LIBRARY_PATH=/userdata/s7_3_acceptance/s7_3_deploy_20260813/lib:/usr/lib \
@@ -94,6 +108,9 @@ nohup env \
 
 # 核对 RK3568 物理资源后才把 /dev/null 换成已验证的 /dev/tty*。
 ```
+
+每次 `--uart-test` 启动时，第一帧固定为无效释放标记，随后才发送所选固定手势。这样 Linux
+进程重启后，飞控可以安全重置序号门禁，但仍必须由操作者重新拨动授权开关。
 
 当前主机纯逻辑自检和文件回环均通过，ARM64 交叉构建产物为 112992 字节，SHA-256
 `61cfff8d59ed8ce28f42836fdfc875cef54ae01f3ca01bcda38135adac9933fb`。x86 WSL 不能执行

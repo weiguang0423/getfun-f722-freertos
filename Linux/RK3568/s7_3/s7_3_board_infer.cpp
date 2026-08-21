@@ -721,6 +721,55 @@ static int parse_int(const char* text) {
     return value;
 }
 
+#ifdef S7_6_VIRTUAL_RC
+static int run_uart_test(int argc, char** argv) {
+    if (argc < 3 || argc > 5) {
+        std::cerr << "usage: s7_6_live --uart-test DEVICE [FRAME_COUNT] [cycle|neutral|point|vsign|release]\n";
+        return 2;
+    }
+    const int frame_count = argc >= 4 ? parse_int(argv[3]) : 20;
+    if (frame_count <= 0) throw std::runtime_error("FRAME_COUNT must be positive");
+
+    s7_6::SerialLink link(argv[2]);
+    const s7_5::GestureSnapshot gestures[] = {
+        {},
+        {s7_5::GestureState::ACTIVE, s7_5::GestureId::OPEN_PALM,
+         .95f, s7_5::GestureId::OPEN_PALM, 5},
+        {s7_5::GestureState::ACTIVE, s7_5::GestureId::POINT,
+         .95f, s7_5::GestureId::POINT, 5},
+        {s7_5::GestureState::ACTIVE, s7_5::GestureId::V_SIGN,
+         .95f, s7_5::GestureId::V_SIGN, 5},
+        {s7_5::GestureState::ACTIVE, s7_5::GestureId::FIST,
+         .95f, s7_5::GestureId::FIST, 5},
+    };
+    int fixed_gesture = -1;
+    if (argc == 5) {
+        const std::string name(argv[4]);
+        if (name == "neutral") fixed_gesture = 1;
+        else if (name == "point") fixed_gesture = 2;
+        else if (name == "vsign") fixed_gesture = 3;
+        else if (name == "release") fixed_gesture = 4;
+        else if (name != "cycle") throw std::runtime_error("unknown UART test gesture");
+    }
+    for (int index = 0; index < frame_count; ++index) {
+        const uint64_t timestamp = now_us(true);
+        const int gesture_index = index == 0 ? 0
+                                : (fixed_gesture >= 0 ? fixed_gesture : index % 5);
+        const auto frame = link.send(gestures[gesture_index],
+                                     static_cast<uint32_t>(index),
+                                     timestamp, timestamp);
+        const auto bytes = s7_6::encode(frame);
+        std::cout << "UART_TX frame=" << index + 1 << " bytes=" << bytes.size()
+                  << " heartbeat=" << frame.heartbeat << " valid=" << (frame.valid ? 1 : 0)
+                  << " hex=" << std::hex << std::setfill('0');
+        for (uint8_t byte : bytes) std::cout << std::setw(2) << static_cast<unsigned>(byte);
+        std::cout << std::dec << '\n' << std::flush;
+        usleep(static_cast<useconds_t>(s7_6::kFramePeriodUs));
+    }
+    return 0;
+}
+#endif
+
 static int run_camera(int argc, char** argv) {
     if (argc < 8 || argc > 14) {
 #ifdef S7_6_VIRTUAL_RC
@@ -878,6 +927,9 @@ int main(int argc, char** argv) try {
         std::cout << "self-test ok\n";
         return 0;
     }
+#ifdef S7_6_VIRTUAL_RC
+    if (argc >= 2 && std::string(argv[1]) == "--uart-test") return run_uart_test(argc, argv);
+#endif
     if (argc >= 2 && std::string(argv[1]) == "--camera") return run_camera(argc, argv);
     if (argc != 4 && argc != 5) {
         std::cerr << "usage: s7_3_board_infer DETECTOR.rknn LANDMARK.rknn TESTSET [SECONDS]\n";
