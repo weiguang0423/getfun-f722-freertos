@@ -30,11 +30,13 @@ int main() {
 
     s7_6::VirtualRcFrame first, second;
     if (!s7_6::decode(bytes.data(), s7_6::kWireFrameSize, 1070000, 0, 0, first)
-        || first.valid || first.heartbeat != 1)
+        || !first.valid || first.gesture_id != s7_5::GestureId::UNKNOWN
+        || first.channels.roll != 0 || first.channels.pitch != 0
+        || first.heartbeat != 1)
         return 1;
     if (!s7_6::decode(bytes.data() + s7_6::kWireFrameSize, s7_6::kWireFrameSize,
                       1070000, first.source_sequence, first.heartbeat, second)
-        || !second.valid || second.channels.pitch != -30 || second.heartbeat != 2)
+        || !second.valid || second.channels.pitch != 30 || second.heartbeat != 2)
         return 1;
     std::cout << "s7.6 serial loopback self-test ok\n";
     return 0;

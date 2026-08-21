@@ -1,7 +1,8 @@
 /*
- * 文件作用：实现 S7.6 保守手势映射、变化率限制、固定小端帧和 CRC16 完整性检查。
- * 冻结映射：张掌=有效中立，握拳=释放，单指=Pitch -0.30，V 字=Yaw +0.30。
- * 关键约束：Throttle/AUX 保持释放值 0；源过期、非 ACTIVE 或非法时间立即输出无效释放帧。
+ * 文件作用：实现 S7.6 事件式手势映射、变化率限制、固定小端帧和 CRC16 完整性检查。
+ * 冻结映射：张掌=Pitch -0.30，单指=Pitch +0.30，V 字=Roll -0.30，握拳=释放。
+ * 关键约束：手势只在 ACTIVE 边沿触发一次短脉冲，健康的无手/切换状态不截断脉冲也不退出 Linux；
+ * Throttle/AUX 始终为 0，只有握拳、源过期或管线故障输出无效释放帧。
  */
 #include "s7_6_virtual_rc.hpp"
 
@@ -76,8 +77,9 @@ int16_t approach(int16_t current, int16_t target, int32_t rate_per_second, uint6
 
 Channels target_for(s7_5::GestureId id) {
     switch (id) {
-    case s7_5::GestureId::POINT: return {0, -300, 0, 0, 0};
-    case s7_5::GestureId::V_SIGN: return {0, 0, 300, 0, 0};
+    case s7_5::GestureId::OPEN_PALM: return {0, -300, 0, 0, 0};
+    case s7_5::GestureId::POINT: return {0, 300, 0, 0, 0};
+    case s7_5::GestureId::V_SIGN: return {-300, 0, 0, 0, 0};
     default: return {};
     }
 }
@@ -90,12 +92,36 @@ bool channels_in_range(const Channels& value) {
         && value.aux >= 0 && value.aux <= kAuxLimit;
 }
 
+bool channels_are_zero(const Channels& value) {
+    return value.roll == 0 && value.pitch == 0 && value.yaw == 0
+        && value.throttle == 0 && value.aux == 0;
+}
+
+bool channels_match_gesture(const VirtualRcFrame& frame) {
+    if (frame.channels.yaw != 0 || frame.channels.throttle != 0 || frame.channels.aux != 0)
+        return false;
+    switch (frame.gesture_id) {
+    case s7_5::GestureId::UNKNOWN:
+        return frame.confidence_percent == 0 && channels_are_zero(frame.channels);
+    case s7_5::GestureId::OPEN_PALM:
+        return frame.confidence_percent >= 75 && frame.channels.roll == 0
+            && frame.channels.pitch >= -kAxisLimit && frame.channels.pitch <= 0;
+    case s7_5::GestureId::POINT:
+        return frame.confidence_percent >= 75 && frame.channels.roll == 0
+            && frame.channels.pitch >= 0 && frame.channels.pitch <= kAxisLimit;
+    case s7_5::GestureId::V_SIGN:
+        return frame.confidence_percent >= 75 && frame.channels.pitch == 0
+            && frame.channels.roll >= -kAxisLimit && frame.channels.roll <= 0;
+    default:
+        return false;
+    }
+}
+
 }  // namespace
 
 VirtualRcFrame Mapper::update(const s7_5::GestureSnapshot& gesture, uint32_t source_sequence,
                               uint64_t source_timestamp_us, uint64_t send_timestamp_us) {
     VirtualRcFrame frame;
-    frame.gesture_id = gesture.active_id;
     frame.confidence_percent = std::isfinite(gesture.observed_confidence)
         ? static_cast<uint8_t>(std::clamp(std::lround(gesture.observed_confidence * 100.0f), 0l, 100l))
         : 0;
@@ -107,20 +133,40 @@ VirtualRcFrame Mapper::update(const s7_5::GestureSnapshot& gesture, uint32_t sou
     const bool fresh = source_timestamp_us && send_timestamp_us >= source_timestamp_us
                     && send_timestamp_us - source_timestamp_us <= kSourceTimeoutUs;
     const bool ordered = !last_send_us_ || send_timestamp_us >= last_send_us_;
-    frame.valid = fresh && ordered && gesture.state == s7_5::GestureState::ACTIVE
-               && gesture.active_id != s7_5::GestureId::UNKNOWN
-               && gesture.active_id != s7_5::GestureId::FIST
-               && gesture.observed_id == gesture.active_id
-               && std::isfinite(gesture.observed_confidence)
-               && gesture.observed_confidence >= .75f;
-    if (!frame.valid) {
+    const bool active = gesture.state == s7_5::GestureState::ACTIVE
+                     && gesture.active_id != s7_5::GestureId::UNKNOWN
+                     && gesture.observed_id == gesture.active_id
+                     && std::isfinite(gesture.observed_confidence)
+                     && gesture.observed_confidence >= .75f;
+    const bool release = active && gesture.active_id == s7_5::GestureId::FIST;
+
+    if (!fresh || !ordered || release) {
         current_ = {};
+        command_gesture_ = s7_5::GestureId::UNKNOWN;
+        last_confidence_percent_ = 0;
+        active_latched_ = false;
+        pulse_until_us_ = 0;
+        frame.confidence_percent = 0;
         frame.channels = current_;
         last_send_us_ = send_timestamp_us;
         return frame;
     }
 
-    const Channels target = target_for(gesture.active_id);
+    if (active) {
+        last_confidence_percent_ = frame.confidence_percent;
+        if (!active_latched_ || command_gesture_ != gesture.active_id) {
+            current_ = {};
+            command_gesture_ = gesture.active_id;
+            pulse_until_us_ = send_timestamp_us + kCommandPulseUs;
+        }
+        active_latched_ = true;
+    } else {
+        active_latched_ = false;
+    }
+
+    frame.valid = true;
+    const Channels target = send_timestamp_us < pulse_until_us_
+                          ? target_for(command_gesture_) : Channels{};
     const uint64_t elapsed = last_send_us_ && send_timestamp_us >= last_send_us_
                            ? std::min<uint64_t>(send_timestamp_us - last_send_us_, kSourceTimeoutUs)
                            : kFramePeriodUs;
@@ -129,6 +175,13 @@ VirtualRcFrame Mapper::update(const s7_5::GestureSnapshot& gesture, uint32_t sou
     current_.yaw = approach(current_.yaw, target.yaw, kAxisRatePerSecond, elapsed);
     current_.throttle = approach(current_.throttle, target.throttle, kThrottleRatePerSecond, elapsed);
     current_.aux = approach(current_.aux, target.aux, kAuxRatePerSecond, elapsed);
+    if (!channels_are_zero(current_)) {
+        frame.gesture_id = command_gesture_;
+        frame.confidence_percent = last_confidence_percent_;
+    } else {
+        frame.gesture_id = s7_5::GestureId::UNKNOWN;
+        frame.confidence_percent = 0;
+    }
     frame.channels = current_;
     last_send_us_ = send_timestamp_us;
     return frame;
@@ -187,8 +240,7 @@ bool decode(const uint8_t* bytes, std::size_t size, uint64_t receive_timestamp_u
             || !decoded.source_timestamp_us
             || decoded.send_timestamp_us < decoded.source_timestamp_us
             || decoded.send_timestamp_us - decoded.source_timestamp_us > kSourceTimeoutUs
-            || decoded.gesture_id == s7_5::GestureId::UNKNOWN
-            || decoded.gesture_id == s7_5::GestureId::FIST))
+            || !channels_match_gesture(decoded)))
         return false;
     if (!decoded.valid && (decoded.channels.roll || decoded.channels.pitch || decoded.channels.yaw
                            || decoded.channels.throttle || decoded.channels.aux))
@@ -201,23 +253,50 @@ bool self_test() {
     Mapper mapper;
     s7_5::GestureSnapshot inactive;
     auto frame = mapper.update(inactive, 1, 1000000, 1010000);
-    if (frame.valid || frame.heartbeat != 1) return false;
+    if (!frame.valid || frame.gesture_id != s7_5::GestureId::UNKNOWN
+        || !channels_are_zero(frame.channels) || frame.heartbeat != 1)
+        return false;
+    const auto neutral_bytes = encode(frame);
+    VirtualRcFrame neutral_decoded;
+    if (!decode(neutral_bytes.data(), neutral_bytes.size(), 1011000, 0, 0,
+                neutral_decoded)
+        || !neutral_decoded.valid
+        || neutral_decoded.gesture_id != s7_5::GestureId::UNKNOWN)
+        return false;
 
-    s7_5::GestureSnapshot point{s7_5::GestureState::ACTIVE, s7_5::GestureId::POINT,
-                                .90f, s7_5::GestureId::POINT, 5};
-    frame = mapper.update(point, 2, 1050000, 1060000);
+    s7_5::GestureSnapshot palm{s7_5::GestureState::ACTIVE, s7_5::GestureId::OPEN_PALM,
+                               .90f, s7_5::GestureId::OPEN_PALM, 5};
+    frame = mapper.update(palm, 2, 1050000, 1060000);
     if (!frame.valid || frame.channels.pitch != -30 || frame.channels.throttle != 0
         || frame.channels.aux != 0)
         return false;
-    for (uint32_t i = 3; i < 13; ++i)
-        frame = mapper.update(point, i, 1000000u + i * 50000u, 1010000u + i * 50000u);
+    for (uint32_t i = 3; i < 22; ++i)
+        frame = mapper.update(palm, i, 950000u + i * 50000u, 960000u + i * 50000u);
     if (frame.channels.pitch != -300) return false;
+
+    frame = mapper.update(palm, 22, 2050000, 2060000);
+    if (!frame.valid || frame.channels.pitch != -270) return false;
+
+    s7_5::GestureSnapshot transition{s7_5::GestureState::RELEASED,
+                                     s7_5::GestureId::UNKNOWN, 0.0f,
+                                     s7_5::GestureId::UNKNOWN, 0};
+    frame = mapper.update(transition, 23, 2100000, 2110000);
+    if (!frame.valid || frame.gesture_id != s7_5::GestureId::OPEN_PALM
+        || frame.channels.pitch != -240)
+        return false;
+
+    s7_5::GestureSnapshot v_sign{s7_5::GestureState::ACTIVE, s7_5::GestureId::V_SIGN,
+                                 .95f, s7_5::GestureId::V_SIGN, 5};
+    frame = mapper.update(v_sign, 24, 2150000, 2160000);
+    if (!frame.valid || frame.channels.roll != -30 || frame.channels.pitch != 0
+        || frame.channels.yaw != 0)
+        return false;
 
     const auto bytes = encode(frame);
     VirtualRcFrame decoded;
     if (!decode(bytes.data(), bytes.size(), frame.send_timestamp_us + 1000,
                 frame.source_sequence - 1, frame.heartbeat - 1, decoded)
-        || decoded.channels.pitch != frame.channels.pitch)
+        || decoded.channels.roll != frame.channels.roll)
         return false;
     auto corrupt = bytes;
     corrupt[34] ^= 1u;
@@ -231,10 +310,26 @@ bool self_test() {
                frame.source_sequence, frame.heartbeat - 1, decoded))
         return false;
 
+    Mapper grace_mapper;
+    s7_5::GestureSnapshot point{s7_5::GestureState::ACTIVE, s7_5::GestureId::POINT,
+                                .90f, s7_5::GestureId::POINT, 5};
+    frame = grace_mapper.update(point, 1, 1990000, 2000000);
+    if (!frame.valid || frame.channels.pitch != 30) return false;
+    frame = grace_mapper.update(transition, 2, 2040000, 2050000);
+    if (!frame.valid || frame.channels.pitch != 60) return false;
+    frame = grace_mapper.update(transition, 3, 2990001, 3000001);
+    if (!frame.valid || frame.channels.pitch != 0
+        || frame.gesture_id != s7_5::GestureId::UNKNOWN)
+        return false;
+    frame = grace_mapper.update(point, 4, 3040000, 3050000);
+    if (!frame.valid) return false;
+    frame = grace_mapper.update(transition, 5, 0, 3100000);
+    if (frame.valid || frame.channels.pitch != 0) return false;
+
     s7_5::GestureSnapshot fist{s7_5::GestureState::ACTIVE, s7_5::GestureId::FIST,
                                .95f, s7_5::GestureId::FIST, 5};
-    frame = mapper.update(fist, 13, 1650000, 1660000);
-    return !frame.valid && frame.channels.pitch == 0 && frame.channels.throttle == 0;
+    frame = mapper.update(fist, 25, 2200000, 2210000);
+    return !frame.valid && frame.channels.roll == 0 && frame.channels.throttle == 0;
 }
 
 }  // namespace s7_6

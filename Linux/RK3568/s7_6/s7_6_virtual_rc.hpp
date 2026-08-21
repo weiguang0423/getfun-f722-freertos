@@ -1,7 +1,8 @@
 /*
  * 文件作用：S7.6 手势到有界虚拟 RC 的纯逻辑与固定二进制帧接口。
  * 核心数据流：S7.5 ACTIVE 快照 -> 限幅/限速通道 -> 序号/心跳/时间戳 -> CRC16 帧。
- * 关键约束：启动和任一失效输入立即释放；不生成 ARM 或总授权 AUX；不负责飞控仲裁。
+ * 关键约束：每次 ACTIVE 边沿只触发一次短指令；健康的无手/切换状态持续发送有效中立；
+ * 不生成 ARM 或总授权 AUX；不负责飞控仲裁。
  */
 #ifndef S7_6_VIRTUAL_RC_HPP
 #define S7_6_VIRTUAL_RC_HPP
@@ -18,6 +19,7 @@ constexpr std::size_t kWireFrameSize = 44;
 constexpr uint64_t kFramePeriodUs = 50000;
 constexpr uint64_t kLinkTimeoutUs = 150000;
 constexpr uint64_t kSourceTimeoutUs = 250000;
+constexpr uint64_t kCommandPulseUs = 1000000;
 
 struct Channels {
     int16_t roll{};
@@ -45,7 +47,11 @@ public:
 
 private:
     Channels current_{};
+    s7_5::GestureId command_gesture_{s7_5::GestureId::UNKNOWN};
+    uint8_t last_confidence_percent_{};
+    bool active_latched_{};
     uint32_t heartbeat_{};
+    uint64_t pulse_until_us_{};
     uint64_t last_send_us_{};
 };
 

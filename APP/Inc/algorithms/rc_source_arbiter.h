@@ -3,7 +3,8 @@
  *
  * The arbiter consumes an already validated Linux candidate plus the physical
  * AETR snapshot and emits the only channel snapshot allowed into rc_setpoint.
- * Physical AUX channels always retain ownership of ARM, ANGLE and authorization.
+ * Physical throttle and AUX channels always retain ownership; Linux can only
+ * replace Roll/Pitch/Yaw after authorization.
  * Any exit latches reauthorization until AUX3 is observed low before a new rise.
  */
 #ifndef RC_SOURCE_ARBITER_H
@@ -21,7 +22,6 @@ extern "C" {
 #define RC_SOURCE_AUTH_CHANNEL 6U
 #define RC_SOURCE_AUTH_MIN_US 1700U
 #define RC_SOURCE_TAKEOVER_AXIS_DELTA_US 150U
-#define RC_SOURCE_TAKEOVER_THROTTLE_US 1100U
 #define RC_SOURCE_VIRTUAL_TIMEOUT_MS 150U
 
 typedef enum
@@ -65,8 +65,8 @@ typedef struct
     uint32_t last_transition_ms;
     uint32_t last_update_ms;
     uint32_t active_session_generation;
-    uint16_t virtual_channel_us[4];
-    uint16_t slew_remainder[4];
+    uint16_t virtual_channel_us[3];
+    uint16_t slew_remainder[3];
 } rc_source_arbiter_t;
 
 void rc_source_arbiter_init(rc_source_arbiter_t *state,

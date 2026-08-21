@@ -496,6 +496,7 @@ static void print_record(const std::string& source, int frame_index, const cv::M
     out << std::fixed << std::setprecision(6) << "{\"source\":" << json_string(source)
         << ",\"frame_index\":" << frame_index;
     bool valid = false;
+    bool source_healthy = true;
     const char* reject_reason = "no_hand";
     cv::Mat annotated;
 #ifdef S7_5_GESTURE
@@ -602,6 +603,7 @@ static void print_record(const std::string& source, int frame_index, const cv::M
                              ? (complete - live->capture_timestamp_us) / 1000.0 : 0.0;
         if (latency > live->max_latency_ms) {
             valid = false;
+            source_healthy = false;
             reject_reason = "deadline_miss";
         }
         out << ",\"sequence\":" << live->sequence
@@ -627,9 +629,13 @@ static void print_record(const std::string& source, int frame_index, const cv::M
 #ifdef S7_6_VIRTUAL_RC
         if (rc_link && live) {
             const auto rc = rc_link->send(gesture_snapshot, live->sequence,
-                                          live->monotonic_timestamp ? live->capture_timestamp_us : 0,
+                                          source_healthy && live->monotonic_timestamp
+                                              ? live->capture_timestamp_us : 0,
                                           now_us(true));
             out << ",\"virtual_rc_valid\":" << (rc.valid ? "true" : "false")
+                << ",\"virtual_rc_gesture_id\":" << static_cast<unsigned>(rc.gesture_id)
+                << ",\"virtual_rc_gesture_name\":"
+                << json_string(s7_5::gesture_name(rc.gesture_id))
                 << ",\"virtual_rc_source_sequence\":" << rc.source_sequence
                 << ",\"virtual_rc_heartbeat\":" << rc.heartbeat
                 << ",\"virtual_rc_send_timestamp_us\":" << rc.send_timestamp_us
@@ -701,8 +707,10 @@ static void print_invalid(const char* source, const char* reason, uint32_t seque
 #ifdef S7_6_VIRTUAL_RC
         if (rc_link) {
             const auto send_timestamp = now_us(true);
-            const auto rc = rc_link->send(snapshot, sequence, send_timestamp, send_timestamp);
-            out << ",\"virtual_rc_valid\":false,\"virtual_rc_heartbeat\":" << rc.heartbeat
+            const auto rc = rc_link->send(snapshot, sequence, 0, send_timestamp);
+            out << ",\"virtual_rc_valid\":false,\"virtual_rc_gesture_id\":0"
+                << ",\"virtual_rc_gesture_name\":\"UNKNOWN\""
+                << ",\"virtual_rc_heartbeat\":" << rc.heartbeat
                 << ",\"virtual_rc_channels\":[0,0,0,0,0]";
         }
 #endif
@@ -724,7 +732,7 @@ static int parse_int(const char* text) {
 #ifdef S7_6_VIRTUAL_RC
 static int run_uart_test(int argc, char** argv) {
     if (argc < 3 || argc > 5) {
-        std::cerr << "usage: s7_6_live --uart-test DEVICE [FRAME_COUNT] [cycle|neutral|point|vsign|release]\n";
+        std::cerr << "usage: s7_6_live --uart-test DEVICE [FRAME_COUNT] [cycle|palm|point|vsign|release]\n";
         return 2;
     }
     const int frame_count = argc >= 4 ? parse_int(argv[3]) : 20;
@@ -745,7 +753,7 @@ static int run_uart_test(int argc, char** argv) {
     int fixed_gesture = -1;
     if (argc == 5) {
         const std::string name(argv[4]);
-        if (name == "neutral") fixed_gesture = 1;
+        if (name == "palm") fixed_gesture = 1;
         else if (name == "point") fixed_gesture = 2;
         else if (name == "vsign") fixed_gesture = 3;
         else if (name == "release") fixed_gesture = 4;
