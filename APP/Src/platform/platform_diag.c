@@ -146,6 +146,36 @@ static int32_t diag_float_to_milli(float value)
     return (int32_t)lroundf(scaled);
 }
 
+static unsigned long diag_tick_age(TickType_t now, TickType_t then)
+{
+    const TickType_t delta = now - then;
+
+    /* A snapshot can briefly contain a timestamp from the next tick.  Do not
+     * print the unsigned-wrap value (often a misleading ten-digit age). */
+    if ((then > now) && ((then - now) < (TickType_t)0x80000000UL)) {
+        return 0UL;
+    }
+    return (unsigned long)delta;
+}
+
+static const char *diag_rc_source_name(rc_source_t source)
+{
+    return source == RC_SOURCE_VIRTUAL ? "virtual" : "physical";
+}
+
+static const char *diag_rc_exit_reason_name(rc_source_exit_reason_t reason)
+{
+    static const char *const names[] = {
+        "none", "auth_revoked", "physical_takeover", "virtual_invalid",
+        "virtual_timeout", "virtual_restart", "flight_inhibit", "disarmed",
+        "physical_invalid", "configuration_invalid"
+    };
+
+    return ((unsigned int)reason < (sizeof(names) / sizeof(names[0])))
+               ? names[reason]
+               : "unknown";
+}
+
 void platform_diag_startup(void)
 {
     char line[192];
@@ -193,6 +223,7 @@ void platform_diag_heartbeat(void)
     dshot_motor_diagnostics_t dshot;
     linux_rc_monitor_diagnostics_t linux_rc;
     const TickType_t current_tick = xTaskGetTickCount();
+    const TickType_t source_tick = (TickType_t)HAL_GetTick();
     const TickType_t elapsed_ticks = current_tick - previous_tick;
     uint32_t sample_rate_hz = 0U;
     char line[256];
@@ -222,13 +253,43 @@ void platform_diag_heartbeat(void)
     length = snprintf(
         line,
         sizeof(line),
-        "linux_rc rx=%lu frame=%lu valid=%lu crc=%lu fmt=%lu uart=%lu "
+        "e2e rc_source=%u rc_valid=%u rc_seq=%lu rc_hb=%lu "
+        "setpoint_valid=%u setpoint_mode=%u pid_valid=%u mixer_valid=%u "
+        "flight_ready=%u armed=%u failsafe=%u dshot_ready=%u dshot_busy=%u "
+        "motors=[%u,%u,%u,%u]\r\n",
+        (unsigned int)snapshot.rc.active_source,
+        snapshot.rc.channels_valid ? 1U : 0U,
+        (unsigned long)snapshot.rc.virtual_source_sequence,
+        (unsigned long)snapshot.rc.virtual_heartbeat,
+        snapshot.flight.rc_setpoint.valid ? 1U : 0U,
+        (unsigned int)snapshot.flight.rc_setpoint.mode,
+        snapshot.flight.rate_pid.valid ? 1U : 0U,
+        snapshot.flight.mixer.valid ? 1U : 0U,
+        snapshot.flight.inputs_ready ? 1U : 0U,
+        snapshot.flight.armed ? 1U : 0U,
+        snapshot.rc.failsafe_active ? 1U : 0U,
+        snapshot.flight.dshot_ready ? 1U : 0U,
+        snapshot.flight.dshot_busy ? 1U : 0U,
+        snapshot.flight.output_motor_value[0],
+        snapshot.flight.output_motor_value[1],
+        snapshot.flight.output_motor_value[2],
+        snapshot.flight.output_motor_value[3]);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "linux_rc rx=%lu frame=%lu valid=%lu crc=%lu fmt=%lu seqerr=%lu "
+        "timeerr=%lu restart=%lu uart=%lu "
         "last=[v%u g%u c%u seq=%lu hb=%lu ch=%d,%d,%d,%d,%d]\r\n",
         (unsigned long)linux_rc.received_bytes,
         (unsigned long)linux_rc.complete_frames,
         (unsigned long)linux_rc.valid_frames,
         (unsigned long)linux_rc.crc_errors,
         (unsigned long)linux_rc.format_errors,
+        (unsigned long)linux_rc.sequence_errors,
+        (unsigned long)linux_rc.timestamp_errors,
+        (unsigned long)linux_rc.session_reset_count,
         (unsigned long)linux_rc.uart_errors,
         linux_rc.last_frame_valid ? 1U : 0U,
         (unsigned int)linux_rc.last_gesture_id,
@@ -240,6 +301,40 @@ void platform_diag_heartbeat(void)
         (int)linux_rc.last_channels[2],
         (int)linux_rc.last_channels[3],
         (int)linux_rc.last_channels[4]);
+    diag_write_formatted(line, sizeof(line), length);
+
+    length = snprintf(
+        line,
+        sizeof(line),
+        "rc source=%u(%s) auth=%u reauth=%u virtual=%u age_ms=%lu seq=%lu hb=%lu gen=%lu "
+        "enter=%lu exit=%lu reason=%u(%s) transition_age_ms=%lu "
+        "aux3_us=%u armed=%u inhibit=0x%08lX cfg=%u\r\n",
+        (unsigned int)snapshot.rc.active_source,
+        diag_rc_source_name(snapshot.rc.active_source),
+        snapshot.rc.source_authorization_active ? 1U : 0U,
+        snapshot.rc.source_reauthorization_ready ? 1U : 0U,
+        snapshot.rc.virtual_candidate_valid ? 1U : 0U,
+        snapshot.rc.virtual_heartbeat != 0U
+            ? diag_tick_age(source_tick, snapshot.rc.virtual_candidate_tick)
+            : 0UL,
+        (unsigned long)snapshot.rc.virtual_source_sequence,
+        (unsigned long)snapshot.rc.virtual_heartbeat,
+        (unsigned long)snapshot.rc.virtual_session_generation,
+        (unsigned long)snapshot.rc.source_activation_count,
+        (unsigned long)snapshot.rc.source_exit_count,
+        (unsigned int)snapshot.rc.source_last_exit_reason,
+        diag_rc_exit_reason_name(snapshot.rc.source_last_exit_reason),
+        diag_tick_age(source_tick, snapshot.rc.source_last_transition_tick),
+        snapshot.rc.physical_mapped_channel_us[RC_SOURCE_AUTH_CHANNEL],
+        snapshot.flight.armed ? 1U : 0U,
+        (unsigned long)snapshot.arming_inhibit_flags,
+        snapshot.parameters.storage_valid &&
+                (snapshot.parameters.values.rc_profile.arm_aux_channel !=
+                 RC_SOURCE_AUTH_CHANNEL) &&
+                (snapshot.parameters.values.rc_profile.angle_aux_channel !=
+                 RC_SOURCE_AUTH_CHANNEL)
+            ? 1U
+            : 0U);
     diag_write_formatted(line, sizeof(line), length);
 
     length = snprintf(

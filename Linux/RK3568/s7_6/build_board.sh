@@ -3,11 +3,17 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-SDK=${SDK:-/home/user123/rk3568_sdk}
+SDK=${SDK:-"$HOME/rk3568_sdk"}
 HOST="$SDK/buildroot/output/rockchip_rk3568/host"
 RKNN="$SDK/external/rknpu2/runtime/RK356X/Linux/librknn_api"
-OPENCV=${OPENCV:-/home/user123/s7_3_opencv/install}
-DRMHDR=${DRMHDR:-/home/user123/s7_4_drm_headers}
+OPENCV=${OPENCV:-"$HOME/s7_3_opencv/install"}
+DRMHDR=${DRMHDR:-"$HOME/s7_4_drm_headers"}
+
+if [ ! -x "$HOST/bin/aarch64-buildroot-linux-gnu-g++" ]; then
+  echo "找不到 ARM64 交叉编译器：$HOST/bin/aarch64-buildroot-linux-gnu-g++" >&2
+  echo "请设置 SDK=/实际/rk3568_sdk 路径后重试。" >&2
+  exit 1
+fi
 
 "$HOST/bin/aarch64-buildroot-linux-gnu-g++" -std=c++17 -O2 -Wall -Wextra -D__user= \
   -DS7_5_GESTURE -DS7_6_VIRTUAL_RC \

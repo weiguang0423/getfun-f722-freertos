@@ -1,15 +1,16 @@
 /*
- * linux_rc_monitor.c -- Passive parser for S7.6 virtual-RC frames received on USART6.
+ * linux_rc_monitor.c -- Validating parser for S7.6 virtual-RC frames on USART6.
  *
  * Data flow: USART6 RX interrupt -> byte synchronizer -> 44-byte frame validation ->
- * diagnostic snapshot. This module intentionally has no dependency on rc_input or flight
- * control, so observing Linux traffic cannot enable or command the aircraft.
+ * candidate snapshot. RcTask remains the sole owner of source arbitration, so
+ * observing Linux traffic alone cannot enable or command the aircraft.
  */
 #include "bsp/linux_rc_monitor.h"
 
 #include <string.h>
 
 #include "stm32f7xx.h"
+#include "stm32f7xx_hal.h"
 
 #define LINUX_RC_FRAME_SIZE 44U
 #define LINUX_RC_CRC_OFFSET 42U
@@ -18,12 +19,16 @@
 #define LINUX_RC_CHANNEL_LIMIT 300
 #define LINUX_RC_THROTTLE_LIMIT 250
 #define LINUX_RC_AUX_LIMIT 1000
+#define LINUX_RC_LINK_TIMEOUT_MS 150U
+#define LINUX_RC_SOURCE_TIMEOUT_US 250000ULL
 
 typedef struct
 {
     linux_rc_monitor_diagnostics_t diagnostics;
+    rc_virtual_candidate_t candidate;
     uint8_t frame[LINUX_RC_FRAME_SIZE];
     uint8_t frame_length;
+    bool progression_initialized;
 } linux_rc_monitor_state_t;
 
 static linux_rc_monitor_state_t monitor;
@@ -37,6 +42,17 @@ static uint32_t get_u32_le(const uint8_t *data)
 {
     return (uint32_t)data[0] | ((uint32_t)data[1] << 8U) |
            ((uint32_t)data[2] << 16U) | ((uint32_t)data[3] << 24U);
+}
+
+static uint64_t get_u64_le(const uint8_t *data)
+{
+    return (uint64_t)get_u32_le(data) |
+           ((uint64_t)get_u32_le(data + 4U) << 32U);
+}
+
+static bool sequence_is_newer(uint32_t value, uint32_t previous)
+{
+    return (int32_t)(value - previous) > 0;
 }
 
 static uint16_t crc16_ccitt_false(const uint8_t *data, uint32_t length)
@@ -71,14 +87,46 @@ static bool channels_in_range(const uint8_t *frame)
            (aux >= 0) && (aux <= LINUX_RC_AUX_LIMIT);
 }
 
+static bool channels_match_gesture(const uint8_t *frame)
+{
+    const int16_t roll = (int16_t)get_u16_le(&frame[32]);
+    const int16_t pitch = (int16_t)get_u16_le(&frame[34]);
+    const int16_t yaw = (int16_t)get_u16_le(&frame[36]);
+    const int16_t throttle = (int16_t)get_u16_le(&frame[38]);
+    const int16_t aux = (int16_t)get_u16_le(&frame[40]);
+
+    if ((roll != 0) || (throttle != 0) || (aux != 0)) {
+        return false;
+    }
+    if (frame[5] == 1U) {
+        return (pitch == 0) && (yaw == 0);
+    }
+    if (frame[5] == 3U) {
+        return (pitch >= -LINUX_RC_CHANNEL_LIMIT) && (pitch <= 0) &&
+               (yaw == 0);
+    }
+    if (frame[5] == 4U) {
+        return (pitch == 0) && (yaw >= 0) &&
+               (yaw <= LINUX_RC_CHANNEL_LIMIT);
+    }
+    return false;
+}
+
 static void validate_complete_frame(void)
 {
     linux_rc_monitor_diagnostics_t *const diagnostics = &monitor.diagnostics;
     const uint8_t *const frame = monitor.frame;
     const bool frame_valid = (frame[4] & LINUX_RC_FLAG_VALID) != 0U;
     const uint16_t expected_crc = get_u16_le(&frame[LINUX_RC_CRC_OFFSET]);
+    const uint32_t now_ms = HAL_GetTick();
+    const uint32_t source_sequence = get_u32_le(&frame[8]);
+    const uint32_t heartbeat = get_u32_le(&frame[12]);
+    const uint64_t source_timestamp_us = get_u64_le(&frame[16]);
+    const uint64_t send_timestamp_us = get_u64_le(&frame[24]);
+    bool new_session = false;
 
     diagnostics->complete_frames++;
+    monitor.candidate.valid = false;
     if (expected_crc != crc16_ccitt_false(frame, LINUX_RC_CRC_OFFSET)) {
         diagnostics->crc_errors++;
         return;
@@ -90,7 +138,9 @@ static void validate_complete_frame(void)
         diagnostics->format_errors++;
         return;
     }
-    if (frame_valid && ((frame[5] == 0U) || (frame[5] == 2U))) {
+    if (frame_valid && ((frame[5] == 0U) || (frame[5] == 2U) ||
+                        (frame[6] < 75U) ||
+                        !channels_match_gesture(frame))) {
         diagnostics->format_errors++;
         return;
     }
@@ -103,17 +153,53 @@ static void validate_complete_frame(void)
         return;
     }
 
+    if ((send_timestamp_us < source_timestamp_us) ||
+        (frame_valid && ((source_timestamp_us == 0U) ||
+                         ((send_timestamp_us - source_timestamp_us) >
+                          LINUX_RC_SOURCE_TIMEOUT_US)))) {
+        diagnostics->timestamp_errors++;
+        return;
+    }
+
+    if (monitor.progression_initialized &&
+        !sequence_is_newer(heartbeat, diagnostics->last_heartbeat)) {
+        if ((uint32_t)(now_ms - monitor.candidate.received_ms) <
+            LINUX_RC_LINK_TIMEOUT_MS) {
+            diagnostics->sequence_errors++;
+            return;
+        }
+        new_session = true;
+    }
+    if (frame_valid && monitor.progression_initialized && !new_session &&
+        !sequence_is_newer(source_sequence,
+                           diagnostics->last_source_sequence)) {
+        diagnostics->sequence_errors++;
+        return;
+    }
+
     diagnostics->valid_frames++;
     diagnostics->last_frame_valid = frame_valid;
     diagnostics->last_gesture_id = frame[5];
     diagnostics->last_confidence_percent = frame[6];
-    diagnostics->last_source_sequence = get_u32_le(&frame[8]);
-    diagnostics->last_heartbeat = get_u32_le(&frame[12]);
+    diagnostics->last_source_sequence = source_sequence;
+    diagnostics->last_heartbeat = heartbeat;
     diagnostics->last_channels[0] = (int16_t)get_u16_le(&frame[32]);
     diagnostics->last_channels[1] = (int16_t)get_u16_le(&frame[34]);
     diagnostics->last_channels[2] = (int16_t)get_u16_le(&frame[36]);
     diagnostics->last_channels[3] = (int16_t)get_u16_le(&frame[38]);
     diagnostics->last_channels[4] = (int16_t)get_u16_le(&frame[40]);
+    if (new_session) {
+        diagnostics->session_reset_count++;
+    }
+    monitor.progression_initialized = true;
+    monitor.candidate.valid = frame_valid;
+    monitor.candidate.received_ms = now_ms;
+    monitor.candidate.source_sequence = source_sequence;
+    monitor.candidate.heartbeat = heartbeat;
+    monitor.candidate.session_generation =
+        diagnostics->session_reset_count;
+    memcpy(monitor.candidate.channel, diagnostics->last_channels,
+           sizeof(monitor.candidate.channel));
 }
 
 void linux_rc_monitor_init(void)
@@ -153,6 +239,7 @@ void linux_rc_monitor_uart_rx_byte(uint8_t byte)
 void linux_rc_monitor_uart_error(void)
 {
     monitor.diagnostics.uart_errors++;
+    monitor.candidate.valid = false;
     monitor.frame_length = 0U;
 }
 
@@ -167,6 +254,22 @@ void linux_rc_monitor_get_diagnostics(linux_rc_monitor_diagnostics_t *diagnostic
     primask = __get_PRIMASK();
     __disable_irq();
     *diagnostics = monitor.diagnostics;
+    if (primask == 0U) {
+        __enable_irq();
+    }
+}
+
+void linux_rc_monitor_get_candidate(rc_virtual_candidate_t *candidate)
+{
+    uint32_t primask;
+
+    if (candidate == NULL) {
+        return;
+    }
+
+    primask = __get_PRIMASK();
+    __disable_irq();
+    *candidate = monitor.candidate;
     if (primask == 0U) {
         __enable_irq();
     }

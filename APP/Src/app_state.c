@@ -15,6 +15,8 @@
  *       加速度校准、参数有效性和IMU时间有效性解锁抑制位。
  *   - app_state_get_snapshot()：临界区内整体拷贝 state，退出后把 uptime_ms 替换为
  *       HAL_GetTick()，保证每次读到的都是"当下"的运行时长。
+ *   - app_state_get_rc_source_context()：只原子读取 RC 源仲裁需要的 ARM、inhibit 和
+ *       AUX3 配置所有权，避免 RcTask 在栈上复制整份系统快照。
  *   - app_state_set_runtime/set_fault_flags：写入运行时与故障标志。
  *   - app_state_publish_parameters()/publish_imu()：整体复制参数/IMU状态，并原子
  *       更新参数有效性和传感器校准解锁抑制位。
@@ -79,6 +81,26 @@ void app_state_get_snapshot(app_state_snapshot_t *snapshot)
     *snapshot = state;
     app_state_unlock(primask);
     snapshot->uptime_ms = HAL_GetTick();
+}
+
+void app_state_get_rc_source_context(app_rc_source_context_t *context)
+{
+    uint32_t primask;
+
+    if (context == NULL) {
+        return;
+    }
+
+    primask = app_state_lock();
+    context->flight_armed = state.flight.armed;
+    context->arming_inhibit_flags = state.arming_inhibit_flags;
+    context->authorization_channel_available =
+        state.parameters.storage_valid &&
+        (state.parameters.values.rc_profile.arm_aux_channel !=
+         RC_SOURCE_AUTH_CHANNEL) &&
+        (state.parameters.values.rc_profile.angle_aux_channel !=
+         RC_SOURCE_AUTH_CHANNEL);
+    app_state_unlock(primask);
 }
 
 bool app_state_is_armed(void)

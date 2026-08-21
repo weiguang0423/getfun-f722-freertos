@@ -86,6 +86,9 @@ MspTask (APP/Src/rtos/app_task.c, idle+2, 静态分配 1024 words 栈)
 - [APP/Inc/app_state.h](APP/Inc/app_state.h) / [APP/Src/app_state.c](APP/Src/app_state.c) — 全局运行态快照 `app_state_snapshot_t`（含IMU时间/dt、未滤波/滤波数据、两种校准、参数槽状态、解锁抑制、姿态/电池/运行信息）。多任务安全靠 **PRIMASK关中断 + DMB** 做短临界区。
 - [APP/Src/bsp/usb_cdc_transport.c](APP/Src/bsp/usb_cdc_transport.c) — USB CDC 上的一层收发适配。RX 是 1024 字节环形缓冲，ISR 写入后 `vTaskNotifyGiveFromISR` 唤醒绑定任务；`usb_cdc_transport_bind_current_task()` 必须在 MspTask 启动时调用一次。TX 320 字节缓冲，`tx_idle` 标志 + 轮询等待 `CDC_Transmit_FS` 完成（`usb_cdc_transport_transmit_complete_from_isr()` 在发送完成时置位）。
 - [APP/Src/platform/platform_diag.c](APP/Src/platform/platform_diag.c) — 平台基线诊断与安全停机。UART4 1 Hz输出IMU时间/dt、低通、两种校准、参数槽和偏置摘要；致命故障或参数保存前强制Motor 1～8低电平。
+- [APP/Src/algorithms/rc_source_arbiter.c](APP/Src/algorithms/rc_source_arbiter.c) — S7.7纯C物理/虚拟RC仲裁；AUX3低高授权，物理AUX保持所有权，摇杆/油门接管、非法候选、150 ms超时、会话重启、inhibit、DISARM或物理RC失效均立即退出，退出后禁止自动重入。
+- [APP/Src/bsp/linux_rc_monitor.c](APP/Src/bsp/linux_rc_monitor.c) — USART6 ISR固定帧接收器；校验CRC、格式、范围、时间差、心跳、源序号和发送会话，向RcTask提供原子候选快照，不直接发布RC。
+- [APP/Src/rtos/rc_task.c](APP/Src/rtos/rc_task.c) — RcTask是物理CRSF解析和最终RC快照单写者；S7.7保留物理映射，消费USART6候选并只把仲裁后的`mapped_channel_us`交给既有控制链。
 - [APP/Src/rtos/app_task.c](APP/Src/rtos/app_task.c) — `app_tasks_init()` 由 [freertos.c](Core/Src/freertos.c) 调用，初始化 app_state/transport，并**静态创建** ImuTask 和 MspTask。
 
 关键约束：

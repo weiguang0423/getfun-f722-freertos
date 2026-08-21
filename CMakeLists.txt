@@ -42,6 +42,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     APP/Src/algorithms/power_monitor.c
     APP/Src/algorithms/quad_x_mixer.c
     APP/Src/algorithms/rc_input.c
+    APP/Src/algorithms/rc_source_arbiter.c
     APP/Src/algorithms/rc_setpoint.c
     APP/Src/algorithms/rate_pid.c
     APP/Src/app_state.c

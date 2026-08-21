@@ -1,14 +1,17 @@
 /*
- * linux_rc_monitor.h -- Passive USART6 monitor for the S7.6 Linux virtual-RC frame.
+ * linux_rc_monitor.h -- Validated USART6 receiver for S7.6/S7.7 virtual RC.
  *
- * The monitor validates and exposes received 44-byte frames for UART4 diagnostics.
- * It never publishes RC input and cannot affect arming, setpoints, or motor outputs.
+ * The ISR parser validates framing, CRC, bounds, timestamps and progression. It
+ * exposes an atomic candidate snapshot to RcTask; only the S7.7 arbiter may turn
+ * that candidate into effective RC input.
  */
 #ifndef LINUX_RC_MONITOR_H
 #define LINUX_RC_MONITOR_H
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "algorithms/rc_source_arbiter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +24,9 @@ typedef struct
     uint32_t valid_frames;
     uint32_t crc_errors;
     uint32_t format_errors;
+    uint32_t sequence_errors;
+    uint32_t timestamp_errors;
+    uint32_t session_reset_count;
     uint32_t uart_errors;
     uint32_t last_heartbeat;
     uint32_t last_source_sequence;
@@ -34,6 +40,7 @@ void linux_rc_monitor_init(void);
 void linux_rc_monitor_uart_rx_byte(uint8_t byte);
 void linux_rc_monitor_uart_error(void);
 void linux_rc_monitor_get_diagnostics(linux_rc_monitor_diagnostics_t *diagnostics);
+void linux_rc_monitor_get_candidate(rc_virtual_candidate_t *candidate);
 
 #ifdef __cplusplus
 }

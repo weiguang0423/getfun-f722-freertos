@@ -39,6 +39,7 @@
 #include "algorithms/quad_x_mixer.h"
 #include "algorithms/rate_pid.h"
 #include "algorithms/rc_input.h"
+#include "algorithms/rc_source_arbiter.h"
 #include "algorithms/rc_setpoint.h"
 #include "storage/parameter_store.h"
 
@@ -228,8 +229,21 @@ typedef struct
     uint32_t failsafe_count;
     uint32_t failsafe_recovery_count;
     uint16_t failsafe_recovery_frame_count;
+    rc_source_t active_source;
+    rc_source_exit_reason_t source_last_exit_reason;
+    bool source_authorization_active;
+    bool source_reauthorization_ready;
+    bool virtual_candidate_valid;
+    TickType_t virtual_candidate_tick;
+    uint32_t virtual_source_sequence;
+    uint32_t virtual_heartbeat;
+    uint32_t virtual_session_generation;
+    uint32_t source_activation_count;
+    uint32_t source_exit_count;
+    TickType_t source_last_transition_tick;
     uint16_t channel_raw[APP_STATE_RC_CHANNEL_COUNT];
     uint16_t channel_us[APP_STATE_RC_CHANNEL_COUNT];
+    uint16_t physical_mapped_channel_us[APP_STATE_RC_CHANNEL_COUNT];
     uint16_t mapped_channel_us[APP_STATE_RC_CHANNEL_COUNT];
     int16_t uplink_rssi_dbm[2];
     uint8_t uplink_link_quality;
@@ -241,6 +255,17 @@ typedef struct
     uint8_t downlink_link_quality;
     int8_t downlink_snr_db;
 } app_rc_state_t;
+
+/* Compact, atomic input boundary for RcTask source arbitration. */
+typedef struct
+{
+    bool flight_armed;
+    bool authorization_channel_available;
+    uint32_t arming_inhibit_flags;
+} app_rc_source_context_t;
+
+_Static_assert(sizeof(app_rc_source_context_t) <= 16U,
+               "RcTask source context must remain stack-bounded");
 
 typedef struct
 {
@@ -332,6 +357,7 @@ typedef struct
 
 void app_state_init(void);
 void app_state_get_snapshot(app_state_snapshot_t *snapshot);
+void app_state_get_rc_source_context(app_rc_source_context_t *context);
 bool app_state_is_armed(void);
 
 void app_state_set_runtime(uint16_t cycle_time_us,

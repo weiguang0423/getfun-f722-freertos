@@ -630,7 +630,9 @@ static void print_record(const std::string& source, int frame_index, const cv::M
                                           live->monotonic_timestamp ? live->capture_timestamp_us : 0,
                                           now_us(true));
             out << ",\"virtual_rc_valid\":" << (rc.valid ? "true" : "false")
+                << ",\"virtual_rc_source_sequence\":" << rc.source_sequence
                 << ",\"virtual_rc_heartbeat\":" << rc.heartbeat
+                << ",\"virtual_rc_send_timestamp_us\":" << rc.send_timestamp_us
                 << ",\"virtual_rc_channels\":[" << rc.channels.roll << ',' << rc.channels.pitch
                 << ',' << rc.channels.yaw << ',' << rc.channels.throttle << ',' << rc.channels.aux
                 << ']';
