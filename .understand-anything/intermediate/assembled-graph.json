@@ -1,0 +1,1950 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "GETFUN_F722_FreeRTOS",
+    "languages": [
+      "c"
+    ],
+    "frameworks": [
+      "stm32-hal",
+      "freertos",
+      "cmsis-rtos"
+    ],
+    "description": "基于 STM32F722 + FreeRTOS 的飞控固件 APP 应用层，按系统逻辑（数据流/控制流）组织的子系统图谱。",
+    "analyzedAt": "2026-08-24T03:53:27.221Z",
+    "gitCommitHash": "a504227765e8c80120e29ac75c7e5148d47239ba"
+  },
+  "nodes": [
+    {
+      "id": "module:app-init",
+      "type": "module",
+      "name": "应用装配",
+      "filePath": "APP/Src/rtos/app_task.c",
+      "summary": "APP 层入口：创建并初始化所有 RTOS 任务、app_state 与 USB 传输。",
+      "tags": [
+        "rtos",
+        "init",
+        "entry-point"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:imu-sampling",
+      "type": "module",
+      "name": "IMU 采样",
+      "filePath": "APP/Src/rtos/imu_task.c",
+      "summary": "ImuTask 是 SPI1/ICM42688P 唯一所有者，1kHz DRDY 门控 DMA 采样原始陀螺/加速度数据。",
+      "tags": [
+        "imu",
+        "sensor",
+        "dma",
+        "task"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:time-base",
+      "type": "module",
+      "name": "时间基准",
+      "filePath": "APP/Src/platform/platform_time.c",
+      "summary": "Cortex-M7 DWT 微秒时基，提供真实 dt 供采样门控、滤波与姿态积分。",
+      "tags": [
+        "platform",
+        "time",
+        "dwt"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:calibration",
+      "type": "module",
+      "name": "校准",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "SI 换算与 CW90 之后执行陀螺/加速度零偏校准状态机，候选值持久化成功前不切换。",
+      "tags": [
+        "algorithm",
+        "calibration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:filter",
+      "type": "module",
+      "name": "低通滤波",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "三轴 PT1 低通，按真实 dt 更新，Gyro 100Hz / Accel 30Hz，专供后续姿态链。",
+      "tags": [
+        "algorithm",
+        "filter",
+        "pt1"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:attitude",
+      "type": "module",
+      "name": "姿态估计",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "Mahony 四元数融合陀螺与加速度，输出机体姿态；dt 无效或 IMU 门禁未过时禁止积分。",
+      "tags": [
+        "algorithm",
+        "attitude",
+        "mahony"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:rc-input",
+      "type": "module",
+      "name": "RC 输入",
+      "filePath": "APP/Src/rtos/rc_task.c",
+      "summary": "物理 CRSF 解析 + Linux 虚拟候选监视 + 人工授权仲裁，生成控制链使用的设定值。",
+      "tags": [
+        "algorithm",
+        "rc",
+        "arbiter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:flight-control",
+      "type": "module",
+      "name": "飞行控制",
+      "filePath": "APP/Src/rtos/flight_task.c",
+      "summary": "FlightTask 1kHz 消费 RC/PID/Angle：ANGLE 外环转 Rate 设定，Rate PID 计算控制量，四态解锁链门禁。",
+      "tags": [
+        "flight-control",
+        "pid",
+        "arming"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:mixer",
+      "type": "module",
+      "name": "混控",
+      "filePath": "APP/Src/algorithms/quad_x_mixer.c",
+      "summary": "Quad-X 混控矩阵，把三轴控制量 + 油门映射到 4 路电机输出端点。",
+      "tags": [
+        "algorithm",
+        "mixer",
+        "quad-x"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:motor-output",
+      "type": "module",
+      "name": "电机输出",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "DShot 电调协议输出，把电机端点值编码为 DShot 帧并经定时器 DMA 发送给电调。",
+      "tags": [
+        "bsp",
+        "motor",
+        "dshot"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:msp-usb",
+      "type": "module",
+      "name": "MSP/USB 通信",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "USB CDC 环形缓冲收发 + MSP 逐字节状态机解析与命令派发，使 Configurator 可读状态/写配置。",
+      "tags": [
+        "protocol",
+        "msp",
+        "usb",
+        "comms"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:param-store",
+      "type": "module",
+      "name": "参数存储",
+      "filePath": "APP/Src/storage/parameter_store.c",
+      "summary": "Sector 6/7 双槽 Flash 参数存储与迁移，保存偏置/RC/PID/Angle/motor_idle/名称。",
+      "tags": [
+        "storage",
+        "flash",
+        "parameter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:app-state",
+      "type": "module",
+      "name": "全局状态",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state 共享快照：跨任务短临界区发布 IMU/校准/滤波/姿态/电池信息，供飞行与 MSP 读取。",
+      "tags": [
+        "state",
+        "snapshot",
+        "shared"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:diag",
+      "type": "module",
+      "name": "平台诊断",
+      "filePath": "APP/Src/platform/platform_diag.c",
+      "summary": "平台基线诊断与安全停机：UART4 输出摘要，致命故障/保存前强制电机低电平。",
+      "tags": [
+        "platform",
+        "diag",
+        "safety"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "module:power",
+      "type": "module",
+      "name": "电源监测",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "ADC3 采样 + 电源监测算法 + 电池任务，发布电压/电流/剩余量到 app_state。",
+      "tags": [
+        "power",
+        "adc",
+        "battery"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/accel_calibration.h",
+      "type": "file",
+      "name": "accel_calibration.h",
+      "filePath": "APP/Inc/algorithms/accel_calibration.h",
+      "summary": "声明加速度校准状态机接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/angle_outer_loop.h",
+      "type": "file",
+      "name": "angle_outer_loop.h",
+      "filePath": "APP/Inc/algorithms/angle_outer_loop.h",
+      "summary": "声明姿态角外环接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/attitude_estimator.h",
+      "type": "file",
+      "name": "attitude_estimator.h",
+      "filePath": "APP/Inc/algorithms/attitude_estimator.h",
+      "summary": "声明 Mahony 四元数姿态估计接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/flight_arming.h",
+      "type": "file",
+      "name": "flight_arming.h",
+      "filePath": "APP/Inc/algorithms/flight_arming.h",
+      "summary": "声明四态安全解锁接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/gyro_calibration.h",
+      "type": "file",
+      "name": "gyro_calibration.h",
+      "filePath": "APP/Inc/algorithms/gyro_calibration.h",
+      "summary": "声明陀螺零偏校准接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/imu_filter.h",
+      "type": "file",
+      "name": "imu_filter.h",
+      "filePath": "APP/Inc/algorithms/imu_filter.h",
+      "summary": "声明 PT1 低通接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/power_monitor.h",
+      "type": "file",
+      "name": "power_monitor.h",
+      "filePath": "APP/Inc/algorithms/power_monitor.h",
+      "summary": "声明电源监测接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/quad_x_mixer.h",
+      "type": "file",
+      "name": "quad_x_mixer.h",
+      "filePath": "APP/Inc/algorithms/quad_x_mixer.h",
+      "summary": "声明 Quad-X 混控接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rate_pid.h",
+      "type": "file",
+      "name": "rate_pid.h",
+      "filePath": "APP/Inc/algorithms/rate_pid.h",
+      "summary": "声明角速率 PID 接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rc_input.h",
+      "type": "file",
+      "name": "rc_input.h",
+      "filePath": "APP/Inc/algorithms/rc_input.h",
+      "summary": "声明 RC 输入映射接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rc_setpoint.h",
+      "type": "file",
+      "name": "rc_setpoint.h",
+      "filePath": "APP/Inc/algorithms/rc_setpoint.h",
+      "summary": "声明设定值生成接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "type": "file",
+      "name": "rc_source_arbiter.h",
+      "filePath": "APP/Inc/algorithms/rc_source_arbiter.h",
+      "summary": "声明 RC 源仲裁接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/app_state.h",
+      "type": "file",
+      "name": "app_state.h",
+      "filePath": "APP/Inc/app_state.h",
+      "summary": "定义 app_state_snapshot_t 全局运行态结构与发布/读取接口。",
+      "tags": [
+        "type-definition",
+        "state"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Inc/bsp/crsf_uart.h",
+      "type": "file",
+      "name": "crsf_uart.h",
+      "filePath": "APP/Inc/bsp/crsf_uart.h",
+      "summary": "声明 CRSF 串口接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/dshot_motor.h",
+      "type": "file",
+      "name": "dshot_motor.h",
+      "filePath": "APP/Inc/bsp/dshot_motor.h",
+      "summary": "声明 DShot 电机输出接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/imu_bus.h",
+      "type": "file",
+      "name": "imu_bus.h",
+      "filePath": "APP/Inc/bsp/imu_bus.h",
+      "summary": "声明 SPI1/ICM42688P 总线接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/bsp/linux_rc_monitor.h",
+      "type": "file",
+      "name": "linux_rc_monitor.h",
+      "filePath": "APP/Inc/bsp/linux_rc_monitor.h",
+      "summary": "声明 USART6 候选快照接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/power_adc.h",
+      "type": "file",
+      "name": "power_adc.h",
+      "filePath": "APP/Inc/bsp/power_adc.h",
+      "summary": "声明 ADC3 采样接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/usb_cdc_transport.h",
+      "type": "file",
+      "name": "usb_cdc_transport.h",
+      "filePath": "APP/Inc/bsp/usb_cdc_transport.h",
+      "summary": "声明环形缓冲收发接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/drivers/icm42688p.h",
+      "type": "file",
+      "name": "icm42688p.h",
+      "filePath": "APP/Inc/drivers/icm42688p.h",
+      "summary": "定义 ICM42688P 寄存器与配置接口。",
+      "tags": [
+        "type-definition",
+        "driver"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/platform/platform_diag.h",
+      "type": "file",
+      "name": "platform_diag.h",
+      "filePath": "APP/Inc/platform/platform_diag.h",
+      "summary": "声明诊断输出与安全停机接口。",
+      "tags": [
+        "type-definition",
+        "platform"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/platform/platform_time.h",
+      "type": "file",
+      "name": "platform_time.h",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "声明 DWT 微秒时基接口。",
+      "tags": [
+        "type-definition",
+        "platform"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/protocol/crsf.h",
+      "type": "file",
+      "name": "crsf.h",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "定义 CRSF 帧结构与通道解算接口。",
+      "tags": [
+        "type-definition",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/protocol/msp_server.h",
+      "type": "file",
+      "name": "msp_server.h",
+      "filePath": "APP/Inc/protocol/msp_server.h",
+      "summary": "声明 MSP 命令派发接口。",
+      "tags": [
+        "type-definition",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/protocol/msp_transport.h",
+      "type": "file",
+      "name": "msp_transport.h",
+      "filePath": "APP/Inc/protocol/msp_transport.h",
+      "summary": "定义 msp_parser_t 状态机与帧构造接口。",
+      "tags": [
+        "type-definition",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/rtos/app_task.h",
+      "type": "file",
+      "name": "app_task.h",
+      "filePath": "APP/Inc/rtos/app_task.h",
+      "summary": "声明 app_tasks_init() 与静态任务句柄。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/battery_task.h",
+      "type": "file",
+      "name": "battery_task.h",
+      "filePath": "APP/Inc/rtos/battery_task.h",
+      "summary": "声明 BatteryTask 入口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/flight_task.h",
+      "type": "file",
+      "name": "flight_task.h",
+      "filePath": "APP/Inc/rtos/flight_task.h",
+      "summary": "声明 FlightTask 入口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/imu_task.h",
+      "type": "file",
+      "name": "imu_task.h",
+      "filePath": "APP/Inc/rtos/imu_task.h",
+      "summary": "声明 ImuTask 入口与初始化接口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/rtos/rc_task.h",
+      "type": "file",
+      "name": "rc_task.h",
+      "filePath": "APP/Inc/rtos/rc_task.h",
+      "summary": "声明 RcTask 入口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/storage/parameter_store.h",
+      "type": "file",
+      "name": "parameter_store.h",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "定义双槽参数结构与读写接口。",
+      "tags": [
+        "type-definition",
+        "storage"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/accel_calibration.c",
+      "type": "file",
+      "name": "accel_calibration.c",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "水平单面加速度校准：预热、Welford 窗口与运动/水平/方差/偏置门限，候选值持久化成功前不切换。",
+      "tags": [
+        "algorithm",
+        "calibration",
+        "accel"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "type": "file",
+      "name": "angle_outer_loop.c",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "姿态角外环：Roll/Pitch 角误差转 Rate 设定、Yaw 透传，模式/参数切换复位 PID。",
+      "tags": [
+        "algorithm",
+        "attitude",
+        "angle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/attitude_estimator.c",
+      "type": "file",
+      "name": "attitude_estimator.c",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "attitude_estimator.c：C 源文件。",
+      "tags": [
+        "module",
+        "code"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/flight_arming.c",
+      "type": "file",
+      "name": "flight_arming.c",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "四态安全解锁链：综合 IMU/校准/参数/RC 门禁，只有 ARMED 才允许电机输出。",
+      "tags": [
+        "algorithm",
+        "arming",
+        "safety"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/gyro_calibration.c",
+      "type": "file",
+      "name": "gyro_calibration.c",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "上电陀螺静态零偏状态机：预热、Welford 均值/方差窗口，运动或异常时重置，READY 后冻结并扣除三轴零偏。",
+      "tags": [
+        "algorithm",
+        "calibration",
+        "gyro"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/imu_filter.c",
+      "type": "file",
+      "name": "imu_filter.c",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "三轴 PT1 低通：按真实 dt 更新，Gyro 100Hz / Accel 30Hz，首样本播种，dt 超界或非有限值重置。",
+      "tags": [
+        "algorithm",
+        "filter",
+        "pt1"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/power_monitor.c",
+      "type": "file",
+      "name": "power_monitor.c",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "电源监测算法：由 ADC 原始值换算电压/电流/剩余量并做滤波。",
+      "tags": [
+        "algorithm",
+        "power",
+        "monitor"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "type": "file",
+      "name": "quad_x_mixer.c",
+      "filePath": "APP/Src/algorithms/quad_x_mixer.c",
+      "summary": "Quad-X 混控矩阵：把控制量映射到 4 路电机输出，含油门与方向分配。",
+      "tags": [
+        "algorithm",
+        "mixer",
+        "quad-x"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rate_pid.c",
+      "type": "file",
+      "name": "rate_pid.c",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "角速率 PID：对三轴角速率误差做 PID 计算并输出混控前控制量。",
+      "tags": [
+        "algorithm",
+        "pid",
+        "rate"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_input.c",
+      "type": "file",
+      "name": "rc_input.c",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "RC 输入抽象：把物理/虚拟候选通道映射为控制链使用的 mapped_channel_us。",
+      "tags": [
+        "algorithm",
+        "rc",
+        "input"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_setpoint.c",
+      "type": "file",
+      "name": "rc_setpoint.c",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "RC 设定值生成：由映射通道解算目标姿态角速率/油门设定。",
+      "tags": [
+        "algorithm",
+        "rc",
+        "setpoint"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "type": "file",
+      "name": "rc_source_arbiter.c",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "物理/虚拟 RC 仲裁：AUX3 授权，物理 AUX 保持所有权，超时/会话重启/inhibit/DISARM 立即退出且禁止自动重入。",
+      "tags": [
+        "algorithm",
+        "rc",
+        "arbiter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/app_state.c",
+      "type": "file",
+      "name": "app_state.c",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state 全局快照：聚合 IMU 时间/dt、未滤波/滤波数据、校准、参数槽、解锁抑制与姿态/电池信息，关中断短临界区发布。",
+      "tags": [
+        "state",
+        "snapshot",
+        "shared"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/crsf_uart.c",
+      "type": "file",
+      "name": "crsf_uart.c",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "CRSF 串口驱动：物理 RC 链路字节收发与帧边界检测。",
+      "tags": [
+        "bsp",
+        "crsf",
+        "uart"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/dshot_motor.c",
+      "type": "file",
+      "name": "dshot_motor.c",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "DShot 电调协议输出：把电机端点值编码为 DShot 帧并通过定时器 DMA 发送。",
+      "tags": [
+        "bsp",
+        "motor",
+        "dshot"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/imu_bus.c",
+      "type": "file",
+      "name": "imu_bus.c",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "SPI1 + PA4 CS + DMA2 总线适配层，封装 ICM42688P 阻塞事务与 14 字节 DMA 样本传输。",
+      "tags": [
+        "bsp",
+        "spi",
+        "driver"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "type": "file",
+      "name": "linux_rc_monitor.c",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "USART6 ISR 固定帧接收器：校验 CRC/格式/范围/心跳，向 RcTask 提供原子候选快照。",
+      "tags": [
+        "bsp",
+        "rc",
+        "linux",
+        "uart"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/power_adc.c",
+      "type": "file",
+      "name": "power_adc.c",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "ADC3 电源采样驱动：读取电池电压/电流原始值。",
+      "tags": [
+        "bsp",
+        "adc",
+        "power"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "type": "file",
+      "name": "usb_cdc_transport.c",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "USB CDC 收发适配：1024 字节 RX 环形缓冲 + 任务通知，TX 轮询等待 CDC_Transmit_FS 完成。",
+      "tags": [
+        "bsp",
+        "usb",
+        "cdc",
+        "transport"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/drivers/icm42688p.c",
+      "type": "file",
+      "name": "icm42688p.c",
+      "filePath": "APP/Src/drivers/icm42688p.c",
+      "summary": "ICM42688P 寄存器级驱动：初始化、量程/ODR 配置、FIFO/DRDY 读取与原始样本转换。",
+      "tags": [
+        "driver",
+        "imu",
+        "sensor"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/platform/platform_diag.c",
+      "type": "file",
+      "name": "platform_diag.c",
+      "filePath": "APP/Src/platform/platform_diag.c",
+      "summary": "平台基线诊断与安全停机：UART4 1Hz 输出摘要，致命故障或参数保存前强制 Motor 1~8 低电平。",
+      "tags": [
+        "platform",
+        "diag",
+        "safety"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/platform/platform_time.c",
+      "type": "file",
+      "name": "platform_time.c",
+      "filePath": "APP/Src/platform/platform_time.c",
+      "summary": "Cortex-M7 DWT 微秒时基：ISR 只读 CYCCNT，ImuTask 单写者做 32 位回绕扩展与周期余数累计。",
+      "tags": [
+        "platform",
+        "time",
+        "dwt"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/protocol/crsf.c",
+      "type": "file",
+      "name": "crsf.c",
+      "filePath": "APP/Src/protocol/crsf.c",
+      "summary": "Crossfire 遥控协议编解码：帧解析、通道解算与 CRC 校验。",
+      "tags": [
+        "protocol",
+        "crsf",
+        "rc"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/protocol/msp_server.c",
+      "type": "file",
+      "name": "msp_server.c",
+      "filePath": "APP/Src/protocol/msp_server.c",
+      "summary": "MSP 命令派发：按 command 路由，实现 PID/Modes/Motors/Configuration 最小标准读写，写操作受 Armed/安全门禁约束。",
+      "tags": [
+        "protocol",
+        "msp",
+        "server"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/protocol/msp_transport.c",
+      "type": "file",
+      "name": "msp_transport.c",
+      "filePath": "APP/Src/protocol/msp_transport.c",
+      "summary": "纯协议层：msp_parser_t 逐字节状态机解析 $M< V1 / $X< V2，构造回包帧。",
+      "tags": [
+        "protocol",
+        "msp",
+        "parser"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/rtos/app_task.c",
+      "type": "file",
+      "name": "app_task.c",
+      "filePath": "APP/Src/rtos/app_task.c",
+      "summary": "app_tasks_init()：初始化 app_state 与 usb_cdc_transport，并静态创建 ImuTask / MspTask / RcTask / FlightTask / BatteryTask。",
+      "tags": [
+        "entry-point",
+        "rtos",
+        "initialization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/rtos/battery_task.c",
+      "type": "file",
+      "name": "battery_task.c",
+      "filePath": "APP/Src/rtos/battery_task.c",
+      "summary": "BatteryTask：周期读取电源监测结果并发布电池电压/电流/剩余量到 app_state。",
+      "tags": [
+        "rtos",
+        "battery",
+        "task"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/rtos/flight_task.c",
+      "type": "file",
+      "name": "flight_task.c",
+      "filePath": "APP/Src/rtos/flight_task.c",
+      "summary": "FlightTask：1kHz 消费动态 RC/PID/Angle，ANGLE 外环转 Rate 设定、Yaw 透传，四态安全链仅 ARMED 时映射混控到电机。",
+      "tags": [
+        "rtos",
+        "flight-control",
+        "task"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/rtos/imu_task.c",
+      "type": "file",
+      "name": "imu_task.c",
+      "filePath": "APP/Src/rtos/imu_task.c",
+      "summary": "ImuTask：SPI1/ICM42688P 唯一所有者，1kHz DRDY 门控 DMA 采样、时间扩展、SI/CW90、校准、PT1 低通、参数提交与 app_state 发布。",
+      "tags": [
+        "rtos",
+        "imu",
+        "sensor",
+        "task"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/rtos/rc_task.c",
+      "type": "file",
+      "name": "rc_task.c",
+      "filePath": "APP/Src/rtos/rc_task.c",
+      "summary": "RcTask：物理 CRSF 解析与最终 RC 快照单写者，消费 USART6 候选并只把仲裁后 mapped_channel_us 交控制链。",
+      "tags": [
+        "rtos",
+        "rc",
+        "task"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/storage/parameter_store.c",
+      "type": "file",
+      "name": "parameter_store.c",
+      "filePath": "APP/Src/storage/parameter_store.c",
+      "summary": "STM32F722 Sector 6/7 双槽参数存储：保存 v2（偏置/RC/Rate PID/Angle/motor_idle/名称），兼容 v1 迁移，只擦非活动槽。",
+      "tags": [
+        "storage",
+        "flash",
+        "parameter"
+      ],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "module:app-init",
+      "target": "file:APP/Src/rtos/app_task.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:app-init",
+      "target": "file:APP/Inc/rtos/app_task.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "file:APP/Src/rtos/imu_task.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "file:APP/Inc/rtos/imu_task.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "file:APP/Src/bsp/imu_bus.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "file:APP/Inc/bsp/imu_bus.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "file:APP/Src/drivers/icm42688p.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "file:APP/Inc/drivers/icm42688p.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:time-base",
+      "target": "file:APP/Src/platform/platform_time.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:time-base",
+      "target": "file:APP/Inc/platform/platform_time.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:calibration",
+      "target": "file:APP/Src/algorithms/gyro_calibration.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:calibration",
+      "target": "file:APP/Inc/algorithms/gyro_calibration.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:calibration",
+      "target": "file:APP/Src/algorithms/accel_calibration.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:calibration",
+      "target": "file:APP/Inc/algorithms/accel_calibration.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:filter",
+      "target": "file:APP/Src/algorithms/imu_filter.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:filter",
+      "target": "file:APP/Inc/algorithms/imu_filter.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:attitude",
+      "target": "file:APP/Src/algorithms/attitude_estimator.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:attitude",
+      "target": "file:APP/Inc/algorithms/attitude_estimator.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Src/rtos/rc_task.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Inc/rtos/rc_task.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Src/bsp/crsf_uart.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Inc/bsp/crsf_uart.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Src/protocol/crsf.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Inc/protocol/crsf.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Inc/bsp/linux_rc_monitor.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Src/algorithms/rc_input.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Inc/algorithms/rc_input.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Src/algorithms/rc_setpoint.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:rc-input",
+      "target": "file:APP/Inc/algorithms/rc_setpoint.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Src/rtos/flight_task.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Inc/rtos/flight_task.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Inc/algorithms/angle_outer_loop.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Src/algorithms/rate_pid.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Inc/algorithms/rate_pid.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Src/algorithms/flight_arming.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:flight-control",
+      "target": "file:APP/Inc/algorithms/flight_arming.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:mixer",
+      "target": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:mixer",
+      "target": "file:APP/Inc/algorithms/quad_x_mixer.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:motor-output",
+      "target": "file:APP/Src/bsp/dshot_motor.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:motor-output",
+      "target": "file:APP/Inc/bsp/dshot_motor.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:msp-usb",
+      "target": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:msp-usb",
+      "target": "file:APP/Inc/bsp/usb_cdc_transport.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:msp-usb",
+      "target": "file:APP/Src/protocol/msp_transport.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:msp-usb",
+      "target": "file:APP/Inc/protocol/msp_transport.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:msp-usb",
+      "target": "file:APP/Src/protocol/msp_server.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:msp-usb",
+      "target": "file:APP/Inc/protocol/msp_server.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:param-store",
+      "target": "file:APP/Src/storage/parameter_store.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:param-store",
+      "target": "file:APP/Inc/storage/parameter_store.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:app-state",
+      "target": "file:APP/Src/app_state.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:app-state",
+      "target": "file:APP/Inc/app_state.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:diag",
+      "target": "file:APP/Src/platform/platform_diag.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:diag",
+      "target": "file:APP/Inc/platform/platform_diag.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:power",
+      "target": "file:APP/Src/bsp/power_adc.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:power",
+      "target": "file:APP/Inc/bsp/power_adc.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:power",
+      "target": "file:APP/Src/algorithms/power_monitor.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:power",
+      "target": "file:APP/Inc/algorithms/power_monitor.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:power",
+      "target": "file:APP/Src/rtos/battery_task.c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:power",
+      "target": "file:APP/Inc/rtos/battery_task.h",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "module:app-init",
+      "target": "module:imu-sampling",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "label": "创建并启动 ImuTask"
+    },
+    {
+      "source": "module:app-init",
+      "target": "module:msp-usb",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "label": "创建并启动 MspTask"
+    },
+    {
+      "source": "module:app-init",
+      "target": "module:rc-input",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "label": "创建并启动 RcTask"
+    },
+    {
+      "source": "module:app-init",
+      "target": "module:flight-control",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "label": "创建并启动 FlightTask"
+    },
+    {
+      "source": "module:app-init",
+      "target": "module:power",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "label": "创建并启动 BatteryTask"
+    },
+    {
+      "source": "module:app-init",
+      "target": "module:app-state",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "label": "初始化全局状态"
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "module:calibration",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "原始样本送入校准"
+    },
+    {
+      "source": "module:calibration",
+      "target": "module:filter",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "校准后数据送入低通"
+    },
+    {
+      "source": "module:filter",
+      "target": "module:attitude",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "滤波后数据送入姿态估计"
+    },
+    {
+      "source": "module:time-base",
+      "target": "module:imu-sampling",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "提供采样真实 dt"
+    },
+    {
+      "source": "module:time-base",
+      "target": "module:filter",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "提供滤波真实 dt"
+    },
+    {
+      "source": "module:time-base",
+      "target": "module:attitude",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "提供姿态积分 dt"
+    },
+    {
+      "source": "module:attitude",
+      "target": "module:flight-control",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "姿态送入 ANGLE 外环"
+    },
+    {
+      "source": "module:rc-input",
+      "target": "module:flight-control",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "RC 设定值送入飞行控制"
+    },
+    {
+      "source": "module:flight-control",
+      "target": "module:mixer",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "控制量送入混控"
+    },
+    {
+      "source": "module:mixer",
+      "target": "module:motor-output",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "混控输出送入电机"
+    },
+    {
+      "source": "module:flight-control",
+      "target": "module:motor-output",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "解锁门禁放行电机"
+    },
+    {
+      "source": "module:imu-sampling",
+      "target": "module:app-state",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "发布 IMU 快照"
+    },
+    {
+      "source": "module:calibration",
+      "target": "module:app-state",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "发布校准状态"
+    },
+    {
+      "source": "module:filter",
+      "target": "module:app-state",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "发布滤波数据"
+    },
+    {
+      "source": "module:app-state",
+      "target": "module:flight-control",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "飞行控制读取状态"
+    },
+    {
+      "source": "module:app-state",
+      "target": "module:msp-usb",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "MSP 读取遥测"
+    },
+    {
+      "source": "module:msp-usb",
+      "target": "module:app-state",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "MSP 写配置"
+    },
+    {
+      "source": "module:calibration",
+      "target": "module:param-store",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "保存零偏到 Flash"
+    },
+    {
+      "source": "module:param-store",
+      "target": "module:calibration",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "启动时加载零偏"
+    },
+    {
+      "source": "module:power",
+      "target": "module:app-state",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.5,
+      "label": "发布电池信息"
+    },
+    {
+      "source": "module:diag",
+      "target": "module:motor-output",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "label": "安全停机强制电机低电平"
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:app-init",
+      "name": "应用装配",
+      "description": "APP 层入口：创建并初始化所有 RTOS 任务、app_state 与 USB 传输。",
+      "nodeIds": [
+        "module:app-init",
+        "file:APP/Src/rtos/app_task.c",
+        "file:APP/Inc/rtos/app_task.h"
+      ]
+    },
+    {
+      "id": "layer:imu-sampling",
+      "name": "IMU 采样",
+      "description": "ImuTask 是 SPI1/ICM42688P 唯一所有者，1kHz DRDY 门控 DMA 采样原始陀螺/加速度数据。",
+      "nodeIds": [
+        "module:imu-sampling",
+        "file:APP/Src/rtos/imu_task.c",
+        "file:APP/Inc/rtos/imu_task.h",
+        "file:APP/Src/bsp/imu_bus.c",
+        "file:APP/Inc/bsp/imu_bus.h",
+        "file:APP/Src/drivers/icm42688p.c",
+        "file:APP/Inc/drivers/icm42688p.h"
+      ]
+    },
+    {
+      "id": "layer:time-base",
+      "name": "时间基准",
+      "description": "Cortex-M7 DWT 微秒时基，提供真实 dt 供采样门控、滤波与姿态积分。",
+      "nodeIds": [
+        "module:time-base",
+        "file:APP/Src/platform/platform_time.c",
+        "file:APP/Inc/platform/platform_time.h"
+      ]
+    },
+    {
+      "id": "layer:calibration",
+      "name": "校准",
+      "description": "SI 换算与 CW90 之后执行陀螺/加速度零偏校准状态机，候选值持久化成功前不切换。",
+      "nodeIds": [
+        "module:calibration",
+        "file:APP/Src/algorithms/gyro_calibration.c",
+        "file:APP/Inc/algorithms/gyro_calibration.h",
+        "file:APP/Src/algorithms/accel_calibration.c",
+        "file:APP/Inc/algorithms/accel_calibration.h"
+      ]
+    },
+    {
+      "id": "layer:filter",
+      "name": "低通滤波",
+      "description": "三轴 PT1 低通，按真实 dt 更新，Gyro 100Hz / Accel 30Hz，专供后续姿态链。",
+      "nodeIds": [
+        "module:filter",
+        "file:APP/Src/algorithms/imu_filter.c",
+        "file:APP/Inc/algorithms/imu_filter.h"
+      ]
+    },
+    {
+      "id": "layer:attitude",
+      "name": "姿态估计",
+      "description": "Mahony 四元数融合陀螺与加速度，输出机体姿态；dt 无效或 IMU 门禁未过时禁止积分。",
+      "nodeIds": [
+        "module:attitude",
+        "file:APP/Src/algorithms/attitude_estimator.c",
+        "file:APP/Inc/algorithms/attitude_estimator.h"
+      ]
+    },
+    {
+      "id": "layer:rc-input",
+      "name": "RC 输入",
+      "description": "物理 CRSF 解析 + Linux 虚拟候选监视 + 人工授权仲裁，生成控制链使用的设定值。",
+      "nodeIds": [
+        "module:rc-input",
+        "file:APP/Src/rtos/rc_task.c",
+        "file:APP/Inc/rtos/rc_task.h",
+        "file:APP/Src/bsp/crsf_uart.c",
+        "file:APP/Inc/bsp/crsf_uart.h",
+        "file:APP/Src/protocol/crsf.c",
+        "file:APP/Inc/protocol/crsf.h",
+        "file:APP/Src/bsp/linux_rc_monitor.c",
+        "file:APP/Inc/bsp/linux_rc_monitor.h",
+        "file:APP/Src/algorithms/rc_source_arbiter.c",
+        "file:APP/Inc/algorithms/rc_source_arbiter.h",
+        "file:APP/Src/algorithms/rc_input.c",
+        "file:APP/Inc/algorithms/rc_input.h",
+        "file:APP/Src/algorithms/rc_setpoint.c",
+        "file:APP/Inc/algorithms/rc_setpoint.h"
+      ]
+    },
+    {
+      "id": "layer:flight-control",
+      "name": "飞行控制",
+      "description": "FlightTask 1kHz 消费 RC/PID/Angle：ANGLE 外环转 Rate 设定，Rate PID 计算控制量，四态解锁链门禁。",
+      "nodeIds": [
+        "module:flight-control",
+        "file:APP/Src/rtos/flight_task.c",
+        "file:APP/Inc/rtos/flight_task.h",
+        "file:APP/Src/algorithms/angle_outer_loop.c",
+        "file:APP/Inc/algorithms/angle_outer_loop.h",
+        "file:APP/Src/algorithms/rate_pid.c",
+        "file:APP/Inc/algorithms/rate_pid.h",
+        "file:APP/Src/algorithms/flight_arming.c",
+        "file:APP/Inc/algorithms/flight_arming.h"
+      ]
+    },
+    {
+      "id": "layer:mixer",
+      "name": "混控",
+      "description": "Quad-X 混控矩阵，把三轴控制量 + 油门映射到 4 路电机输出端点。",
+      "nodeIds": [
+        "module:mixer",
+        "file:APP/Src/algorithms/quad_x_mixer.c",
+        "file:APP/Inc/algorithms/quad_x_mixer.h"
+      ]
+    },
+    {
+      "id": "layer:motor-output",
+      "name": "电机输出",
+      "description": "DShot 电调协议输出，把电机端点值编码为 DShot 帧并经定时器 DMA 发送给电调。",
+      "nodeIds": [
+        "module:motor-output",
+        "file:APP/Src/bsp/dshot_motor.c",
+        "file:APP/Inc/bsp/dshot_motor.h"
+      ]
+    },
+    {
+      "id": "layer:msp-usb",
+      "name": "MSP/USB 通信",
+      "description": "USB CDC 环形缓冲收发 + MSP 逐字节状态机解析与命令派发，使 Configurator 可读状态/写配置。",
+      "nodeIds": [
+        "module:msp-usb",
+        "file:APP/Src/bsp/usb_cdc_transport.c",
+        "file:APP/Inc/bsp/usb_cdc_transport.h",
+        "file:APP/Src/protocol/msp_transport.c",
+        "file:APP/Inc/protocol/msp_transport.h",
+        "file:APP/Src/protocol/msp_server.c",
+        "file:APP/Inc/protocol/msp_server.h"
+      ]
+    },
+    {
+      "id": "layer:param-store",
+      "name": "参数存储",
+      "description": "Sector 6/7 双槽 Flash 参数存储与迁移，保存偏置/RC/PID/Angle/motor_idle/名称。",
+      "nodeIds": [
+        "module:param-store",
+        "file:APP/Src/storage/parameter_store.c",
+        "file:APP/Inc/storage/parameter_store.h"
+      ]
+    },
+    {
+      "id": "layer:app-state",
+      "name": "全局状态",
+      "description": "app_state 共享快照：跨任务短临界区发布 IMU/校准/滤波/姿态/电池信息，供飞行与 MSP 读取。",
+      "nodeIds": [
+        "module:app-state",
+        "file:APP/Src/app_state.c",
+        "file:APP/Inc/app_state.h"
+      ]
+    },
+    {
+      "id": "layer:diag",
+      "name": "平台诊断",
+      "description": "平台基线诊断与安全停机：UART4 输出摘要，致命故障/保存前强制电机低电平。",
+      "nodeIds": [
+        "module:diag",
+        "file:APP/Src/platform/platform_diag.c",
+        "file:APP/Inc/platform/platform_diag.h"
+      ]
+    },
+    {
+      "id": "layer:power",
+      "name": "电源监测",
+      "description": "ADC3 采样 + 电源监测算法 + 电池任务，发布电压/电流/剩余量到 app_state。",
+      "nodeIds": [
+        "module:power",
+        "file:APP/Src/bsp/power_adc.c",
+        "file:APP/Inc/bsp/power_adc.h",
+        "file:APP/Src/algorithms/power_monitor.c",
+        "file:APP/Inc/algorithms/power_monitor.h",
+        "file:APP/Src/rtos/battery_task.c",
+        "file:APP/Inc/rtos/battery_task.h"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "应用装配：任务创建与初始化",
+      "description": "APP 层入口：创建并初始化所有 RTOS 任务、app_state 与 USB 传输。",
+      "nodeIds": [
+        "module:app-init"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "IMU 采样：1kHz DRDY 门控 DMA 采集原始数据",
+      "description": "ImuTask 是 SPI1/ICM42688P 唯一所有者，1kHz DRDY 门控 DMA 采样原始陀螺/加速度数据。",
+      "nodeIds": [
+        "module:imu-sampling"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "时间基准：DWT 微秒时基提供真实 dt",
+      "description": "Cortex-M7 DWT 微秒时基，提供真实 dt 供采样门控、滤波与姿态积分。",
+      "nodeIds": [
+        "module:time-base"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "校准：陀螺/加速度零偏状态机",
+      "description": "SI 换算与 CW90 之后执行陀螺/加速度零偏校准状态机，候选值持久化成功前不切换。",
+      "nodeIds": [
+        "module:calibration"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "低通滤波：三轴 PT1 低通",
+      "description": "三轴 PT1 低通，按真实 dt 更新，Gyro 100Hz / Accel 30Hz，专供后续姿态链。",
+      "nodeIds": [
+        "module:filter"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "姿态估计：Mahony 四元数融合",
+      "description": "Mahony 四元数融合陀螺与加速度，输出机体姿态；dt 无效或 IMU 门禁未过时禁止积分。",
+      "nodeIds": [
+        "module:attitude"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "RC 输入：物理/虚拟源仲裁与设定值",
+      "description": "物理 CRSF 解析 + Linux 虚拟候选监视 + 人工授权仲裁，生成控制链使用的设定值。",
+      "nodeIds": [
+        "module:rc-input"
+      ]
+    },
+    {
+      "order": 8,
+      "title": "飞行控制：ANGLE 外环 + Rate PID + 四态解锁",
+      "description": "FlightTask 1kHz 消费 RC/PID/Angle：ANGLE 外环转 Rate 设定，Rate PID 计算控制量，四态解锁链门禁。",
+      "nodeIds": [
+        "module:flight-control"
+      ]
+    },
+    {
+      "order": 9,
+      "title": "混控：Quad-X 矩阵映射",
+      "description": "Quad-X 混控矩阵，把三轴控制量 + 油门映射到 4 路电机输出端点。",
+      "nodeIds": [
+        "module:mixer"
+      ]
+    },
+    {
+      "order": 10,
+      "title": "电机输出：DShot 帧发送",
+      "description": "DShot 电调协议输出，把电机端点值编码为 DShot 帧并经定时器 DMA 发送给电调。",
+      "nodeIds": [
+        "module:motor-output"
+      ]
+    },
+    {
+      "order": 11,
+      "title": "全局状态：跨任务共享快照",
+      "description": "app_state 共享快照：跨任务短临界区发布 IMU/校准/滤波/姿态/电池信息，供飞行与 MSP 读取。",
+      "nodeIds": [
+        "module:app-state"
+      ]
+    },
+    {
+      "order": 12,
+      "title": "MSP/USB 通信：Configurator 遥测与配置",
+      "description": "USB CDC 环形缓冲收发 + MSP 逐字节状态机解析与命令派发，使 Configurator 可读状态/写配置。",
+      "nodeIds": [
+        "module:msp-usb"
+      ]
+    },
+    {
+      "order": 13,
+      "title": "参数存储：双槽 Flash 持久化",
+      "description": "Sector 6/7 双槽 Flash 参数存储与迁移，保存偏置/RC/PID/Angle/motor_idle/名称。",
+      "nodeIds": [
+        "module:param-store"
+      ]
+    },
+    {
+      "order": 14,
+      "title": "电源监测：电池电压/电流采集",
+      "description": "ADC3 采样 + 电源监测算法 + 电池任务，发布电压/电流/剩余量到 app_state。",
+      "nodeIds": [
+        "module:power"
+      ]
+    },
+    {
+      "order": 15,
+      "title": "平台诊断：安全停机与摘要",
+      "description": "平台基线诊断与安全停机：UART4 输出摘要，致命故障/保存前强制电机低电平。",
+      "nodeIds": [
+        "module:diag"
+      ]
+    }
+  ]
+}

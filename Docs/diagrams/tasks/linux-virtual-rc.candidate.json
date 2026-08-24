@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Linux 链路 · 手势虚拟 RC · 摄像头到 USART6",
+    "quality_profile": "showcase",
+    "viewBox": [1200, 520]
+  },
+  "stages": [
+    { "label": "采集" },
+    { "label": "推理 · RKNN/NPU" },
+    { "label": "识别" },
+    { "label": "映射 / 编码" },
+    { "label": "发送 / 监视" }
+  ],
+  "nodes": [
+    { "id": "s0_v4l2", "type": "external", "label": "IMX335 V4L2 采集", "sublabel": "800×600 NV12 · 20fps", "stage": 0, "row": 0, "width": 148, "height": 60, "tag": "/dev/video0" },
+    { "id": "s1_detector", "type": "backend", "label": "手部检测 · FP16", "sublabel": "hand_detector_fp16.rknn", "stage": 1, "row": 0, "width": 148, "height": 60, "tag": "RKNN · NPU" },
+    { "id": "s1_landmark", "type": "backend", "label": "21 关键点 · FP16", "sublabel": "hand_landmarks · 左右手", "stage": 1, "row": 1, "width": 148, "height": 60, "tag": "RKNN · NPU" },
+    { "id": "s2_gesture", "type": "backend", "label": "分类 + 五态状态机", "sublabel": "4 类 · ACTIVE≥0.75·5帧·150ms", "stage": 2, "row": 1, "width": 148, "height": 60, "tag": "s7_5_gesture" },
+    { "id": "s3_vrc", "type": "backend", "label": "Mapper + 44B 编码", "sublabel": "限幅±300 · 600/s · CRC16", "stage": 3, "row": 1, "width": 148, "height": 60, "tag": "s7_6_virtual_rc" },
+    { "id": "s4_serial", "type": "backend", "label": "SerialLink 发送", "sublabel": "/dev/ttyS9 · 115200 8N1", "stage": 4, "row": 1, "width": 148, "height": 60, "tag": "20Hz · 写失败终止" },
+    { "id": "s4_monitor", "type": "external", "label": "STM32 USART6 监视", "sublabel": "CRC/心跳/序号 → 候选", "stage": 4, "row": 2, "width": 148, "height": 60, "tag": "linux_rc_monitor" }
+  ],
+  "flows": [
+    { "id": "v4l2-detector", "from": "s0_v4l2", "to": "s1_detector", "label": "NV12 帧", "classification": "V4L2 MMAP", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "detector-landmark", "from": "s1_detector", "to": "s1_landmark", "label": "ROI 裁切", "classification": "关键点窗口", "variant": "emphasis", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [365, 215] },
+    { "id": "landmark-gesture", "from": "s1_landmark", "to": "s2_gesture", "label": "21 点 · presence", "classification": "几何观测", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelAt": [423, 316] },
+    { "id": "gesture-vrc", "from": "s2_gesture", "to": "s3_vrc", "label": "ACTIVE 快照 · 边沿", "classification": "事件式", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelAt": [638, 316] },
+    { "id": "vrc-serial", "from": "s3_vrc", "to": "s4_serial", "label": "44B CRC 帧", "classification": "小端 · CRC16", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelAt": [852.5, 316] },
+    { "id": "serial-monitor", "from": "s4_serial", "to": "s4_monitor", "label": "UART 115200", "classification": "USART6 被动", "variant": "emphasis", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [1010, 328] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "20 fps 实时链", "items": [
+      "V4L2 MMAP 排空缓冲 · 只取最新帧 · 每帧 50ms 处理窗",
+      "坏帧 / 采集超时 / 推理失败 → valid:false · 不沿用旧结果",
+      "端到端延迟门槛超时同样失效 (S7.4 验收 ≥5min 稳定)"
+    ] },
+    { "dot": "emerald", "title": "FP16 两级推理 (RKNN/NPU)", "items": [
+      "hand_detector → 检测框 + presence · 再裁切到关键点网络",
+      "21 点 + 左右手 · 分类置信度受几何分与 presence 双重限制",
+      "DRM 屏显并行: BGR→letterbox→XRGB8888→page flip · 失败仅告警"
+    ] },
+    { "dot": "amber", "title": "手势与状态机", "items": [
+      "4 类几何分类: OPEN_PALM/FIST/POINT/V_SIGN · 门槛 0.58 · 候选差 0.08",
+      "五态: NO_HAND/UNKNOWN/CANDIDATE/ACTIVE/RELEASED",
+      "ACTIVE 需 ≥0.75 连续 5 帧且跨度 ≥150ms · 250ms 间隔释放 · 300ms 冷却"
+    ] },
+    { "dot": "rose", "title": "映射 / 帧 / 监视契约", "items": [
+      "手势边沿 → 1s 脉冲 (Pitch/Roll ±300) · Throttle/AUX 恒 0 释放值",
+      "限幅 ±300 · 变化率 600/s · 44B 小端帧 GR+ver1+CRC16-CCITT-FALSE",
+      "健康态发中立有效帧 · 握拳/失败/重启发无效帧 · 写失败终止",
+      "STM32 侧校验 CRC/版本/范围/150ms/250ms/心跳/序号 → 候选 → S7.7 仲裁"
+    ] }
+  ]
+}

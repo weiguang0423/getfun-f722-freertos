@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "ImuTask 链路 · 1 kHz 传感器采集与姿态",
+    "quality_profile": "showcase",
+    "viewBox": [1120, 520]
+  },
+  "stages": [
+    { "label": "采集" },
+    { "label": "换算" },
+    { "label": "校准" },
+    { "label": "滤波 / 姿态" },
+    { "label": "发布" }
+  ],
+  "nodes": [
+    { "id": "s0_sample", "type": "backend", "label": "SPI1 DMA 采样", "sublabel": "DRDY 门控 · 14B", "stage": 0, "row": 0, "width": 148, "height": 60, "tag": "实时读取" },
+    { "id": "s0_isr", "type": "backend", "label": "DMA 完成 ISR", "sublabel": "DWT 取时", "stage": 0, "row": 1, "width": 148, "height": 60, "tag": "不阻塞" },
+    { "id": "s1_convert", "type": "backend", "label": "SI + CW90", "sublabel": "机体系 · 真实 dt", "stage": 1, "row": 0, "width": 148, "height": 60, "tag": "convert_sample" },
+    { "id": "s2_calibrate", "type": "backend", "label": "陀螺零偏 / 加速度校准", "sublabel": "Welford · 扣偏", "stage": 2, "row": 0, "width": 148, "height": 60, "tag": "校准" },
+    { "id": "s3_filter", "type": "backend", "label": "PT1 低通 + Mahony", "sublabel": "Gyro100/Accel30 → 姿态", "stage": 3, "row": 0, "width": 148, "height": 60, "tag": "姿态估计" },
+    { "id": "s4_publish", "type": "database", "label": "app_state 发布", "sublabel": "IMU / 姿态 / 参数", "stage": 4, "row": 0, "width": 148, "height": 60, "tag": "单写者" }
+  ],
+  "flows": [
+    { "id": "sample-convert", "from": "s0_sample", "to": "s1_convert", "label": "原始样本", "classification": "寄存器数据", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "sample-isr", "from": "s0_sample", "to": "s0_isr", "label": "完成中断", "classification": "通知任务", "variant": "dashed", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [150, 205] },
+    { "id": "isr-convert", "from": "s0_isr", "to": "s1_convert", "label": "DWT 取时", "classification": "platform_time", "variant": "dashed", "fromSide": "right", "toSide": "bottom", "via": [[315, 272]], "labelAt": [265, 204] },
+    { "id": "convert-calibrate", "from": "s1_convert", "to": "s2_calibrate", "label": "机体系", "classification": "SI 物理量", "variant": "emphasis", "labelDy": -16 },
+    { "id": "calibrate-filter", "from": "s2_calibrate", "to": "s3_filter", "label": "扣偏后", "classification": "滤波输入", "variant": "emphasis", "labelDy": -16 },
+    { "id": "filter-publish", "from": "s3_filter", "to": "s4_publish", "label": "姿态", "classification": "app_state", "variant": "emphasis", "labelDy": -16 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "1 kHz 单写者", "items": [
+      "ImuTask 是 SPI1/ICM42688P 唯一所有者，禁止他处直接访问",
+      "DRDY 就绪才启动 DMA；DMA 完成 ISR 只捕获 DWT 并唤醒",
+      "静态栈 512 words · 优先级 idle+4"
+    ] },
+    { "dot": "emerald", "title": "校准分支", "items": [
+      "陀螺零偏: 250 预热 + 2000 Welford · 上电重校 · 不持久化",
+      "加速度: 水平单面 · 候选持久化验证成功后才切换",
+      "IMU / 校准 / 参数无效时对应 arming_inhibit 保持置位"
+    ] },
+    { "dot": "amber", "title": "姿态输入", "items": [
+      "PT1 低通按真实 dt 更新 (Gyro 100Hz / Accel 30Hz)",
+      "Mahony 六轴融合输出四元数 + 欧拉角",
+      "未就绪 / dt 越界则不积分 · 保持抑制"
+    ] },
+    { "dot": "rose", "title": "存储边界", "items": [
+      "参数 Flash 仅 ImuTask 安全态写入 (Sector 6/7 A/B)",
+      "ARMED 或事务入口拒绝擦写；保存失败不覆盖活动槽",
+      "兼容 v1 参数迁移"
+    ] }
+  ]
+}

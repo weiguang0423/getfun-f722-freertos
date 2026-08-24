@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "BatteryTask 链路 · 50 Hz 电源采样与监控",
+    "quality_profile": "showcase",
+    "viewBox": [1000, 480]
+  },
+  "stages": [
+    { "label": "采样" },
+    { "label": "换算" },
+    { "label": "判定" },
+    { "label": "发布" }
+  ],
+  "nodes": [
+    { "id": "s0_adc", "type": "backend", "label": "ADC3 DMA 采样", "sublabel": "coherent 4ch · 20ms", "stage": 0, "row": 0, "width": 148, "height": 60, "tag": "power_adc" },
+    { "id": "s1_monitor", "type": "backend", "label": "power_monitor_update", "sublabel": "滤波 · 电压/电流 · mAh · 电芯", "stage": 1, "row": 0, "width": 148, "height": 60, "tag": "power_monitor" },
+    { "id": "s2_stale", "type": "backend", "label": "adc_running 判定", "sublabel": ">100ms 周期超时 → stale", "stage": 2, "row": 0, "width": 148, "height": 60, "tag": "状态机" },
+    { "id": "s3_pub", "type": "database", "label": "app_state 发布", "sublabel": "电池快照", "stage": 3, "row": 0, "width": 148, "height": 60, "tag": "单写者" }
+  ],
+  "flows": [
+    { "id": "adc-monitor", "from": "s0_adc", "to": "s1_monitor", "label": "原始采样", "classification": "4ch 原始", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "monitor-stale", "from": "s1_monitor", "to": "s2_stale", "label": "物理量", "classification": "更新计数", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "stale-pub", "from": "s2_stale", "to": "s3_pub", "label": "有效/失效", "classification": "app_state", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "50 Hz 周期", "items": [
+      "BatteryTask 空闲优先级 idle+1 · 384 words 静态栈",
+      "ADC3 持续后台转换 · 20ms 触发一次 coherent 4ch 采样",
+      "仅在 sequence 变化时才跑 power_monitor_update"
+    ] },
+    { "dot": "emerald", "title": "监控换算", "items": [
+      "四通道原始 → 电压/电流物理量 · 滤波",
+      "累加 consumed_mAh · 推定 cell_count",
+      "无效采样 / DMA 错误计数进入诊断"
+    ] },
+    { "dot": "amber", "title": "有效判定", "items": [
+      "初始未就绪 = POWER_BATTERY_INIT",
+      "adc_running 且 100ms 内有新样本才 present",
+      "超时/周期无新样本 → mark_stale"
+    ] },
+    { "dot": "rose", "title": "发布", "items": [
+      "app_state_publish_battery 原子发布电池快照",
+      "adc_running · cell_count · voltage_cv · current_ca · consumed_mah",
+      "关机/诊断数据供 MspTask 与平台诊断"
+    ] }
+  ]
+}

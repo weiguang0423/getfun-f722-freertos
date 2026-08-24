@@ -1,0 +1,4645 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "APP/Inc/rtos/app_task.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/rtos/battery_task.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 13,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/rtos/flight_task.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 23,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/rtos/imu_task.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 51,
+      "nonEmptyLines": 44,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/rtos/rc_task.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 13,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/storage/parameter_store.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 105,
+      "nonEmptyLines": 93,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/accel_calibration.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 351,
+      "nonEmptyLines": 311,
+      "functions": [
+        {
+          "name": "increment_saturating",
+          "startLine": 47,
+          "endLine": 52,
+          "params": [
+            "counter"
+          ]
+        },
+        {
+          "name": "clear_window",
+          "startLine": 54,
+          "endLine": 67,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "classify_sample",
+          "startLine": 69,
+          "endLine": 102,
+          "params": [
+            "acceleration_m_s2",
+            "angular_rate_rad_s"
+          ]
+        },
+        {
+          "name": "reject_window",
+          "startLine": 104,
+          "endLine": 125,
+          "params": [
+            "calibration",
+            "result"
+          ]
+        },
+        {
+          "name": "final_window_is_valid",
+          "startLine": 127,
+          "endLine": 172,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "accel_calibration_initialize",
+          "startLine": 174,
+          "endLine": 207,
+          "params": [
+            "calibration",
+            "bias_m_s2",
+            "bias_valid"
+          ]
+        },
+        {
+          "name": "accel_calibration_start",
+          "startLine": 209,
+          "endLine": 225,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "accel_calibration_process",
+          "startLine": 227,
+          "endLine": 286,
+          "params": [
+            "calibration",
+            "acceleration_m_s2",
+            "angular_rate_rad_s"
+          ]
+        },
+        {
+          "name": "accel_calibration_get_candidate",
+          "startLine": 288,
+          "endLine": 303,
+          "params": [
+            "calibration",
+            "candidate_bias_m_s2"
+          ]
+        },
+        {
+          "name": "accel_calibration_mark_persisted",
+          "startLine": 305,
+          "endLine": 319,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "accel_calibration_mark_save_failed",
+          "startLine": 321,
+          "endLine": 329,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "accel_calibration_apply",
+          "startLine": 331,
+          "endLine": 351,
+          "params": [
+            "calibration",
+            "acceleration_m_s2",
+            "corrected_m_s2"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "accel_calibration_initialize",
+          "line": 174,
+          "isDefault": false
+        },
+        {
+          "name": "accel_calibration_start",
+          "line": 209,
+          "isDefault": false
+        },
+        {
+          "name": "accel_calibration_process",
+          "line": 227,
+          "isDefault": false
+        },
+        {
+          "name": "accel_calibration_get_candidate",
+          "line": 288,
+          "isDefault": false
+        },
+        {
+          "name": "accel_calibration_mark_persisted",
+          "line": 305,
+          "isDefault": false
+        },
+        {
+          "name": "accel_calibration_mark_save_failed",
+          "line": 321,
+          "isDefault": false
+        },
+        {
+          "name": "accel_calibration_apply",
+          "line": 331,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "clear_window",
+          "callee": "memset",
+          "lineNumber": 58
+        },
+        {
+          "caller": "clear_window",
+          "callee": "memset",
+          "lineNumber": 61
+        },
+        {
+          "caller": "clear_window",
+          "callee": "memset",
+          "lineNumber": 64
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "isfinite",
+          "lineNumber": 77
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "isfinite",
+          "lineNumber": 78
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "fabsf",
+          "lineNumber": 81
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "SQUARE",
+          "lineNumber": 90
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "SQUARE",
+          "lineNumber": 92
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "SQUARE",
+          "lineNumber": 96
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "SQUARE",
+          "lineNumber": 97
+        },
+        {
+          "caller": "classify_sample",
+          "callee": "SQUARE",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reject_window",
+          "callee": "increment_saturating",
+          "lineNumber": 109
+        },
+        {
+          "caller": "reject_window",
+          "callee": "increment_saturating",
+          "lineNumber": 114
+        },
+        {
+          "caller": "reject_window",
+          "callee": "increment_saturating",
+          "lineNumber": 117
+        },
+        {
+          "caller": "reject_window",
+          "callee": "increment_saturating",
+          "lineNumber": 121
+        },
+        {
+          "caller": "reject_window",
+          "callee": "clear_window",
+          "lineNumber": 124
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "SQUARE",
+          "lineNumber": 132
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "SQUARE",
+          "lineNumber": 133
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "fabsf",
+          "lineNumber": 135
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "SQUARE",
+          "lineNumber": 139
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 149
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "SQUARE",
+          "lineNumber": 150
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "copysignf",
+          "lineNumber": 161
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 165
+        },
+        {
+          "caller": "final_window_is_valid",
+          "callee": "fabsf",
+          "lineNumber": 166
+        },
+        {
+          "caller": "accel_calibration_initialize",
+          "callee": "memset",
+          "lineNumber": 183
+        },
+        {
+          "caller": "accel_calibration_initialize",
+          "callee": "isfinite",
+          "lineNumber": 190
+        },
+        {
+          "caller": "accel_calibration_initialize",
+          "callee": "fabsf",
+          "lineNumber": 191
+        },
+        {
+          "caller": "accel_calibration_initialize",
+          "callee": "memcpy",
+          "lineNumber": 198
+        },
+        {
+          "caller": "accel_calibration_start",
+          "callee": "clear_window",
+          "lineNumber": 218
+        },
+        {
+          "caller": "accel_calibration_process",
+          "callee": "classify_sample",
+          "lineNumber": 244
+        },
+        {
+          "caller": "accel_calibration_process",
+          "callee": "reject_window",
+          "lineNumber": 247
+        },
+        {
+          "caller": "accel_calibration_process",
+          "callee": "final_window_is_valid",
+          "lineNumber": 278
+        },
+        {
+          "caller": "accel_calibration_process",
+          "callee": "reject_window",
+          "lineNumber": 279
+        },
+        {
+          "caller": "accel_calibration_get_candidate",
+          "callee": "memcpy",
+          "lineNumber": 299
+        },
+        {
+          "caller": "accel_calibration_mark_persisted",
+          "callee": "memcpy",
+          "lineNumber": 314
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 12,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/angle_outer_loop.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 98,
+      "nonEmptyLines": 89,
+      "functions": [
+        {
+          "name": "clampf",
+          "startLine": 20,
+          "endLine": 29,
+          "params": [
+            "value",
+            "minimum",
+            "maximum"
+          ]
+        },
+        {
+          "name": "angle_outer_loop_profile_is_valid",
+          "startLine": 36,
+          "endLine": 49,
+          "params": [
+            "profile"
+          ]
+        },
+        {
+          "name": "angle_outer_loop_compute",
+          "startLine": 51,
+          "endLine": 98,
+          "params": [
+            "profile",
+            "normalized_stick",
+            "yaw_rate_dps",
+            "attitude_deg",
+            "output"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "angle_outer_loop_profile_is_valid",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "angle_outer_loop_compute",
+          "line": 51,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "angle_outer_loop_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 40
+        },
+        {
+          "caller": "angle_outer_loop_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 41
+        },
+        {
+          "caller": "angle_outer_loop_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 42
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "memset",
+          "lineNumber": 63
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "angle_outer_loop_profile_is_valid",
+          "lineNumber": 64
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "isfinite",
+          "lineNumber": 66
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "fabsf",
+          "lineNumber": 67
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "isfinite",
+          "lineNumber": 72
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "isfinite",
+          "lineNumber": 78
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "isfinite",
+          "lineNumber": 78
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "fabsf",
+          "lineNumber": 79
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "fabsf",
+          "lineNumber": 80
+        },
+        {
+          "caller": "angle_outer_loop_compute",
+          "callee": "clampf",
+          "lineNumber": 90
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/attitude_estimator.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 346,
+      "nonEmptyLines": 311,
+      "functions": [
+        {
+          "name": "increment_saturating",
+          "startLine": 18,
+          "endLine": 23,
+          "params": [
+            "counter"
+          ]
+        },
+        {
+          "name": "clampf",
+          "startLine": 25,
+          "endLine": 34,
+          "params": [
+            "value",
+            "minimum",
+            "maximum"
+          ]
+        },
+        {
+          "name": "vectors_are_finite",
+          "startLine": 36,
+          "endLine": 49,
+          "params": [
+            "acceleration_m_s2",
+            "angular_rate_rad_s"
+          ]
+        },
+        {
+          "name": "normalize_measured_down",
+          "startLine": 51,
+          "endLine": 88,
+          "params": [
+            "acceleration_m_s2",
+            "measured_down"
+          ]
+        },
+        {
+          "name": "normalize_quaternion",
+          "startLine": 90,
+          "endLine": 119,
+          "params": [
+            "estimator"
+          ]
+        },
+        {
+          "name": "update_euler",
+          "startLine": 121,
+          "endLine": 153,
+          "params": [
+            "estimator"
+          ]
+        },
+        {
+          "name": "seed_from_gravity",
+          "startLine": 155,
+          "endLine": 189,
+          "params": [
+            "estimator",
+            "measured_down"
+          ]
+        },
+        {
+          "name": "attitude_estimator_initialize",
+          "startLine": 191,
+          "endLine": 199,
+          "params": [
+            "estimator"
+          ]
+        },
+        {
+          "name": "attitude_estimator_reset",
+          "startLine": 201,
+          "endLine": 220,
+          "params": [
+            "estimator"
+          ]
+        },
+        {
+          "name": "attitude_estimator_update",
+          "startLine": 222,
+          "endLine": 346,
+          "params": [
+            "estimator",
+            "acceleration_m_s2",
+            "angular_rate_rad_s",
+            "dt_s"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "attitude_estimator_initialize",
+          "line": 191,
+          "isDefault": false
+        },
+        {
+          "name": "attitude_estimator_reset",
+          "line": 201,
+          "isDefault": false
+        },
+        {
+          "name": "attitude_estimator_update",
+          "line": 222,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "vectors_are_finite",
+          "callee": "isfinite",
+          "lineNumber": 43
+        },
+        {
+          "caller": "vectors_are_finite",
+          "callee": "isfinite",
+          "lineNumber": 44
+        },
+        {
+          "caller": "normalize_measured_down",
+          "callee": "isfinite",
+          "lineNumber": 67
+        },
+        {
+          "caller": "normalize_measured_down",
+          "callee": "sqrtf",
+          "lineNumber": 73
+        },
+        {
+          "caller": "normalize_measured_down",
+          "callee": "isfinite",
+          "lineNumber": 74
+        },
+        {
+          "caller": "normalize_measured_down",
+          "callee": "isfinite",
+          "lineNumber": 85
+        },
+        {
+          "caller": "normalize_measured_down",
+          "callee": "isfinite",
+          "lineNumber": 86
+        },
+        {
+          "caller": "normalize_measured_down",
+          "callee": "isfinite",
+          "lineNumber": 87
+        },
+        {
+          "caller": "normalize_quaternion",
+          "callee": "isfinite",
+          "lineNumber": 100
+        },
+        {
+          "caller": "normalize_quaternion",
+          "callee": "sqrtf",
+          "lineNumber": 105
+        },
+        {
+          "caller": "normalize_quaternion",
+          "callee": "isfinite",
+          "lineNumber": 106
+        },
+        {
+          "caller": "normalize_quaternion",
+          "callee": "isfinite",
+          "lineNumber": 114
+        },
+        {
+          "caller": "update_euler",
+          "callee": "clampf",
+          "lineNumber": 128
+        },
+        {
+          "caller": "update_euler",
+          "callee": "atan2f",
+          "lineNumber": 132
+        },
+        {
+          "caller": "update_euler",
+          "callee": "asinf",
+          "lineNumber": 136
+        },
+        {
+          "caller": "update_euler",
+          "callee": "atan2f",
+          "lineNumber": 138
+        },
+        {
+          "caller": "update_euler",
+          "callee": "isfinite",
+          "lineNumber": 150
+        },
+        {
+          "caller": "update_euler",
+          "callee": "isfinite",
+          "lineNumber": 151
+        },
+        {
+          "caller": "update_euler",
+          "callee": "isfinite",
+          "lineNumber": 152
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "atan2f",
+          "lineNumber": 160
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "sqrtf",
+          "lineNumber": 162
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "atan2f",
+          "lineNumber": 165
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "cosf",
+          "lineNumber": 168
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "sinf",
+          "lineNumber": 169
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "cosf",
+          "lineNumber": 170
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "sinf",
+          "lineNumber": 171
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "memset",
+          "lineNumber": 177
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "normalize_quaternion",
+          "lineNumber": 181
+        },
+        {
+          "caller": "seed_from_gravity",
+          "callee": "update_euler",
+          "lineNumber": 182
+        },
+        {
+          "caller": "attitude_estimator_initialize",
+          "callee": "memset",
+          "lineNumber": 197
+        },
+        {
+          "caller": "attitude_estimator_reset",
+          "callee": "memset",
+          "lineNumber": 213
+        },
+        {
+          "caller": "attitude_estimator_reset",
+          "callee": "increment_saturating",
+          "lineNumber": 219
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "vectors_are_finite",
+          "lineNumber": 239
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "isfinite",
+          "lineNumber": 241
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "increment_saturating",
+          "lineNumber": 244
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "attitude_estimator_reset",
+          "lineNumber": 245
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "normalize_measured_down",
+          "lineNumber": 250
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "increment_saturating",
+          "lineNumber": 252
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "seed_from_gravity",
+          "lineNumber": 257
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "increment_saturating",
+          "lineNumber": 261
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "memcpy",
+          "lineNumber": 265
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "clampf",
+          "lineNumber": 297
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "increment_saturating",
+          "lineNumber": 309
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "memcpy",
+          "lineNumber": 312
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "normalize_quaternion",
+          "lineNumber": 336
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "update_euler",
+          "lineNumber": 337
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "increment_saturating",
+          "lineNumber": 338
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "attitude_estimator_reset",
+          "lineNumber": 339
+        },
+        {
+          "caller": "attitude_estimator_update",
+          "callee": "increment_saturating",
+          "lineNumber": 344
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 10,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/flight_arming.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 62,
+      "functions": [
+        {
+          "name": "flight_arming_init",
+          "startLine": 11,
+          "endLine": 18,
+          "params": [
+            "arming"
+          ]
+        },
+        {
+          "name": "flight_arming_update",
+          "startLine": 20,
+          "endLine": 65,
+          "params": [
+            "arming",
+            "arm_requested",
+            "blocking_flags",
+            "failsafe_flags"
+          ]
+        },
+        {
+          "name": "flight_arming_is_armed",
+          "startLine": 67,
+          "endLine": 71,
+          "params": [
+            "arming"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "flight_arming_init",
+          "line": 11,
+          "isDefault": false
+        },
+        {
+          "name": "flight_arming_update",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "flight_arming_is_armed",
+          "line": 67,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "flight_arming_init",
+          "callee": "memset",
+          "lineNumber": 16
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/gyro_calibration.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 226,
+      "nonEmptyLines": 193,
+      "functions": [
+        {
+          "name": "increment_saturating",
+          "startLine": 37,
+          "endLine": 42,
+          "params": [
+            "counter"
+          ]
+        },
+        {
+          "name": "clear_window",
+          "startLine": 44,
+          "endLine": 50,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "reject_window",
+          "startLine": 52,
+          "endLine": 67,
+          "params": [
+            "calibration",
+            "invalid"
+          ]
+        },
+        {
+          "name": "sample_is_finite",
+          "startLine": 69,
+          "endLine": 82,
+          "params": [
+            "angular_rate_rad_s",
+            "acceleration_m_s2"
+          ]
+        },
+        {
+          "name": "sample_is_stationary",
+          "startLine": 84,
+          "endLine": 104,
+          "params": [
+            "angular_rate_rad_s",
+            "acceleration_m_s2"
+          ]
+        },
+        {
+          "name": "window_variance_is_acceptable",
+          "startLine": 106,
+          "endLine": 123,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "gyro_calibration_reset",
+          "startLine": 125,
+          "endLine": 133,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "gyro_calibration_start",
+          "startLine": 135,
+          "endLine": 141,
+          "params": [
+            "calibration"
+          ]
+        },
+        {
+          "name": "gyro_calibration_process",
+          "startLine": 143,
+          "endLine": 205,
+          "params": [
+            "calibration",
+            "angular_rate_rad_s",
+            "acceleration_m_s2"
+          ]
+        },
+        {
+          "name": "gyro_calibration_apply",
+          "startLine": 207,
+          "endLine": 226,
+          "params": [
+            "calibration",
+            "angular_rate_rad_s",
+            "corrected_rad_s"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "gyro_calibration_reset",
+          "line": 125,
+          "isDefault": false
+        },
+        {
+          "name": "gyro_calibration_start",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "gyro_calibration_process",
+          "line": 143,
+          "isDefault": false
+        },
+        {
+          "name": "gyro_calibration_apply",
+          "line": 207,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "clear_window",
+          "callee": "memset",
+          "lineNumber": 48
+        },
+        {
+          "caller": "clear_window",
+          "callee": "memset",
+          "lineNumber": 49
+        },
+        {
+          "caller": "reject_window",
+          "callee": "increment_saturating",
+          "lineNumber": 56
+        },
+        {
+          "caller": "reject_window",
+          "callee": "increment_saturating",
+          "lineNumber": 60
+        },
+        {
+          "caller": "reject_window",
+          "callee": "increment_saturating",
+          "lineNumber": 62
+        },
+        {
+          "caller": "reject_window",
+          "callee": "clear_window",
+          "lineNumber": 65
+        },
+        {
+          "caller": "sample_is_finite",
+          "callee": "isfinite",
+          "lineNumber": 76
+        },
+        {
+          "caller": "sample_is_finite",
+          "callee": "isfinite",
+          "lineNumber": 77
+        },
+        {
+          "caller": "sample_is_stationary",
+          "callee": "fabsf",
+          "lineNumber": 92
+        },
+        {
+          "caller": "window_variance_is_acceptable",
+          "callee": "isfinite",
+          "lineNumber": 117
+        },
+        {
+          "caller": "gyro_calibration_reset",
+          "callee": "memset",
+          "lineNumber": 131
+        },
+        {
+          "caller": "gyro_calibration_start",
+          "callee": "gyro_calibration_reset",
+          "lineNumber": 137
+        },
+        {
+          "caller": "gyro_calibration_process",
+          "callee": "sample_is_finite",
+          "lineNumber": 160
+        },
+        {
+          "caller": "gyro_calibration_process",
+          "callee": "reject_window",
+          "lineNumber": 161
+        },
+        {
+          "caller": "gyro_calibration_process",
+          "callee": "sample_is_stationary",
+          "lineNumber": 165
+        },
+        {
+          "caller": "gyro_calibration_process",
+          "callee": "reject_window",
+          "lineNumber": 166
+        },
+        {
+          "caller": "gyro_calibration_process",
+          "callee": "window_variance_is_acceptable",
+          "lineNumber": 195
+        },
+        {
+          "caller": "gyro_calibration_process",
+          "callee": "reject_window",
+          "lineNumber": 196
+        },
+        {
+          "caller": "gyro_calibration_process",
+          "callee": "memcpy",
+          "lineNumber": 200
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 10,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/imu_filter.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 171,
+      "nonEmptyLines": 155,
+      "functions": [
+        {
+          "name": "vectors_are_finite",
+          "startLine": 19,
+          "endLine": 32,
+          "params": [
+            "acceleration_m_s2",
+            "angular_rate_rad_s"
+          ]
+        },
+        {
+          "name": "seed_filter",
+          "startLine": 34,
+          "endLine": 54,
+          "params": [
+            "filter",
+            "acceleration_m_s2",
+            "angular_rate_rad_s",
+            "filtered_acceleration_m_s2",
+            "filtered_angular_rate_rad_s"
+          ]
+        },
+        {
+          "name": "imu_filter_reset",
+          "startLine": 56,
+          "endLine": 61,
+          "params": [
+            "filter"
+          ]
+        },
+        {
+          "name": "imu_filter_process",
+          "startLine": 63,
+          "endLine": 171,
+          "params": [
+            "filter",
+            "acceleration_m_s2",
+            "angular_rate_rad_s",
+            "dt_s",
+            "filtered_acceleration_m_s2",
+            "filtered_angular_rate_rad_s"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "imu_filter_reset",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "imu_filter_process",
+          "line": 63,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "vectors_are_finite",
+          "callee": "isfinite",
+          "lineNumber": 26
+        },
+        {
+          "caller": "vectors_are_finite",
+          "callee": "isfinite",
+          "lineNumber": 27
+        },
+        {
+          "caller": "seed_filter",
+          "callee": "memcpy",
+          "lineNumber": 41
+        },
+        {
+          "caller": "seed_filter",
+          "callee": "memcpy",
+          "lineNumber": 44
+        },
+        {
+          "caller": "seed_filter",
+          "callee": "memcpy",
+          "lineNumber": 47
+        },
+        {
+          "caller": "seed_filter",
+          "callee": "memcpy",
+          "lineNumber": 50
+        },
+        {
+          "caller": "imu_filter_reset",
+          "callee": "memset",
+          "lineNumber": 59
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "vectors_are_finite",
+          "lineNumber": 84
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "imu_filter_reset",
+          "lineNumber": 85
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "memset",
+          "lineNumber": 86
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "memset",
+          "lineNumber": 89
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "seed_filter",
+          "lineNumber": 96
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "isfinite",
+          "lineNumber": 104
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "imu_filter_reset",
+          "lineNumber": 106
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "seed_filter",
+          "lineNumber": 107
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "isfinite",
+          "lineNumber": 122
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "isfinite",
+          "lineNumber": 122
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "imu_filter_reset",
+          "lineNumber": 125
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "seed_filter",
+          "lineNumber": 126
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "isfinite",
+          "lineNumber": 146
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "isfinite",
+          "lineNumber": 147
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "imu_filter_reset",
+          "lineNumber": 148
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "seed_filter",
+          "lineNumber": 149
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "memcpy",
+          "lineNumber": 158
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "memcpy",
+          "lineNumber": 161
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "memcpy",
+          "lineNumber": 164
+        },
+        {
+          "caller": "imu_filter_process",
+          "callee": "memcpy",
+          "lineNumber": 167
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/power_monitor.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 275,
+      "nonEmptyLines": 245,
+      "functions": [
+        {
+          "name": "saturating_add_u32",
+          "startLine": 11,
+          "endLine": 17,
+          "params": [
+            "value",
+            "increment"
+          ]
+        },
+        {
+          "name": "classify_voltage",
+          "startLine": 19,
+          "endLine": 55,
+          "params": [
+            "monitor"
+          ]
+        },
+        {
+          "name": "power_monitor_raw_to_voltage_cv",
+          "startLine": 57,
+          "endLine": 70,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "power_monitor_raw_to_current_ca",
+          "startLine": 72,
+          "endLine": 94,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "power_monitor_detect_cell_count",
+          "startLine": 96,
+          "endLine": 114,
+          "params": [
+            "voltage_cv"
+          ]
+        },
+        {
+          "name": "power_monitor_init",
+          "startLine": 116,
+          "endLine": 125,
+          "params": [
+            "monitor"
+          ]
+        },
+        {
+          "name": "power_monitor_update",
+          "startLine": 127,
+          "endLine": 260,
+          "params": [
+            "monitor",
+            "raw",
+            "elapsed_ms"
+          ]
+        },
+        {
+          "name": "power_monitor_mark_stale",
+          "startLine": 262,
+          "endLine": 275,
+          "params": [
+            "monitor"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "power_monitor_raw_to_voltage_cv",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "power_monitor_raw_to_current_ca",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "power_monitor_detect_cell_count",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "power_monitor_init",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "power_monitor_update",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "power_monitor_mark_stale",
+          "line": 262,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "power_monitor_init",
+          "callee": "memset",
+          "lineNumber": 122
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "memcpy",
+          "lineNumber": 148
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "power_monitor_raw_to_voltage_cv",
+          "lineNumber": 181
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "power_monitor_raw_to_current_ca",
+          "lineNumber": 183
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "saturating_add_u32",
+          "lineNumber": 189
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "power_monitor_detect_cell_count",
+          "lineNumber": 196
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "classify_voltage",
+          "lineNumber": 198
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "saturating_add_u32",
+          "lineNumber": 208
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "classify_voltage",
+          "lineNumber": 227
+        },
+        {
+          "caller": "power_monitor_update",
+          "callee": "saturating_add_u32",
+          "lineNumber": 235
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 8,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/quad_x_mixer.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 96,
+      "nonEmptyLines": 87,
+      "functions": [
+        {
+          "name": "clampf",
+          "startLine": 16,
+          "endLine": 25,
+          "params": [
+            "value",
+            "minimum",
+            "maximum"
+          ]
+        },
+        {
+          "name": "quad_x_mixer_compute",
+          "startLine": 27,
+          "endLine": 96,
+          "params": [
+            "throttle",
+            "correction",
+            "output"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "quad_x_mixer_compute",
+          "line": 27,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "quad_x_mixer_compute",
+          "callee": "memset",
+          "lineNumber": 41
+        },
+        {
+          "caller": "quad_x_mixer_compute",
+          "callee": "isfinite",
+          "lineNumber": 42
+        },
+        {
+          "caller": "quad_x_mixer_compute",
+          "callee": "isfinite",
+          "lineNumber": 47
+        },
+        {
+          "caller": "quad_x_mixer_compute",
+          "callee": "clampf",
+          "lineNumber": 88
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/rate_pid.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 182,
+      "nonEmptyLines": 163,
+      "functions": [
+        {
+          "name": "clampf",
+          "startLine": 24,
+          "endLine": 33,
+          "params": [
+            "value",
+            "minimum",
+            "maximum"
+          ]
+        },
+        {
+          "name": "rate_pid_profile_is_valid",
+          "startLine": 40,
+          "endLine": 72,
+          "params": [
+            "profile"
+          ]
+        },
+        {
+          "name": "rate_pid_reset",
+          "startLine": 74,
+          "endLine": 79,
+          "params": [
+            "state"
+          ]
+        },
+        {
+          "name": "rate_pid_update",
+          "startLine": 81,
+          "endLine": 182,
+          "params": [
+            "profile",
+            "state",
+            "setpoint_rad_s",
+            "measurement_rad_s",
+            "dt_s",
+            "integrator_enabled",
+            "output"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "rate_pid_profile_is_valid",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "rate_pid_reset",
+          "line": 74,
+          "isDefault": false
+        },
+        {
+          "name": "rate_pid_update",
+          "line": 81,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 45
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 46
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 47
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 48
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 49
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 50
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 62
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 63
+        },
+        {
+          "caller": "rate_pid_profile_is_valid",
+          "callee": "isfinite",
+          "lineNumber": 64
+        },
+        {
+          "caller": "rate_pid_reset",
+          "callee": "memset",
+          "lineNumber": 77
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "memset",
+          "lineNumber": 97
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "rate_pid_profile_is_valid",
+          "lineNumber": 100
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "isfinite",
+          "lineNumber": 100
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "rate_pid_reset",
+          "lineNumber": 103
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "isfinite",
+          "lineNumber": 118
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "isfinite",
+          "lineNumber": 119
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "rate_pid_reset",
+          "lineNumber": 120
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "memset",
+          "lineNumber": 121
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "clampf",
+          "lineNumber": 146
+        },
+        {
+          "caller": "rate_pid_update",
+          "callee": "clampf",
+          "lineNumber": 171
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/rc_input.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 131,
+      "nonEmptyLines": 111,
+      "functions": [
+        {
+          "name": "elapsed_ms",
+          "startLine": 11,
+          "endLine": 14,
+          "params": [
+            "now_ms",
+            "then_ms"
+          ]
+        },
+        {
+          "name": "rc_input_map_aetr",
+          "startLine": 16,
+          "endLine": 37,
+          "params": [
+            "raw_channel_us",
+            "mapped_channel_us"
+          ]
+        },
+        {
+          "name": "rc_input_set_safe_channels",
+          "startLine": 39,
+          "endLine": 54,
+          "params": [
+            "channel_us"
+          ]
+        },
+        {
+          "name": "rc_input_failsafe_init",
+          "startLine": 56,
+          "endLine": 71,
+          "params": [
+            "state"
+          ]
+        },
+        {
+          "name": "rc_input_failsafe_on_frame",
+          "startLine": 73,
+          "endLine": 103,
+          "params": [
+            "state",
+            "now_ms"
+          ]
+        },
+        {
+          "name": "rc_input_failsafe_update",
+          "startLine": 105,
+          "endLine": 124,
+          "params": [
+            "state",
+            "now_ms"
+          ]
+        },
+        {
+          "name": "rc_input_control_valid",
+          "startLine": 126,
+          "endLine": 131,
+          "params": [
+            "state"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "rc_input_map_aetr",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "rc_input_set_safe_channels",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "rc_input_failsafe_init",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "rc_input_failsafe_on_frame",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "rc_input_failsafe_update",
+          "line": 105,
+          "isDefault": false
+        },
+        {
+          "name": "rc_input_control_valid",
+          "line": 126,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "rc_input_failsafe_on_frame",
+          "callee": "elapsed_ms",
+          "lineNumber": 97
+        },
+        {
+          "caller": "rc_input_failsafe_update",
+          "callee": "elapsed_ms",
+          "lineNumber": 112
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/rc_setpoint.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 208,
+      "nonEmptyLines": 189,
+      "functions": [
+        {
+          "name": "clamp_channel",
+          "startLine": 25,
+          "endLine": 36,
+          "params": [
+            "value",
+            "minimum",
+            "maximum"
+          ]
+        },
+        {
+          "name": "normalize_axis",
+          "startLine": 38,
+          "endLine": 66,
+          "params": [
+            "channel_us",
+            "profile",
+            "deadband_us"
+          ]
+        },
+        {
+          "name": "actual_rate_dps",
+          "startLine": 68,
+          "endLine": 84,
+          "params": [
+            "normalized",
+            "center_sensitivity",
+            "maximum_rate",
+            "expo_percent"
+          ]
+        },
+        {
+          "name": "range_is_valid",
+          "startLine": 86,
+          "endLine": 93,
+          "params": [
+            "profile",
+            "minimum",
+            "maximum"
+          ]
+        },
+        {
+          "name": "range_is_active",
+          "startLine": 95,
+          "endLine": 100,
+          "params": [
+            "value",
+            "minimum",
+            "maximum"
+          ]
+        },
+        {
+          "name": "rc_setpoint_profile_is_valid",
+          "startLine": 107,
+          "endLine": 149,
+          "params": [
+            "profile"
+          ]
+        },
+        {
+          "name": "rc_setpoint_compute",
+          "startLine": 151,
+          "endLine": 208,
+          "params": [
+            "profile",
+            "mapped_channel_us",
+            "output"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "rc_setpoint_profile_is_valid",
+          "line": 107,
+          "isDefault": false
+        },
+        {
+          "name": "rc_setpoint_compute",
+          "line": 151,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "normalize_axis",
+          "callee": "clamp_channel",
+          "lineNumber": 43
+        },
+        {
+          "caller": "actual_rate_dps",
+          "callee": "fabsf",
+          "lineNumber": 73
+        },
+        {
+          "caller": "rc_setpoint_profile_is_valid",
+          "callee": "range_is_valid",
+          "lineNumber": 129
+        },
+        {
+          "caller": "rc_setpoint_profile_is_valid",
+          "callee": "range_is_valid",
+          "lineNumber": 132
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "memset",
+          "lineNumber": 161
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "rc_setpoint_profile_is_valid",
+          "lineNumber": 163
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "normalize_axis",
+          "lineNumber": 172
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "actual_rate_dps",
+          "lineNumber": 174
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "clamp_channel",
+          "lineNumber": 182
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "range_is_active",
+          "lineNumber": 191
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "clamp_channel",
+          "lineNumber": 191
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "range_is_active",
+          "lineNumber": 198
+        },
+        {
+          "caller": "rc_setpoint_compute",
+          "callee": "clamp_channel",
+          "lineNumber": 198
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/algorithms/rc_source_arbiter.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 200,
+      "nonEmptyLines": 181,
+      "functions": [
+        {
+          "name": "elapsed_ms",
+          "startLine": 18,
+          "endLine": 21,
+          "params": [
+            "now_ms",
+            "then_ms"
+          ]
+        },
+        {
+          "name": "absolute_delta",
+          "startLine": 23,
+          "endLine": 27,
+          "params": [
+            "value",
+            "center"
+          ]
+        },
+        {
+          "name": "authorization_is_active",
+          "startLine": 29,
+          "endLine": 33,
+          "params": [
+            "physical"
+          ]
+        },
+        {
+          "name": "takeover_is_requested",
+          "startLine": 35,
+          "endLine": 44,
+          "params": [
+            "physical"
+          ]
+        },
+        {
+          "name": "candidate_is_fresh",
+          "startLine": 46,
+          "endLine": 52,
+          "params": [
+            "candidate",
+            "now_ms"
+          ]
+        },
+        {
+          "name": "virtual_target_us",
+          "startLine": 54,
+          "endLine": 58,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "slew_toward",
+          "startLine": 60,
+          "endLine": 91,
+          "params": [
+            "current",
+            "target",
+            "rate_per_s",
+            "dt_ms",
+            "remainder"
+          ]
+        },
+        {
+          "name": "exit_virtual",
+          "startLine": 93,
+          "endLine": 102,
+          "params": [
+            "state",
+            "reason",
+            "now_ms"
+          ]
+        },
+        {
+          "name": "rc_source_arbiter_init",
+          "startLine": 104,
+          "endLine": 114,
+          "params": [
+            "state",
+            "now_ms"
+          ]
+        },
+        {
+          "name": "rc_source_arbiter_update",
+          "startLine": 116,
+          "endLine": 200,
+          "params": [
+            "state",
+            "physical",
+            "physical_valid",
+            "aircraft_armed",
+            "arming_inhibit_flags",
+            "authorization_channel_available",
+            "candidate",
+            "now_ms",
+            "output"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "rc_source_arbiter_init",
+          "line": 104,
+          "isDefault": false
+        },
+        {
+          "name": "rc_source_arbiter_update",
+          "line": 116,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "takeover_is_requested",
+          "callee": "absolute_delta",
+          "lineNumber": 38
+        },
+        {
+          "caller": "takeover_is_requested",
+          "callee": "absolute_delta",
+          "lineNumber": 40
+        },
+        {
+          "caller": "takeover_is_requested",
+          "callee": "absolute_delta",
+          "lineNumber": 42
+        },
+        {
+          "caller": "candidate_is_fresh",
+          "callee": "elapsed_ms",
+          "lineNumber": 50
+        },
+        {
+          "caller": "rc_source_arbiter_init",
+          "callee": "memset",
+          "lineNumber": 110
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "memcpy",
+          "lineNumber": 137
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "authorization_is_active",
+          "lineNumber": 138
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "takeover_is_requested",
+          "lineNumber": 139
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "candidate_is_fresh",
+          "lineNumber": 140
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 149
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 151
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 153
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 155
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 157
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 159
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 161
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 164
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "exit_virtual",
+          "lineNumber": 166
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "memcpy",
+          "lineNumber": 178
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "memset",
+          "lineNumber": 180
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "elapsed_ms",
+          "lineNumber": 184
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "virtual_target_us",
+          "lineNumber": 193
+        },
+        {
+          "caller": "rc_source_arbiter_update",
+          "callee": "slew_toward",
+          "lineNumber": 195
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 10,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/app_state.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 287,
+      "nonEmptyLines": 253,
+      "functions": [
+        {
+          "name": "app_state_lock",
+          "startLine": 38,
+          "endLine": 44,
+          "params": []
+        },
+        {
+          "name": "app_state_unlock",
+          "startLine": 46,
+          "endLine": 52,
+          "params": [
+            "primask"
+          ]
+        },
+        {
+          "name": "app_state_init",
+          "startLine": 54,
+          "endLine": 70,
+          "params": []
+        },
+        {
+          "name": "app_state_get_snapshot",
+          "startLine": 72,
+          "endLine": 84,
+          "params": [
+            "snapshot"
+          ]
+        },
+        {
+          "name": "app_state_get_rc_source_context",
+          "startLine": 86,
+          "endLine": 104,
+          "params": [
+            "context"
+          ]
+        },
+        {
+          "name": "app_state_is_armed",
+          "startLine": 106,
+          "endLine": 114,
+          "params": []
+        },
+        {
+          "name": "app_state_set_runtime",
+          "startLine": 116,
+          "endLine": 125,
+          "params": [
+            "cycle_time_us",
+            "cpu_load_permille",
+            "i2c_error_count"
+          ]
+        },
+        {
+          "name": "app_state_set_fault_flags",
+          "startLine": 127,
+          "endLine": 132,
+          "params": [
+            "fault_flags"
+          ]
+        },
+        {
+          "name": "app_state_publish_parameters",
+          "startLine": 134,
+          "endLine": 150,
+          "params": [
+            "parameters"
+          ]
+        },
+        {
+          "name": "app_state_publish_imu",
+          "startLine": 152,
+          "endLine": 209,
+          "params": [
+            "sample"
+          ]
+        },
+        {
+          "name": "app_state_publish_attitude",
+          "startLine": 211,
+          "endLine": 227,
+          "params": [
+            "attitude"
+          ]
+        },
+        {
+          "name": "app_state_publish_rc",
+          "startLine": 229,
+          "endLine": 244,
+          "params": [
+            "rc"
+          ]
+        },
+        {
+          "name": "app_state_publish_battery",
+          "startLine": 246,
+          "endLine": 262,
+          "params": [
+            "battery"
+          ]
+        },
+        {
+          "name": "app_state_publish_flight",
+          "startLine": 264,
+          "endLine": 272,
+          "params": [
+            "flight"
+          ]
+        },
+        {
+          "name": "app_state_set_configurator_arming_disabled",
+          "startLine": 274,
+          "endLine": 279,
+          "params": [
+            "disabled"
+          ]
+        },
+        {
+          "name": "app_state_set_host_rtc",
+          "startLine": 281,
+          "endLine": 287,
+          "params": [
+            "seconds",
+            "millis"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "app_state_init",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_get_snapshot",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_get_rc_source_context",
+          "line": 86,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_is_armed",
+          "line": 106,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_set_runtime",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_set_fault_flags",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_publish_parameters",
+          "line": 134,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_publish_imu",
+          "line": 152,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_publish_attitude",
+          "line": 211,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_publish_rc",
+          "line": 229,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_publish_battery",
+          "line": 246,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_publish_flight",
+          "line": 264,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_set_configurator_arming_disabled",
+          "line": 274,
+          "isDefault": false
+        },
+        {
+          "name": "app_state_set_host_rtc",
+          "line": 281,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "app_state_lock",
+          "callee": "__get_PRIMASK",
+          "lineNumber": 40
+        },
+        {
+          "caller": "app_state_lock",
+          "callee": "__disable_irq",
+          "lineNumber": 41
+        },
+        {
+          "caller": "app_state_lock",
+          "callee": "__DMB",
+          "lineNumber": 42
+        },
+        {
+          "caller": "app_state_unlock",
+          "callee": "__DMB",
+          "lineNumber": 48
+        },
+        {
+          "caller": "app_state_unlock",
+          "callee": "__enable_irq",
+          "lineNumber": 50
+        },
+        {
+          "caller": "app_state_init",
+          "callee": "app_state_lock",
+          "lineNumber": 56
+        },
+        {
+          "caller": "app_state_init",
+          "callee": "memset",
+          "lineNumber": 57
+        },
+        {
+          "caller": "app_state_init",
+          "callee": "app_state_unlock",
+          "lineNumber": 69
+        },
+        {
+          "caller": "app_state_get_snapshot",
+          "callee": "app_state_lock",
+          "lineNumber": 80
+        },
+        {
+          "caller": "app_state_get_snapshot",
+          "callee": "app_state_unlock",
+          "lineNumber": 82
+        },
+        {
+          "caller": "app_state_get_snapshot",
+          "callee": "HAL_GetTick",
+          "lineNumber": 83
+        },
+        {
+          "caller": "app_state_get_rc_source_context",
+          "callee": "app_state_lock",
+          "lineNumber": 94
+        },
+        {
+          "caller": "app_state_get_rc_source_context",
+          "callee": "app_state_unlock",
+          "lineNumber": 103
+        },
+        {
+          "caller": "app_state_is_armed",
+          "callee": "app_state_lock",
+          "lineNumber": 109
+        },
+        {
+          "caller": "app_state_is_armed",
+          "callee": "app_state_unlock",
+          "lineNumber": 112
+        },
+        {
+          "caller": "app_state_set_runtime",
+          "callee": "app_state_lock",
+          "lineNumber": 120
+        },
+        {
+          "caller": "app_state_set_runtime",
+          "callee": "app_state_unlock",
+          "lineNumber": 124
+        },
+        {
+          "caller": "app_state_set_fault_flags",
+          "callee": "app_state_lock",
+          "lineNumber": 129
+        },
+        {
+          "caller": "app_state_set_fault_flags",
+          "callee": "app_state_unlock",
+          "lineNumber": 131
+        },
+        {
+          "caller": "app_state_publish_parameters",
+          "callee": "app_state_lock",
+          "lineNumber": 137
+        },
+        {
+          "caller": "app_state_publish_parameters",
+          "callee": "app_state_unlock",
+          "lineNumber": 149
+        },
+        {
+          "caller": "app_state_publish_imu",
+          "callee": "app_state_lock",
+          "lineNumber": 154
+        },
+        {
+          "caller": "app_state_publish_imu",
+          "callee": "app_state_unlock",
+          "lineNumber": 208
+        },
+        {
+          "caller": "app_state_publish_attitude",
+          "callee": "app_state_lock",
+          "lineNumber": 214
+        },
+        {
+          "caller": "app_state_publish_attitude",
+          "callee": "app_state_unlock",
+          "lineNumber": 226
+        },
+        {
+          "caller": "app_state_publish_rc",
+          "callee": "app_state_lock",
+          "lineNumber": 231
+        },
+        {
+          "caller": "app_state_publish_rc",
+          "callee": "app_state_unlock",
+          "lineNumber": 243
+        },
+        {
+          "caller": "app_state_publish_battery",
+          "callee": "app_state_lock",
+          "lineNumber": 248
+        },
+        {
+          "caller": "app_state_publish_battery",
+          "callee": "app_state_unlock",
+          "lineNumber": 261
+        },
+        {
+          "caller": "app_state_publish_flight",
+          "callee": "app_state_lock",
+          "lineNumber": 266
+        },
+        {
+          "caller": "app_state_publish_flight",
+          "callee": "app_state_unlock",
+          "lineNumber": 271
+        },
+        {
+          "caller": "app_state_set_configurator_arming_disabled",
+          "callee": "app_state_lock",
+          "lineNumber": 276
+        },
+        {
+          "caller": "app_state_set_configurator_arming_disabled",
+          "callee": "app_state_unlock",
+          "lineNumber": 278
+        },
+        {
+          "caller": "app_state_set_host_rtc",
+          "callee": "app_state_lock",
+          "lineNumber": 283
+        },
+        {
+          "caller": "app_state_set_host_rtc",
+          "callee": "app_state_unlock",
+          "lineNumber": 286
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 14,
+        "functionCount": 16,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/bsp/crsf_uart.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 212,
+      "nonEmptyLines": 182,
+      "functions": [
+        {
+          "name": "crsf_uart_ring_next",
+          "startLine": 29,
+          "endLine": 33,
+          "params": [
+            "position"
+          ]
+        },
+        {
+          "name": "crsf_uart_ring_write_from_isr",
+          "startLine": 35,
+          "endLine": 51,
+          "params": [
+            "data",
+            "length"
+          ]
+        },
+        {
+          "name": "crsf_uart_notify_from_isr",
+          "startLine": 53,
+          "endLine": 62,
+          "params": []
+        },
+        {
+          "name": "crsf_uart_start_receive",
+          "startLine": 64,
+          "endLine": 77,
+          "params": []
+        },
+        {
+          "name": "crsf_uart_init",
+          "startLine": 79,
+          "endLine": 91,
+          "params": []
+        },
+        {
+          "name": "crsf_uart_bind_current_task",
+          "startLine": 93,
+          "endLine": 98,
+          "params": []
+        },
+        {
+          "name": "crsf_uart_start",
+          "startLine": 100,
+          "endLine": 103,
+          "params": []
+        },
+        {
+          "name": "crsf_uart_service",
+          "startLine": 105,
+          "endLine": 126,
+          "params": []
+        },
+        {
+          "name": "crsf_uart_read",
+          "startLine": 128,
+          "endLine": 142,
+          "params": [
+            "data",
+            "capacity"
+          ]
+        },
+        {
+          "name": "crsf_uart_get_diagnostics",
+          "startLine": 144,
+          "endLine": 153,
+          "params": [
+            "result"
+          ]
+        },
+        {
+          "name": "HAL_UARTEx_RxEventCallback",
+          "startLine": 155,
+          "endLine": 190,
+          "params": [
+            "huart",
+            "size"
+          ]
+        },
+        {
+          "name": "HAL_UART_ErrorCallback",
+          "startLine": 192,
+          "endLine": 212,
+          "params": [
+            "huart"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "crsf_uart_init",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "crsf_uart_bind_current_task",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "crsf_uart_start",
+          "line": 100,
+          "isDefault": false
+        },
+        {
+          "name": "crsf_uart_service",
+          "line": 105,
+          "isDefault": false
+        },
+        {
+          "name": "crsf_uart_read",
+          "line": 128,
+          "isDefault": false
+        },
+        {
+          "name": "crsf_uart_get_diagnostics",
+          "line": 144,
+          "isDefault": false
+        },
+        {
+          "name": "HAL_UARTEx_RxEventCallback",
+          "line": 155,
+          "isDefault": false
+        },
+        {
+          "name": "HAL_UART_ErrorCallback",
+          "line": 192,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "crsf_uart_ring_write_from_isr",
+          "callee": "crsf_uart_ring_next",
+          "lineNumber": 41
+        },
+        {
+          "caller": "crsf_uart_ring_write_from_isr",
+          "callee": "__DMB",
+          "lineNumber": 48
+        },
+        {
+          "caller": "crsf_uart_notify_from_isr",
+          "callee": "vTaskNotifyGiveFromISR",
+          "lineNumber": 58
+        },
+        {
+          "caller": "crsf_uart_notify_from_isr",
+          "callee": "portYIELD_FROM_ISR",
+          "lineNumber": 60
+        },
+        {
+          "caller": "crsf_uart_start_receive",
+          "callee": "HAL_UARTEx_ReceiveToIdle_DMA",
+          "lineNumber": 67
+        },
+        {
+          "caller": "crsf_uart_init",
+          "callee": "taskENTER_CRITICAL",
+          "lineNumber": 81
+        },
+        {
+          "caller": "crsf_uart_init",
+          "callee": "memset",
+          "lineNumber": 82
+        },
+        {
+          "caller": "crsf_uart_init",
+          "callee": "memset",
+          "lineNumber": 83
+        },
+        {
+          "caller": "crsf_uart_init",
+          "callee": "memset",
+          "lineNumber": 84
+        },
+        {
+          "caller": "crsf_uart_init",
+          "callee": "taskEXIT_CRITICAL",
+          "lineNumber": 90
+        },
+        {
+          "caller": "crsf_uart_bind_current_task",
+          "callee": "taskENTER_CRITICAL",
+          "lineNumber": 95
+        },
+        {
+          "caller": "crsf_uart_bind_current_task",
+          "callee": "xTaskGetCurrentTaskHandle",
+          "lineNumber": 96
+        },
+        {
+          "caller": "crsf_uart_bind_current_task",
+          "callee": "taskEXIT_CRITICAL",
+          "lineNumber": 97
+        },
+        {
+          "caller": "crsf_uart_start",
+          "callee": "crsf_uart_start_receive",
+          "lineNumber": 102
+        },
+        {
+          "caller": "crsf_uart_service",
+          "callee": "taskENTER_CRITICAL",
+          "lineNumber": 109
+        },
+        {
+          "caller": "crsf_uart_service",
+          "callee": "taskEXIT_CRITICAL",
+          "lineNumber": 112
+        },
+        {
+          "caller": "crsf_uart_service",
+          "callee": "HAL_UART_AbortReceive",
+          "lineNumber": 118
+        },
+        {
+          "caller": "crsf_uart_service",
+          "callee": "crsf_uart_start_receive",
+          "lineNumber": 119
+        },
+        {
+          "caller": "crsf_uart_service",
+          "callee": "taskENTER_CRITICAL",
+          "lineNumber": 122
+        },
+        {
+          "caller": "crsf_uart_service",
+          "callee": "taskEXIT_CRITICAL",
+          "lineNumber": 124
+        },
+        {
+          "caller": "crsf_uart_read",
+          "callee": "__DMB",
+          "lineNumber": 138
+        },
+        {
+          "caller": "crsf_uart_read",
+          "callee": "crsf_uart_ring_next",
+          "lineNumber": 139
+        },
+        {
+          "caller": "crsf_uart_get_diagnostics",
+          "callee": "taskENTER_CRITICAL",
+          "lineNumber": 150
+        },
+        {
+          "caller": "crsf_uart_get_diagnostics",
+          "callee": "taskEXIT_CRITICAL",
+          "lineNumber": 152
+        },
+        {
+          "caller": "HAL_UARTEx_RxEventCallback",
+          "callee": "crsf_uart_ring_write_from_isr",
+          "lineNumber": 167
+        },
+        {
+          "caller": "HAL_UARTEx_RxEventCallback",
+          "callee": "crsf_uart_ring_write_from_isr",
+          "lineNumber": 171
+        },
+        {
+          "caller": "HAL_UARTEx_RxEventCallback",
+          "callee": "crsf_uart_ring_write_from_isr",
+          "lineNumber": 175
+        },
+        {
+          "caller": "HAL_UARTEx_RxEventCallback",
+          "callee": "HAL_UARTEx_GetRxEventType",
+          "lineNumber": 181
+        },
+        {
+          "caller": "HAL_UARTEx_RxEventCallback",
+          "callee": "crsf_uart_notify_from_isr",
+          "lineNumber": 189
+        },
+        {
+          "caller": "HAL_UART_ErrorCallback",
+          "callee": "linux_rc_monitor_uart_error",
+          "lineNumber": 199
+        },
+        {
+          "caller": "HAL_UART_ErrorCallback",
+          "callee": "usart6_receive_restart",
+          "lineNumber": 200
+        },
+        {
+          "caller": "HAL_UART_ErrorCallback",
+          "callee": "HAL_UART_GetError",
+          "lineNumber": 208
+        },
+        {
+          "caller": "HAL_UART_ErrorCallback",
+          "callee": "crsf_uart_notify_from_isr",
+          "lineNumber": 211
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 8,
+        "functionCount": 12,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/bsp/dshot_motor.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 317,
+      "nonEmptyLines": 278,
+      "functions": [
+        {
+          "name": "disable_stream",
+          "startLine": 51,
+          "endLine": 61,
+          "params": []
+        },
+        {
+          "name": "configure_motor_pins",
+          "startLine": 63,
+          "endLine": 74,
+          "params": []
+        },
+        {
+          "name": "motor_pins_are_outputs",
+          "startLine": 76,
+          "endLine": 89,
+          "params": []
+        },
+        {
+          "name": "configure_pacer_timer",
+          "startLine": 91,
+          "endLine": 109,
+          "params": []
+        },
+        {
+          "name": "configure_dma",
+          "startLine": 111,
+          "endLine": 125,
+          "params": []
+        },
+        {
+          "name": "dshot_encode_frame",
+          "startLine": 127,
+          "endLine": 138,
+          "params": [
+            "value",
+            "telemetry"
+          ]
+        },
+        {
+          "name": "build_dma_values",
+          "startLine": 140,
+          "endLine": 164,
+          "params": [
+            "frames"
+          ]
+        },
+        {
+          "name": "dshot_motor_init",
+          "startLine": 166,
+          "endLine": 184,
+          "params": []
+        },
+        {
+          "name": "submit_frames",
+          "startLine": 186,
+          "endLine": 233,
+          "params": [
+            "values",
+            "telemetry",
+            "commands"
+          ]
+        },
+        {
+          "name": "dshot_motor_submit",
+          "startLine": 235,
+          "endLine": 238,
+          "params": [
+            "values"
+          ]
+        },
+        {
+          "name": "dshot_motor_submit_command",
+          "startLine": 240,
+          "endLine": 259,
+          "params": [
+            "motor_index",
+            "command"
+          ]
+        },
+        {
+          "name": "dshot_motor_force_safe",
+          "startLine": 261,
+          "endLine": 275,
+          "params": []
+        },
+        {
+          "name": "dshot_motor_get_diagnostics",
+          "startLine": 277,
+          "endLine": 292,
+          "params": [
+            "destination"
+          ]
+        },
+        {
+          "name": "dshot_motor_dma_irq_handler",
+          "startLine": 294,
+          "endLine": 317,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "dshot_encode_frame",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "dshot_motor_init",
+          "line": 166,
+          "isDefault": false
+        },
+        {
+          "name": "dshot_motor_submit",
+          "line": 235,
+          "isDefault": false
+        },
+        {
+          "name": "dshot_motor_submit_command",
+          "line": 240,
+          "isDefault": false
+        },
+        {
+          "name": "dshot_motor_force_safe",
+          "line": 261,
+          "isDefault": false
+        },
+        {
+          "name": "dshot_motor_get_diagnostics",
+          "line": 277,
+          "isDefault": false
+        },
+        {
+          "name": "dshot_motor_dma_irq_handler",
+          "line": 294,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "configure_motor_pins",
+          "callee": "HAL_GPIO_Init",
+          "lineNumber": 72
+        },
+        {
+          "caller": "configure_dma",
+          "callee": "disable_stream",
+          "lineNumber": 113
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "memset",
+          "lineNumber": 168
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "memset",
+          "lineNumber": 169
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "__HAL_RCC_GPIOA_CLK_ENABLE",
+          "lineNumber": 170
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "__HAL_RCC_TIM8_CLK_ENABLE",
+          "lineNumber": 171
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "__HAL_RCC_DMA2_CLK_ENABLE",
+          "lineNumber": 172
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "configure_motor_pins",
+          "lineNumber": 174
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "configure_pacer_timer",
+          "lineNumber": 175
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "configure_dma",
+          "lineNumber": 176
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "HAL_NVIC_SetPriority",
+          "lineNumber": 177
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "HAL_NVIC_EnableIRQ",
+          "lineNumber": 178
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "motor_pins_are_outputs",
+          "lineNumber": 179
+        },
+        {
+          "caller": "dshot_motor_init",
+          "callee": "dshot_motor_force_safe",
+          "lineNumber": 181
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "motor_pins_are_outputs",
+          "lineNumber": 194
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "dshot_motor_force_safe",
+          "lineNumber": 195
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "dshot_encode_frame",
+          "lineNumber": 209
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "disable_stream",
+          "lineNumber": 212
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "dshot_motor_force_safe",
+          "lineNumber": 213
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "build_dma_values",
+          "lineNumber": 216
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "memcpy",
+          "lineNumber": 217
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "memcpy",
+          "lineNumber": 219
+        },
+        {
+          "caller": "submit_frames",
+          "callee": "__DMB",
+          "lineNumber": 229
+        },
+        {
+          "caller": "dshot_motor_submit",
+          "callee": "submit_frames",
+          "lineNumber": 237
+        },
+        {
+          "caller": "dshot_motor_submit_command",
+          "callee": "submit_frames",
+          "lineNumber": 258
+        },
+        {
+          "caller": "dshot_motor_force_safe",
+          "callee": "disable_stream",
+          "lineNumber": 266
+        },
+        {
+          "caller": "dshot_motor_force_safe",
+          "callee": "configure_motor_pins",
+          "lineNumber": 268
+        },
+        {
+          "caller": "dshot_motor_get_diagnostics",
+          "callee": "__get_PRIMASK",
+          "lineNumber": 284
+        },
+        {
+          "caller": "dshot_motor_get_diagnostics",
+          "callee": "__disable_irq",
+          "lineNumber": 285
+        },
+        {
+          "caller": "dshot_motor_get_diagnostics",
+          "callee": "__DMB",
+          "lineNumber": 286
+        },
+        {
+          "caller": "dshot_motor_get_diagnostics",
+          "callee": "__DMB",
+          "lineNumber": 288
+        },
+        {
+          "caller": "dshot_motor_get_diagnostics",
+          "callee": "__enable_irq",
+          "lineNumber": 290
+        },
+        {
+          "caller": "dshot_motor_dma_irq_handler",
+          "callee": "dshot_motor_force_safe",
+          "lineNumber": 307
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 14,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/bsp/imu_bus.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 363,
+      "nonEmptyLines": 314,
+      "functions": [
+        {
+          "name": "imu_bus_lock",
+          "startLine": 55,
+          "endLine": 62,
+          "params": []
+        },
+        {
+          "name": "imu_bus_unlock",
+          "startLine": 64,
+          "endLine": 70,
+          "params": [
+            "primask"
+          ]
+        },
+        {
+          "name": "imu_bus_dcache_enabled",
+          "startLine": 72,
+          "endLine": 75,
+          "params": []
+        },
+        {
+          "name": "imu_bus_dma_prepare_cache",
+          "startLine": 77,
+          "endLine": 87,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "imu_bus_dma_complete_cache",
+          "startLine": 89,
+          "endLine": 95,
+          "params": [
+            "slot"
+          ]
+        },
+        {
+          "name": "imu_bus_status_from_hal",
+          "startLine": 97,
+          "endLine": 110,
+          "params": [
+            "status"
+          ]
+        },
+        {
+          "name": "imu_bus_transfer",
+          "startLine": 112,
+          "endLine": 126,
+          "params": [
+            "transmit",
+            "receive",
+            "length"
+          ]
+        },
+        {
+          "name": "imu_bus_dma_complete_from_isr",
+          "startLine": 128,
+          "endLine": 154,
+          "params": [
+            "status"
+          ]
+        },
+        {
+          "name": "imu_bus_init",
+          "startLine": 156,
+          "endLine": 167,
+          "params": []
+        },
+        {
+          "name": "imu_bus_read",
+          "startLine": 169,
+          "endLine": 191,
+          "params": [
+            "register_address",
+            "data",
+            "length"
+          ]
+        },
+        {
+          "name": "imu_bus_write",
+          "startLine": 193,
+          "endLine": 211,
+          "params": [
+            "register_address",
+            "data",
+            "length"
+          ]
+        },
+        {
+          "name": "imu_bus_set_dma_callback",
+          "startLine": 213,
+          "endLine": 221,
+          "params": [
+            "callback",
+            "context"
+          ]
+        },
+        {
+          "name": "imu_bus_read_dma_start",
+          "startLine": 223,
+          "endLine": 278,
+          "params": [
+            "register_address",
+            "length"
+          ]
+        },
+        {
+          "name": "imu_bus_read_dma_finish",
+          "startLine": 280,
+          "endLine": 315,
+          "params": [
+            "data",
+            "length"
+          ]
+        },
+        {
+          "name": "imu_bus_dma_abort",
+          "startLine": 317,
+          "endLine": 339,
+          "params": []
+        },
+        {
+          "name": "imu_bus_dma_busy",
+          "startLine": 341,
+          "endLine": 344,
+          "params": []
+        },
+        {
+          "name": "imu_bus_clock_hz",
+          "startLine": 346,
+          "endLine": 349,
+          "params": []
+        },
+        {
+          "name": "HAL_SPI_TxRxCpltCallback",
+          "startLine": 351,
+          "endLine": 356,
+          "params": [
+            "hspi"
+          ]
+        },
+        {
+          "name": "HAL_SPI_ErrorCallback",
+          "startLine": 358,
+          "endLine": 363,
+          "params": [
+            "hspi"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "imu_bus_init",
+          "line": 156,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_read",
+          "line": 169,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_write",
+          "line": 193,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_set_dma_callback",
+          "line": 213,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_read_dma_start",
+          "line": 223,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_read_dma_finish",
+          "line": 280,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_dma_abort",
+          "line": 317,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_dma_busy",
+          "line": 341,
+          "isDefault": false
+        },
+        {
+          "name": "imu_bus_clock_hz",
+          "line": 346,
+          "isDefault": false
+        },
+        {
+          "name": "HAL_SPI_TxRxCpltCallback",
+          "line": 351,
+          "isDefault": false
+        },
+        {
+          "name": "HAL_SPI_ErrorCallback",
+          "line": 358,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "imu_bus_lock",
+          "callee": "__get_PRIMASK",
+          "lineNumber": 57
+        },
+        {
+          "caller": "imu_bus_lock",
+          "callee": "__disable_irq",
+          "lineNumber": 59
+        },
+        {
+          "caller": "imu_bus_lock",
+          "callee": "__DMB",
+          "lineNumber": 60
+        },
+        {
+          "caller": "imu_bus_unlock",
+          "callee": "__DMB",
+          "lineNumber": 66
+        },
+        {
+          "caller": "imu_bus_unlock",
+          "callee": "__enable_irq",
+          "lineNumber": 68
+        },
+        {
+          "caller": "imu_bus_dma_prepare_cache",
+          "callee": "imu_bus_dcache_enabled",
+          "lineNumber": 79
+        },
+        {
+          "caller": "imu_bus_dma_prepare_cache",
+          "callee": "SCB_CleanDCache_by_Addr",
+          "lineNumber": 83
+        },
+        {
+          "caller": "imu_bus_dma_prepare_cache",
+          "callee": "SCB_InvalidateDCache_by_Addr",
+          "lineNumber": 85
+        },
+        {
+          "caller": "imu_bus_dma_complete_cache",
+          "callee": "imu_bus_dcache_enabled",
+          "lineNumber": 91
+        },
+        {
+          "caller": "imu_bus_dma_complete_cache",
+          "callee": "SCB_InvalidateDCache_by_Addr",
+          "lineNumber": 92
+        },
+        {
+          "caller": "imu_bus_transfer",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 118
+        },
+        {
+          "caller": "imu_bus_transfer",
+          "callee": "HAL_SPI_TransmitReceive",
+          "lineNumber": 119
+        },
+        {
+          "caller": "imu_bus_transfer",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 124
+        },
+        {
+          "caller": "imu_bus_transfer",
+          "callee": "imu_bus_status_from_hal",
+          "lineNumber": 125
+        },
+        {
+          "caller": "imu_bus_dma_complete_from_isr",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 139
+        },
+        {
+          "caller": "imu_bus_dma_complete_from_isr",
+          "callee": "imu_bus_dma_complete_cache",
+          "lineNumber": 140
+        },
+        {
+          "caller": "imu_bus_dma_complete_from_isr",
+          "callee": "__DMB",
+          "lineNumber": 147
+        },
+        {
+          "caller": "imu_bus_dma_complete_from_isr",
+          "callee": "callback",
+          "lineNumber": 152
+        },
+        {
+          "caller": "imu_bus_init",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 158
+        },
+        {
+          "caller": "imu_bus_init",
+          "callee": "HAL_SPI_GetState",
+          "lineNumber": 163
+        },
+        {
+          "caller": "imu_bus_read",
+          "callee": "imu_bus_dma_busy",
+          "lineNumber": 181
+        },
+        {
+          "caller": "imu_bus_read",
+          "callee": "imu_bus_transfer",
+          "lineNumber": 186
+        },
+        {
+          "caller": "imu_bus_read",
+          "callee": "memcpy",
+          "lineNumber": 188
+        },
+        {
+          "caller": "imu_bus_write",
+          "callee": "imu_bus_dma_busy",
+          "lineNumber": 204
+        },
+        {
+          "caller": "imu_bus_write",
+          "callee": "memcpy",
+          "lineNumber": 209
+        },
+        {
+          "caller": "imu_bus_write",
+          "callee": "imu_bus_transfer",
+          "lineNumber": 210
+        },
+        {
+          "caller": "imu_bus_set_dma_callback",
+          "callee": "imu_bus_lock",
+          "lineNumber": 216
+        },
+        {
+          "caller": "imu_bus_set_dma_callback",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 220
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_lock",
+          "lineNumber": 241
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 243
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 249
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "memset",
+          "lineNumber": 252
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_dma_prepare_cache",
+          "lineNumber": 254
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_lock",
+          "lineNumber": 256
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 262
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 264
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "HAL_SPI_TransmitReceive_DMA",
+          "lineNumber": 265
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_lock",
+          "lineNumber": 271
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 274
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 275
+        },
+        {
+          "caller": "imu_bus_read_dma_start",
+          "callee": "imu_bus_status_from_hal",
+          "lineNumber": 277
+        },
+        {
+          "caller": "imu_bus_read_dma_finish",
+          "callee": "imu_bus_lock",
+          "lineNumber": 293
+        },
+        {
+          "caller": "imu_bus_read_dma_finish",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 295
+        },
+        {
+          "caller": "imu_bus_read_dma_finish",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 303
+        },
+        {
+          "caller": "imu_bus_read_dma_finish",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 307
+        },
+        {
+          "caller": "imu_bus_read_dma_finish",
+          "callee": "memcpy",
+          "lineNumber": 310
+        },
+        {
+          "caller": "imu_bus_dma_abort",
+          "callee": "imu_bus_lock",
+          "lineNumber": 320
+        },
+        {
+          "caller": "imu_bus_dma_abort",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 324
+        },
+        {
+          "caller": "imu_bus_dma_abort",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 325
+        },
+        {
+          "caller": "imu_bus_dma_abort",
+          "callee": "imu_bus_unlock",
+          "lineNumber": 331
+        },
+        {
+          "caller": "imu_bus_dma_abort",
+          "callee": "HAL_SPI_Abort",
+          "lineNumber": 333
+        },
+        {
+          "caller": "imu_bus_dma_abort",
+          "callee": "HAL_GPIO_WritePin",
+          "lineNumber": 334
+        },
+        {
+          "caller": "imu_bus_dma_abort",
+          "callee": "imu_bus_status_from_hal",
+          "lineNumber": 338
+        },
+        {
+          "caller": "HAL_SPI_TxRxCpltCallback",
+          "callee": "imu_bus_dma_complete_from_isr",
+          "lineNumber": 354
+        },
+        {
+          "caller": "HAL_SPI_ErrorCallback",
+          "callee": "imu_bus_dma_complete_from_isr",
+          "lineNumber": 361
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 11,
+        "functionCount": 19,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/bsp/linux_rc_monitor.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 280,
+      "nonEmptyLines": 248,
+      "functions": [
+        {
+          "name": "get_u16_le",
+          "startLine": 36,
+          "endLine": 39,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "get_u32_le",
+          "startLine": 41,
+          "endLine": 45,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "get_u64_le",
+          "startLine": 47,
+          "endLine": 51,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "sequence_is_newer",
+          "startLine": 53,
+          "endLine": 56,
+          "params": [
+            "value",
+            "previous"
+          ]
+        },
+        {
+          "name": "crc16_ccitt_false",
+          "startLine": 58,
+          "endLine": 73,
+          "params": [
+            "data",
+            "length"
+          ]
+        },
+        {
+          "name": "channels_in_range",
+          "startLine": 75,
+          "endLine": 88,
+          "params": [
+            "frame"
+          ]
+        },
+        {
+          "name": "channels_match_gesture",
+          "startLine": 90,
+          "endLine": 117,
+          "params": [
+            "frame"
+          ]
+        },
+        {
+          "name": "validate_complete_frame",
+          "startLine": 119,
+          "endLine": 207,
+          "params": []
+        },
+        {
+          "name": "linux_rc_monitor_init",
+          "startLine": 209,
+          "endLine": 212,
+          "params": []
+        },
+        {
+          "name": "linux_rc_monitor_uart_rx_byte",
+          "startLine": 214,
+          "endLine": 241,
+          "params": [
+            "byte"
+          ]
+        },
+        {
+          "name": "linux_rc_monitor_uart_error",
+          "startLine": 243,
+          "endLine": 248,
+          "params": []
+        },
+        {
+          "name": "linux_rc_monitor_get_diagnostics",
+          "startLine": 250,
+          "endLine": 264,
+          "params": [
+            "diagnostics"
+          ]
+        },
+        {
+          "name": "linux_rc_monitor_get_candidate",
+          "startLine": 266,
+          "endLine": 280,
+          "params": [
+            "candidate"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "linux_rc_monitor_init",
+          "line": 209,
+          "isDefault": false
+        },
+        {
+          "name": "linux_rc_monitor_uart_rx_byte",
+          "line": 214,
+          "isDefault": false
+        },
+        {
+          "name": "linux_rc_monitor_uart_error",
+          "line": 243,
+          "isDefault": false
+        },
+        {
+          "name": "linux_rc_monitor_get_diagnostics",
+          "line": 250,
+          "isDefault": false
+        },
+        {
+          "name": "linux_rc_monitor_get_candidate",
+          "line": 266,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get_u64_le",
+          "callee": "get_u32_le",
+          "lineNumber": 49
+        },
+        {
+          "caller": "get_u64_le",
+          "callee": "get_u32_le",
+          "lineNumber": 50
+        },
+        {
+          "caller": "channels_in_range",
+          "callee": "get_u16_le",
+          "lineNumber": 77
+        },
+        {
+          "caller": "channels_in_range",
+          "callee": "get_u16_le",
+          "lineNumber": 78
+        },
+        {
+          "caller": "channels_in_range",
+          "callee": "get_u16_le",
+          "lineNumber": 79
+        },
+        {
+          "caller": "channels_in_range",
+          "callee": "get_u16_le",
+          "lineNumber": 80
+        },
+        {
+          "caller": "channels_in_range",
+          "callee": "get_u16_le",
+          "lineNumber": 81
+        },
+        {
+          "caller": "channels_match_gesture",
+          "callee": "get_u16_le",
+          "lineNumber": 92
+        },
+        {
+          "caller": "channels_match_gesture",
+          "callee": "get_u16_le",
+          "lineNumber": 93
+        },
+        {
+          "caller": "channels_match_gesture",
+          "callee": "get_u16_le",
+          "lineNumber": 94
+        },
+        {
+          "caller": "channels_match_gesture",
+          "callee": "get_u16_le",
+          "lineNumber": 95
+        },
+        {
+          "caller": "channels_match_gesture",
+          "callee": "get_u16_le",
+          "lineNumber": 96
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 124
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "HAL_GetTick",
+          "lineNumber": 125
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u32_le",
+          "lineNumber": 126
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u32_le",
+          "lineNumber": 127
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u64_le",
+          "lineNumber": 128
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u64_le",
+          "lineNumber": 129
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "crc16_ccitt_false",
+          "lineNumber": 134
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "channels_in_range",
+          "lineNumber": 141
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "channels_match_gesture",
+          "lineNumber": 147
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 151
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 152
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 153
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 154
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 155
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "sequence_is_newer",
+          "lineNumber": 169
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "sequence_is_newer",
+          "lineNumber": 178
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 190
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 191
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 192
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 193
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "get_u16_le",
+          "lineNumber": 194
+        },
+        {
+          "caller": "validate_complete_frame",
+          "callee": "memcpy",
+          "lineNumber": 205
+        },
+        {
+          "caller": "linux_rc_monitor_init",
+          "callee": "memset",
+          "lineNumber": 211
+        },
+        {
+          "caller": "linux_rc_monitor_uart_rx_byte",
+          "callee": "validate_complete_frame",
+          "lineNumber": 238
+        },
+        {
+          "caller": "linux_rc_monitor_get_diagnostics",
+          "callee": "__get_PRIMASK",
+          "lineNumber": 258
+        },
+        {
+          "caller": "linux_rc_monitor_get_diagnostics",
+          "callee": "__disable_irq",
+          "lineNumber": 259
+        },
+        {
+          "caller": "linux_rc_monitor_get_diagnostics",
+          "callee": "__enable_irq",
+          "lineNumber": 262
+        },
+        {
+          "caller": "linux_rc_monitor_get_candidate",
+          "callee": "__get_PRIMASK",
+          "lineNumber": 274
+        },
+        {
+          "caller": "linux_rc_monitor_get_candidate",
+          "callee": "__disable_irq",
+          "lineNumber": 275
+        },
+        {
+          "caller": "linux_rc_monitor_get_candidate",
+          "callee": "__enable_irq",
+          "lineNumber": 278
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 13,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/bsp/power_adc.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 257,
+      "nonEmptyLines": 227,
+      "functions": [
+        {
+          "name": "irq_lock",
+          "startLine": 25,
+          "endLine": 31,
+          "params": []
+        },
+        {
+          "name": "irq_unlock",
+          "startLine": 33,
+          "endLine": 38,
+          "params": [
+            "primask"
+          ]
+        },
+        {
+          "name": "disable_dma_stream",
+          "startLine": 40,
+          "endLine": 50,
+          "params": []
+        },
+        {
+          "name": "configure_gpio",
+          "startLine": 52,
+          "endLine": 67,
+          "params": []
+        },
+        {
+          "name": "configure_adc",
+          "startLine": 69,
+          "endLine": 95,
+          "params": []
+        },
+        {
+          "name": "configure_dma",
+          "startLine": 97,
+          "endLine": 113,
+          "params": []
+        },
+        {
+          "name": "power_adc_init",
+          "startLine": 115,
+          "endLine": 153,
+          "params": []
+        },
+        {
+          "name": "power_adc_start_conversion",
+          "startLine": 155,
+          "endLine": 204,
+          "params": []
+        },
+        {
+          "name": "power_adc_get_snapshot",
+          "startLine": 206,
+          "endLine": 229,
+          "params": [
+            "snapshot"
+          ]
+        },
+        {
+          "name": "power_adc_dma_irq_handler",
+          "startLine": 231,
+          "endLine": 257,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "power_adc_init",
+          "line": 115,
+          "isDefault": false
+        },
+        {
+          "name": "power_adc_start_conversion",
+          "line": 155,
+          "isDefault": false
+        },
+        {
+          "name": "power_adc_get_snapshot",
+          "line": 206,
+          "isDefault": false
+        },
+        {
+          "name": "power_adc_dma_irq_handler",
+          "line": 231,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "irq_lock",
+          "callee": "__get_PRIMASK",
+          "lineNumber": 27
+        },
+        {
+          "caller": "irq_lock",
+          "callee": "__disable_irq",
+          "lineNumber": 29
+        },
+        {
+          "caller": "irq_unlock",
+          "callee": "__enable_irq",
+          "lineNumber": 36
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "__HAL_RCC_GPIOC_CLK_ENABLE",
+          "lineNumber": 119
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "__HAL_RCC_DMA2_CLK_ENABLE",
+          "lineNumber": 120
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "__HAL_RCC_ADC3_CLK_ENABLE",
+          "lineNumber": 121
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "__DSB",
+          "lineNumber": 122
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "disable_dma_stream",
+          "lineNumber": 124
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "configure_gpio",
+          "lineNumber": 142
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "configure_adc",
+          "lineNumber": 146
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "configure_dma",
+          "lineNumber": 147
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "HAL_NVIC_SetPriority",
+          "lineNumber": 149
+        },
+        {
+          "caller": "power_adc_init",
+          "callee": "HAL_NVIC_EnableIRQ",
+          "lineNumber": 150
+        },
+        {
+          "caller": "power_adc_start_conversion",
+          "callee": "irq_lock",
+          "lineNumber": 163
+        },
+        {
+          "caller": "power_adc_start_conversion",
+          "callee": "irq_unlock",
+          "lineNumber": 169
+        },
+        {
+          "caller": "power_adc_start_conversion",
+          "callee": "disable_dma_stream",
+          "lineNumber": 174
+        },
+        {
+          "caller": "power_adc_start_conversion",
+          "callee": "irq_unlock",
+          "lineNumber": 176
+        },
+        {
+          "caller": "power_adc_start_conversion",
+          "callee": "disable_dma_stream",
+          "lineNumber": 185
+        },
+        {
+          "caller": "power_adc_start_conversion",
+          "callee": "irq_unlock",
+          "lineNumber": 187
+        },
+        {
+          "caller": "power_adc_start_conversion",
+          "callee": "irq_unlock",
+          "lineNumber": 202
+        },
+        {
+          "caller": "power_adc_get_snapshot",
+          "callee": "irq_lock",
+          "lineNumber": 215
+        },
+        {
+          "caller": "power_adc_get_snapshot",
+          "callee": "irq_unlock",
+          "lineNumber": 228
+        },
+        {
+          "caller": "power_adc_dma_irq_handler",
+          "callee": "__DMB",
+          "lineNumber": 247
+        },
+        {
+          "caller": "power_adc_dma_irq_handler",
+          "callee": "__DMB",
+          "lineNumber": 253
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 10,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Src/bsp/usb_cdc_transport.c",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 113,
+      "functions": [
+        {
+          "name": "usb_cdc_transport_init",
+          "startLine": 21,
+          "endLine": 28,
+          "params": []
+        },
+        {
+          "name": "usb_cdc_transport_bind_current_task",
+          "startLine": 30,
+          "endLine": 35,
+          "params": []
+        },
+        {
+          "name": "usb_cdc_transport_receive_from_isr",
+          "startLine": 37,
+          "endLine": 64,
+          "params": [
+            "data",
+            "length"
+          ]
+        },
+        {
+          "name": "usb_cdc_transport_transmit_complete_from_isr",
+          "startLine": 66,
+          "endLine": 70,
+          "params": []
+        },
+        {
+          "name": "usb_cdc_transport_read",
+          "startLine": 72,
+          "endLine": 86,
+          "params": [
+            "data",
+            "capacity"
+          ]
+        },
+        {
+          "name": "usb_cdc_transport_wait_tx_idle",
+          "startLine": 88,
+          "endLine": 98,
+          "params": [
+            "start",
+            "timeout"
+          ]
+        },
+        {
+          "name": "usb_cdc_transport_write",
+          "startLine": 100,
+          "endLine": 136,
+          "params": [
+            "data",
+            "length",
+            "timeout_ms"
+          ]
+        },
+        {
+          "name": "usb_cdc_transport_rx_dropped",
+          "startLine": 138,
+          "endLine": 141,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "usb_cdc_transport_init",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "usb_cdc_transport_bind_current_task",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "usb_cdc_transport_receive_from_isr",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "usb_cdc_transport_transmit_complete_from_isr",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "usb_cdc_transport_read",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "usb_cdc_transport_write",
+          "line": 100,
+          "isDefault": false
+        },
+        {
+          "name": "usb_cdc_transport_rx_dropped",
+          "line": 138,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "usb_cdc_transport_bind_current_task",
+          "callee": "taskENTER_CRITICAL",
+          "lineNumber": 32
+        },
+        {
+          "caller": "usb_cdc_transport_bind_current_task",
+          "callee": "xTaskGetCurrentTaskHandle",
+          "lineNumber": 33
+        },
+        {
+          "caller": "usb_cdc_transport_bind_current_task",
+          "callee": "taskEXIT_CRITICAL",
+          "lineNumber": 34
+        },
+        {
+          "caller": "usb_cdc_transport_receive_from_isr",
+          "callee": "__DMB",
+          "lineNumber": 56
+        },
+        {
+          "caller": "usb_cdc_transport_receive_from_isr",
+          "callee": "vTaskNotifyGiveFromISR",
+          "lineNumber": 61
+        },
+        {
+          "caller": "usb_cdc_transport_receive_from_isr",
+          "callee": "portYIELD_FROM_ISR",
+          "lineNumber": 62
+        },
+        {
+          "caller": "usb_cdc_transport_transmit_complete_from_isr",
+          "callee": "__DMB",
+          "lineNumber": 69
+        },
+        {
+          "caller": "usb_cdc_transport_wait_tx_idle",
+          "callee": "xTaskGetTickCount",
+          "lineNumber": 92
+        },
+        {
+          "caller": "usb_cdc_transport_wait_tx_idle",
+          "callee": "vTaskDelay",
+          "lineNumber": 95
+        },
+        {
+          "caller": "usb_cdc_transport_wait_tx_idle",
+          "callee": "pdMS_TO_TICKS",
+          "lineNumber": 95
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "xTaskGetTickCount",
+          "lineNumber": 104
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "pdMS_TO_TICKS",
+          "lineNumber": 105
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "usb_cdc_transport_wait_tx_idle",
+          "lineNumber": 116
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "memcpy",
+          "lineNumber": 120
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "__DMB",
+          "lineNumber": 124
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "CDC_Transmit_FS",
+          "lineNumber": 126
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "usb_cdc_transport_wait_tx_idle",
+          "lineNumber": 127
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "xTaskGetTickCount",
+          "lineNumber": 131
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "vTaskDelay",
+          "lineNumber": 134
+        },
+        {
+          "caller": "usb_cdc_transport_write",
+          "callee": "pdMS_TO_TICKS",
+          "lineNumber": 134
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 8,
+        "classCount": 0
+      }
+    }
+  ]
+}

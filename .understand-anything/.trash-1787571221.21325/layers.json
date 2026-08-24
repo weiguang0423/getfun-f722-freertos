@@ -1,0 +1,113 @@
+[
+  {
+    "id": "layer:app-rtos",
+    "name": "RTOS 任务层",
+    "description": "FreeRTOS 静态任务：应用装配、IMU 采样、飞行控制、RC 解析、电池监测。",
+    "nodeIds": [
+      "file:APP/Inc/rtos/app_task.h",
+      "file:APP/Inc/rtos/battery_task.h",
+      "file:APP/Inc/rtos/flight_task.h",
+      "file:APP/Inc/rtos/imu_task.h",
+      "file:APP/Inc/rtos/rc_task.h",
+      "file:APP/Src/rtos/app_task.c",
+      "file:APP/Src/rtos/battery_task.c",
+      "file:APP/Src/rtos/flight_task.c",
+      "file:APP/Src/rtos/imu_task.c",
+      "file:APP/Src/rtos/rc_task.c"
+    ]
+  },
+  {
+    "id": "layer:app-algorithms",
+    "name": "控制算法层",
+    "description": "姿态/校准/滤波/PID/混控/解锁/RC 等不依赖 HAL/RTOS 的纯算法模块。",
+    "nodeIds": [
+      "file:APP/Inc/algorithms/accel_calibration.h",
+      "file:APP/Inc/algorithms/angle_outer_loop.h",
+      "file:APP/Inc/algorithms/attitude_estimator.h",
+      "file:APP/Inc/algorithms/flight_arming.h",
+      "file:APP/Inc/algorithms/gyro_calibration.h",
+      "file:APP/Inc/algorithms/imu_filter.h",
+      "file:APP/Inc/algorithms/power_monitor.h",
+      "file:APP/Inc/algorithms/quad_x_mixer.h",
+      "file:APP/Inc/algorithms/rate_pid.h",
+      "file:APP/Inc/algorithms/rc_input.h",
+      "file:APP/Inc/algorithms/rc_setpoint.h",
+      "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "file:APP/Src/algorithms/accel_calibration.c",
+      "file:APP/Src/algorithms/angle_outer_loop.c",
+      "file:APP/Src/algorithms/attitude_estimator.c",
+      "file:APP/Src/algorithms/flight_arming.c",
+      "file:APP/Src/algorithms/gyro_calibration.c",
+      "file:APP/Src/algorithms/imu_filter.c",
+      "file:APP/Src/algorithms/power_monitor.c",
+      "file:APP/Src/algorithms/quad_x_mixer.c",
+      "file:APP/Src/algorithms/rate_pid.c",
+      "file:APP/Src/algorithms/rc_input.c",
+      "file:APP/Src/algorithms/rc_setpoint.c",
+      "file:APP/Src/algorithms/rc_source_arbiter.c"
+    ]
+  },
+  {
+    "id": "layer:app-bsp",
+    "name": "板级支持与驱动层",
+    "description": "SPI 总线、ICM42688P 寄存器驱动、CRSF/DShot/电源/USB CDC 等外设适配。",
+    "nodeIds": [
+      "file:APP/Inc/bsp/crsf_uart.h",
+      "file:APP/Inc/bsp/dshot_motor.h",
+      "file:APP/Inc/bsp/imu_bus.h",
+      "file:APP/Inc/bsp/linux_rc_monitor.h",
+      "file:APP/Inc/bsp/power_adc.h",
+      "file:APP/Inc/bsp/usb_cdc_transport.h",
+      "file:APP/Inc/drivers/icm42688p.h",
+      "file:APP/Src/bsp/crsf_uart.c",
+      "file:APP/Src/bsp/dshot_motor.c",
+      "file:APP/Src/bsp/imu_bus.c",
+      "file:APP/Src/bsp/linux_rc_monitor.c",
+      "file:APP/Src/bsp/power_adc.c",
+      "file:APP/Src/bsp/usb_cdc_transport.c",
+      "file:APP/Src/drivers/icm42688p.c"
+    ]
+  },
+  {
+    "id": "layer:app-protocol",
+    "name": "通信协议层",
+    "description": "MSP 逐字节状态机与命令派发、CRSF 遥控协议编解码。",
+    "nodeIds": [
+      "file:APP/Inc/protocol/crsf.h",
+      "file:APP/Inc/protocol/msp_server.h",
+      "file:APP/Inc/protocol/msp_transport.h",
+      "file:APP/Src/protocol/crsf.c",
+      "file:APP/Src/protocol/msp_server.c",
+      "file:APP/Src/protocol/msp_transport.c"
+    ]
+  },
+  {
+    "id": "layer:app-platform",
+    "name": "平台基础设施层",
+    "description": "DWT 微秒时基与诊断/安全停机。",
+    "nodeIds": [
+      "file:APP/Inc/platform/platform_diag.h",
+      "file:APP/Inc/platform/platform_time.h",
+      "file:APP/Src/platform/platform_diag.c",
+      "file:APP/Src/platform/platform_time.c"
+    ]
+  },
+  {
+    "id": "layer:app-storage",
+    "name": "参数持久化层",
+    "description": "Sector 6/7 双槽 Flash 参数存储与迁移。",
+    "nodeIds": [
+      "file:APP/Inc/storage/parameter_store.h",
+      "file:APP/Src/storage/parameter_store.c"
+    ]
+  },
+  {
+    "id": "layer:app-state",
+    "name": "全局运行态",
+    "description": "app_state 快照：跨任务共享的短临界区发布结构。",
+    "nodeIds": [
+      "file:APP/Inc/app_state.h",
+      "file:APP/Src/app_state.c"
+    ]
+  }
+]

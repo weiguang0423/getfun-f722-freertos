@@ -1,0 +1,404 @@
+{
+  "nodes": [
+    {
+      "id": "file:APP/Inc/algorithms/accel_calibration.h",
+      "type": "file",
+      "name": "accel_calibration.h",
+      "filePath": "APP/Inc/algorithms/accel_calibration.h",
+      "summary": "声明加速度校准状态机接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/angle_outer_loop.h",
+      "type": "file",
+      "name": "angle_outer_loop.h",
+      "filePath": "APP/Inc/algorithms/angle_outer_loop.h",
+      "summary": "声明姿态角外环接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/attitude_estimator.h",
+      "type": "file",
+      "name": "attitude_estimator.h",
+      "filePath": "APP/Inc/algorithms/attitude_estimator.h",
+      "summary": "声明 Mahony 四元数姿态估计接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/flight_arming.h",
+      "type": "file",
+      "name": "flight_arming.h",
+      "filePath": "APP/Inc/algorithms/flight_arming.h",
+      "summary": "声明四态安全解锁接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/gyro_calibration.h",
+      "type": "file",
+      "name": "gyro_calibration.h",
+      "filePath": "APP/Inc/algorithms/gyro_calibration.h",
+      "summary": "声明陀螺零偏校准接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/imu_filter.h",
+      "type": "file",
+      "name": "imu_filter.h",
+      "filePath": "APP/Inc/algorithms/imu_filter.h",
+      "summary": "声明 PT1 低通接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/power_monitor.h",
+      "type": "file",
+      "name": "power_monitor.h",
+      "filePath": "APP/Inc/algorithms/power_monitor.h",
+      "summary": "声明电源监测接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/quad_x_mixer.h",
+      "type": "file",
+      "name": "quad_x_mixer.h",
+      "filePath": "APP/Inc/algorithms/quad_x_mixer.h",
+      "summary": "声明 Quad-X 混控接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rate_pid.h",
+      "type": "file",
+      "name": "rate_pid.h",
+      "filePath": "APP/Inc/algorithms/rate_pid.h",
+      "summary": "声明角速率 PID 接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rc_input.h",
+      "type": "file",
+      "name": "rc_input.h",
+      "filePath": "APP/Inc/algorithms/rc_input.h",
+      "summary": "声明 RC 输入映射接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rc_setpoint.h",
+      "type": "file",
+      "name": "rc_setpoint.h",
+      "filePath": "APP/Inc/algorithms/rc_setpoint.h",
+      "summary": "声明设定值生成接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "type": "file",
+      "name": "rc_source_arbiter.h",
+      "filePath": "APP/Inc/algorithms/rc_source_arbiter.h",
+      "summary": "声明 RC 源仲裁接口。",
+      "tags": [
+        "type-definition",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/app_state.h",
+      "type": "file",
+      "name": "app_state.h",
+      "filePath": "APP/Inc/app_state.h",
+      "summary": "定义 app_state_snapshot_t 全局运行态结构与发布/读取接口。",
+      "tags": [
+        "type-definition",
+        "state"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Inc/bsp/crsf_uart.h",
+      "type": "file",
+      "name": "crsf_uart.h",
+      "filePath": "APP/Inc/bsp/crsf_uart.h",
+      "summary": "声明 CRSF 串口接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/dshot_motor.h",
+      "type": "file",
+      "name": "dshot_motor.h",
+      "filePath": "APP/Inc/bsp/dshot_motor.h",
+      "summary": "声明 DShot 电机输出接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/imu_bus.h",
+      "type": "file",
+      "name": "imu_bus.h",
+      "filePath": "APP/Inc/bsp/imu_bus.h",
+      "summary": "声明 SPI1/ICM42688P 总线接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/bsp/linux_rc_monitor.h",
+      "type": "file",
+      "name": "linux_rc_monitor.h",
+      "filePath": "APP/Inc/bsp/linux_rc_monitor.h",
+      "summary": "声明 USART6 候选快照接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/power_adc.h",
+      "type": "file",
+      "name": "power_adc.h",
+      "filePath": "APP/Inc/bsp/power_adc.h",
+      "summary": "声明 ADC3 采样接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/bsp/usb_cdc_transport.h",
+      "type": "file",
+      "name": "usb_cdc_transport.h",
+      "filePath": "APP/Inc/bsp/usb_cdc_transport.h",
+      "summary": "声明环形缓冲收发接口。",
+      "tags": [
+        "type-definition",
+        "bsp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/drivers/icm42688p.h",
+      "type": "file",
+      "name": "icm42688p.h",
+      "filePath": "APP/Inc/drivers/icm42688p.h",
+      "summary": "定义 ICM42688P 寄存器与配置接口。",
+      "tags": [
+        "type-definition",
+        "driver"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/platform/platform_diag.h",
+      "type": "file",
+      "name": "platform_diag.h",
+      "filePath": "APP/Inc/platform/platform_diag.h",
+      "summary": "声明诊断输出与安全停机接口。",
+      "tags": [
+        "type-definition",
+        "platform"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/platform/platform_time.h",
+      "type": "file",
+      "name": "platform_time.h",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "声明 DWT 微秒时基接口。",
+      "tags": [
+        "type-definition",
+        "platform"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/protocol/crsf.h",
+      "type": "file",
+      "name": "crsf.h",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "定义 CRSF 帧结构与通道解算接口。",
+      "tags": [
+        "type-definition",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/protocol/msp_server.h",
+      "type": "file",
+      "name": "msp_server.h",
+      "filePath": "APP/Inc/protocol/msp_server.h",
+      "summary": "声明 MSP 命令派发接口。",
+      "tags": [
+        "type-definition",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/protocol/msp_transport.h",
+      "type": "file",
+      "name": "msp_transport.h",
+      "filePath": "APP/Inc/protocol/msp_transport.h",
+      "summary": "定义 msp_parser_t 状态机与帧构造接口。",
+      "tags": [
+        "type-definition",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:APP/Inc/algorithms/rc_setpoint.h",
+      "target": "file:APP/Inc/algorithms/rc_input.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "target": "file:APP/Inc/algorithms/rc_input.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/angle_outer_loop.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/flight_arming.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/power_monitor.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/quad_x_mixer.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/rate_pid.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/rc_input.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/algorithms/rc_setpoint.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/app_state.h",
+      "target": "file:APP/Inc/storage/parameter_store.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/bsp/linux_rc_monitor.h",
+      "target": "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/drivers/icm42688p.h",
+      "target": "file:APP/Inc/bsp/imu_bus.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/protocol/msp_server.h",
+      "target": "file:APP/Inc/protocol/msp_transport.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}

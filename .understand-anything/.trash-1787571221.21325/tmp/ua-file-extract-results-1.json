@@ -1,0 +1,332 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "APP/Inc/algorithms/accel_calibration.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 83,
+      "nonEmptyLines": 75,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/angle_outer_loop.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 52,
+      "nonEmptyLines": 44,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/attitude_estimator.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 68,
+      "nonEmptyLines": 61,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/flight_arming.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 47,
+      "nonEmptyLines": 40,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/gyro_calibration.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 66,
+      "nonEmptyLines": 58,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/imu_filter.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 53,
+      "nonEmptyLines": 46,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/power_monitor.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 78,
+      "nonEmptyLines": 68,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/quad_x_mixer.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 43,
+      "nonEmptyLines": 35,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/rate_pid.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 65,
+      "nonEmptyLines": 56,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/rc_input.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 59,
+      "nonEmptyLines": 49,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/rc_setpoint.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 64,
+      "nonEmptyLines": 54,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/algorithms/rc_source_arbiter.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 89,
+      "nonEmptyLines": 78,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/app_state.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 384,
+      "nonEmptyLines": 358,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/bsp/crsf_uart.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 43,
+      "nonEmptyLines": 37,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/bsp/dshot_motor.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 43,
+      "nonEmptyLines": 36,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/bsp/imu_bus.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 67,
+      "nonEmptyLines": 60,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/bsp/linux_rc_monitor.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 49,
+      "nonEmptyLines": 42,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/bsp/power_adc.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 45,
+      "nonEmptyLines": 37,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/bsp/usb_cdc_transport.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 21,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/drivers/icm42688p.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 79,
+      "nonEmptyLines": 68,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/platform/platform_diag.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 59,
+      "nonEmptyLines": 51,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/platform/platform_time.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 35,
+      "nonEmptyLines": 30,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/protocol/crsf.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 82,
+      "nonEmptyLines": 72,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/protocol/msp_server.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 40,
+      "nonEmptyLines": 34,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "APP/Inc/protocol/msp_transport.h",
+      "language": "c",
+      "fileCategory": "code",
+      "totalLines": 78,
+      "nonEmptyLines": 68,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

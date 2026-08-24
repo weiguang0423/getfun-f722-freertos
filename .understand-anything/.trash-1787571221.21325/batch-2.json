@@ -1,0 +1,4455 @@
+{
+  "nodes": [
+    {
+      "id": "file:APP/Inc/rtos/app_task.h",
+      "type": "file",
+      "name": "app_task.h",
+      "filePath": "APP/Inc/rtos/app_task.h",
+      "summary": "声明 app_tasks_init() 与静态任务句柄。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/battery_task.h",
+      "type": "file",
+      "name": "battery_task.h",
+      "filePath": "APP/Inc/rtos/battery_task.h",
+      "summary": "声明 BatteryTask 入口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/flight_task.h",
+      "type": "file",
+      "name": "flight_task.h",
+      "filePath": "APP/Inc/rtos/flight_task.h",
+      "summary": "声明 FlightTask 入口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/imu_task.h",
+      "type": "file",
+      "name": "imu_task.h",
+      "filePath": "APP/Inc/rtos/imu_task.h",
+      "summary": "声明 ImuTask 入口与初始化接口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/rc_task.h",
+      "type": "file",
+      "name": "rc_task.h",
+      "filePath": "APP/Inc/rtos/rc_task.h",
+      "summary": "声明 RcTask 入口。",
+      "tags": [
+        "type-definition",
+        "rtos"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/storage/parameter_store.h",
+      "type": "file",
+      "name": "parameter_store.h",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "定义双槽参数结构与读写接口。",
+      "tags": [
+        "type-definition",
+        "storage"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/accel_calibration.c",
+      "type": "file",
+      "name": "accel_calibration.c",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "水平单面加速度校准：预热、Welford 窗口与运动/水平/方差/偏置门限，候选值持久化成功前不切换。",
+      "tags": [
+        "algorithm",
+        "calibration",
+        "accel"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "type": "file",
+      "name": "angle_outer_loop.c",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "姿态角外环：Roll/Pitch 角误差转 Rate 设定、Yaw 透传，模式/参数切换复位 PID。",
+      "tags": [
+        "algorithm",
+        "attitude",
+        "angle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/attitude_estimator.c",
+      "type": "file",
+      "name": "attitude_estimator.c",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "attitude_estimator.c：C 源文件，含 10 个函数。",
+      "tags": [
+        "module",
+        "code"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/flight_arming.c",
+      "type": "file",
+      "name": "flight_arming.c",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "四态安全解锁链：综合 IMU/校准/参数/RC 门禁，只有 ARMED 才允许电机输出。",
+      "tags": [
+        "algorithm",
+        "arming",
+        "safety"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/gyro_calibration.c",
+      "type": "file",
+      "name": "gyro_calibration.c",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "上电陀螺静态零偏状态机：预热、Welford 均值/方差窗口，运动或异常时重置，READY 后冻结并扣除三轴零偏。",
+      "tags": [
+        "algorithm",
+        "calibration",
+        "gyro"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/imu_filter.c",
+      "type": "file",
+      "name": "imu_filter.c",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "三轴 PT1 低通：按真实 dt 更新，Gyro 100Hz / Accel 30Hz，首样本播种，dt 超界或非有限值重置。",
+      "tags": [
+        "algorithm",
+        "filter",
+        "pt1"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/power_monitor.c",
+      "type": "file",
+      "name": "power_monitor.c",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "电源监测算法：由 ADC 原始值换算电压/电流/剩余量并做滤波。",
+      "tags": [
+        "algorithm",
+        "power",
+        "monitor"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "type": "file",
+      "name": "quad_x_mixer.c",
+      "filePath": "APP/Src/algorithms/quad_x_mixer.c",
+      "summary": "Quad-X 混控矩阵：把控制量映射到 4 路电机输出，含油门与方向分配。",
+      "tags": [
+        "algorithm",
+        "mixer",
+        "quad-x"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rate_pid.c",
+      "type": "file",
+      "name": "rate_pid.c",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "角速率 PID：对三轴角速率误差做 PID 计算并输出混控前控制量。",
+      "tags": [
+        "algorithm",
+        "pid",
+        "rate"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_input.c",
+      "type": "file",
+      "name": "rc_input.c",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "RC 输入抽象：把物理/虚拟候选通道映射为控制链使用的 mapped_channel_us。",
+      "tags": [
+        "algorithm",
+        "rc",
+        "input"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_setpoint.c",
+      "type": "file",
+      "name": "rc_setpoint.c",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "RC 设定值生成：由映射通道解算目标姿态角速率/油门设定。",
+      "tags": [
+        "algorithm",
+        "rc",
+        "setpoint"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "type": "file",
+      "name": "rc_source_arbiter.c",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "物理/虚拟 RC 仲裁：AUX3 授权，物理 AUX 保持所有权，超时/会话重启/inhibit/DISARM 立即退出且禁止自动重入。",
+      "tags": [
+        "algorithm",
+        "rc",
+        "arbiter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/app_state.c",
+      "type": "file",
+      "name": "app_state.c",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state 全局快照：聚合 IMU 时间/dt、未滤波/滤波数据、校准、参数槽、解锁抑制与姿态/电池信息，关中断短临界区发布。",
+      "tags": [
+        "state",
+        "snapshot",
+        "shared"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/crsf_uart.c",
+      "type": "file",
+      "name": "crsf_uart.c",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "CRSF 串口驱动：物理 RC 链路字节收发与帧边界检测。",
+      "tags": [
+        "bsp",
+        "crsf",
+        "uart"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/bsp/dshot_motor.c",
+      "type": "file",
+      "name": "dshot_motor.c",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "DShot 电调协议输出：把电机端点值编码为 DShot 帧并通过定时器 DMA 发送。",
+      "tags": [
+        "bsp",
+        "motor",
+        "dshot"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/imu_bus.c",
+      "type": "file",
+      "name": "imu_bus.c",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "SPI1 + PA4 CS + DMA2 总线适配层，封装 ICM42688P 的阻塞事务与 14 字节 DMA 样本传输。",
+      "tags": [
+        "bsp",
+        "spi",
+        "driver"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "type": "file",
+      "name": "linux_rc_monitor.c",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "USART6 ISR 固定帧接收器：校验 CRC/格式/范围/心跳，向 RcTask 提供原子候选快照。",
+      "tags": [
+        "bsp",
+        "rc",
+        "linux",
+        "uart"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/power_adc.c",
+      "type": "file",
+      "name": "power_adc.c",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "ADC3 电源采样驱动：读取电池电压/电流原始值。",
+      "tags": [
+        "bsp",
+        "adc",
+        "power"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "type": "file",
+      "name": "usb_cdc_transport.c",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "USB CDC 收发适配：1024 字节 RX 环形缓冲 + 任务通知，TX 轮询等待 CDC_Transmit_FS 完成。",
+      "tags": [
+        "bsp",
+        "usb",
+        "cdc",
+        "transport"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:increment_saturating",
+      "type": "function",
+      "name": "increment_saturating",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "increment_saturating()：加速度校准 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:clear_window",
+      "type": "function",
+      "name": "clear_window",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "clear_window()：加速度校准 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:classify_sample",
+      "type": "function",
+      "name": "classify_sample",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "classify_sample()：加速度校准 中的函数（约 33 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:reject_window",
+      "type": "function",
+      "name": "reject_window",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "reject_window()：加速度校准 中的函数（约 21 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:final_window_is_valid",
+      "type": "function",
+      "name": "final_window_is_valid",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "final_window_is_valid()：加速度校准 中的函数（约 45 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_initialize",
+      "type": "function",
+      "name": "accel_calibration_initialize",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "accel_calibration_initialize()：加速度校准 中的函数（约 33 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_start",
+      "type": "function",
+      "name": "accel_calibration_start",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "accel_calibration_start()：加速度校准 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_process",
+      "type": "function",
+      "name": "accel_calibration_process",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "accel_calibration_process()：加速度校准 中的函数（约 59 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_get_candidate",
+      "type": "function",
+      "name": "accel_calibration_get_candidate",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "accel_calibration_get_candidate()：加速度校准 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_persisted",
+      "type": "function",
+      "name": "accel_calibration_mark_persisted",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "accel_calibration_mark_persisted()：加速度校准 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_save_failed",
+      "type": "function",
+      "name": "accel_calibration_mark_save_failed",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "accel_calibration_mark_save_failed()：加速度校准 中的函数（约 8 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_apply",
+      "type": "function",
+      "name": "accel_calibration_apply",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "accel_calibration_apply()：加速度校准 中的函数（约 20 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/angle_outer_loop.c:clampf",
+      "type": "function",
+      "name": "clampf",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "clampf()：ANGLE 外环 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_profile_is_valid",
+      "type": "function",
+      "name": "angle_outer_loop_profile_is_valid",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "angle_outer_loop_profile_is_valid()：ANGLE 外环 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_compute",
+      "type": "function",
+      "name": "angle_outer_loop_compute",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "angle_outer_loop_compute()：ANGLE 外环 中的函数（约 47 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:increment_saturating",
+      "type": "function",
+      "name": "increment_saturating",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "increment_saturating()：attitude_estimator.c 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:clampf",
+      "type": "function",
+      "name": "clampf",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "clampf()：attitude_estimator.c 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:vectors_are_finite",
+      "type": "function",
+      "name": "vectors_are_finite",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "vectors_are_finite()：attitude_estimator.c 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:normalize_measured_down",
+      "type": "function",
+      "name": "normalize_measured_down",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "normalize_measured_down()：attitude_estimator.c 中的函数（约 37 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:normalize_quaternion",
+      "type": "function",
+      "name": "normalize_quaternion",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "normalize_quaternion()：attitude_estimator.c 中的函数（约 29 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:update_euler",
+      "type": "function",
+      "name": "update_euler",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "update_euler()：attitude_estimator.c 中的函数（约 32 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:seed_from_gravity",
+      "type": "function",
+      "name": "seed_from_gravity",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "seed_from_gravity()：attitude_estimator.c 中的函数（约 34 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_initialize",
+      "type": "function",
+      "name": "attitude_estimator_initialize",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "attitude_estimator_initialize()：attitude_estimator.c 中的函数（约 8 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_reset",
+      "type": "function",
+      "name": "attitude_estimator_reset",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "attitude_estimator_reset()：attitude_estimator.c 中的函数（约 19 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_update",
+      "type": "function",
+      "name": "attitude_estimator_update",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "attitude_estimator_update()：attitude_estimator.c 中的函数（约 124 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/flight_arming.c:flight_arming_init",
+      "type": "function",
+      "name": "flight_arming_init",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "flight_arming_init()：解锁安全链 中的函数（约 7 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/flight_arming.c:flight_arming_update",
+      "type": "function",
+      "name": "flight_arming_update",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "flight_arming_update()：解锁安全链 中的函数（约 45 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/flight_arming.c:flight_arming_is_armed",
+      "type": "function",
+      "name": "flight_arming_is_armed",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "flight_arming_is_armed()：解锁安全链 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:increment_saturating",
+      "type": "function",
+      "name": "increment_saturating",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "increment_saturating()：陀螺静态零偏校准 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:clear_window",
+      "type": "function",
+      "name": "clear_window",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "clear_window()：陀螺静态零偏校准 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:reject_window",
+      "type": "function",
+      "name": "reject_window",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "reject_window()：陀螺静态零偏校准 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:sample_is_finite",
+      "type": "function",
+      "name": "sample_is_finite",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "sample_is_finite()：陀螺静态零偏校准 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:sample_is_stationary",
+      "type": "function",
+      "name": "sample_is_stationary",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "sample_is_stationary()：陀螺静态零偏校准 中的函数（约 20 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:window_variance_is_acceptable",
+      "type": "function",
+      "name": "window_variance_is_acceptable",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "window_variance_is_acceptable()：陀螺静态零偏校准 中的函数（约 17 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_reset",
+      "type": "function",
+      "name": "gyro_calibration_reset",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "gyro_calibration_reset()：陀螺静态零偏校准 中的函数（约 8 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_start",
+      "type": "function",
+      "name": "gyro_calibration_start",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "gyro_calibration_start()：陀螺静态零偏校准 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_process",
+      "type": "function",
+      "name": "gyro_calibration_process",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "gyro_calibration_process()：陀螺静态零偏校准 中的函数（约 62 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_apply",
+      "type": "function",
+      "name": "gyro_calibration_apply",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "gyro_calibration_apply()：陀螺静态零偏校准 中的函数（约 19 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/imu_filter.c:vectors_are_finite",
+      "type": "function",
+      "name": "vectors_are_finite",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "vectors_are_finite()：IMU 低通滤波 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/imu_filter.c:seed_filter",
+      "type": "function",
+      "name": "seed_filter",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "seed_filter()：IMU 低通滤波 中的函数（约 20 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/imu_filter.c:imu_filter_reset",
+      "type": "function",
+      "name": "imu_filter_reset",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "imu_filter_reset()：IMU 低通滤波 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/imu_filter.c:imu_filter_process",
+      "type": "function",
+      "name": "imu_filter_process",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "imu_filter_process()：IMU 低通滤波 中的函数（约 108 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:saturating_add_u32",
+      "type": "function",
+      "name": "saturating_add_u32",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "saturating_add_u32()：电源监测 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:classify_voltage",
+      "type": "function",
+      "name": "classify_voltage",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "classify_voltage()：电源监测 中的函数（约 36 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_voltage_cv",
+      "type": "function",
+      "name": "power_monitor_raw_to_voltage_cv",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "power_monitor_raw_to_voltage_cv()：电源监测 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_current_ca",
+      "type": "function",
+      "name": "power_monitor_raw_to_current_ca",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "power_monitor_raw_to_current_ca()：电源监测 中的函数（约 22 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_detect_cell_count",
+      "type": "function",
+      "name": "power_monitor_detect_cell_count",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "power_monitor_detect_cell_count()：电源监测 中的函数（约 18 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_init",
+      "type": "function",
+      "name": "power_monitor_init",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "power_monitor_init()：电源监测 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_update",
+      "type": "function",
+      "name": "power_monitor_update",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "power_monitor_update()：电源监测 中的函数（约 133 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_mark_stale",
+      "type": "function",
+      "name": "power_monitor_mark_stale",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "power_monitor_mark_stale()：电源监测 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/quad_x_mixer.c:clampf",
+      "type": "function",
+      "name": "clampf",
+      "filePath": "APP/Src/algorithms/quad_x_mixer.c",
+      "summary": "clampf()：Quad-X 混控器 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/quad_x_mixer.c:quad_x_mixer_compute",
+      "type": "function",
+      "name": "quad_x_mixer_compute",
+      "filePath": "APP/Src/algorithms/quad_x_mixer.c",
+      "summary": "quad_x_mixer_compute()：Quad-X 混控器 中的函数（约 69 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rate_pid.c:clampf",
+      "type": "function",
+      "name": "clampf",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "clampf()：Rate PID 控制器 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rate_pid.c:rate_pid_profile_is_valid",
+      "type": "function",
+      "name": "rate_pid_profile_is_valid",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "rate_pid_profile_is_valid()：Rate PID 控制器 中的函数（约 32 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rate_pid.c:rate_pid_reset",
+      "type": "function",
+      "name": "rate_pid_reset",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "rate_pid_reset()：Rate PID 控制器 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rate_pid.c:rate_pid_update",
+      "type": "function",
+      "name": "rate_pid_update",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "rate_pid_update()：Rate PID 控制器 中的函数（约 101 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:elapsed_ms",
+      "type": "function",
+      "name": "elapsed_ms",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "elapsed_ms()：RC 输入 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_map_aetr",
+      "type": "function",
+      "name": "rc_input_map_aetr",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "rc_input_map_aetr()：RC 输入 中的函数（约 21 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_set_safe_channels",
+      "type": "function",
+      "name": "rc_input_set_safe_channels",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "rc_input_set_safe_channels()：RC 输入 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_init",
+      "type": "function",
+      "name": "rc_input_failsafe_init",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "rc_input_failsafe_init()：RC 输入 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_on_frame",
+      "type": "function",
+      "name": "rc_input_failsafe_on_frame",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "rc_input_failsafe_on_frame()：RC 输入 中的函数（约 30 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_update",
+      "type": "function",
+      "name": "rc_input_failsafe_update",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "rc_input_failsafe_update()：RC 输入 中的函数（约 19 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_control_valid",
+      "type": "function",
+      "name": "rc_input_control_valid",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "rc_input_control_valid()：RC 输入 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:clamp_channel",
+      "type": "function",
+      "name": "clamp_channel",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "clamp_channel()：RC 设定值 中的函数（约 11 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:normalize_axis",
+      "type": "function",
+      "name": "normalize_axis",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "normalize_axis()：RC 设定值 中的函数（约 28 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:actual_rate_dps",
+      "type": "function",
+      "name": "actual_rate_dps",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "actual_rate_dps()：RC 设定值 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:range_is_valid",
+      "type": "function",
+      "name": "range_is_valid",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "range_is_valid()：RC 设定值 中的函数（约 7 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:range_is_active",
+      "type": "function",
+      "name": "range_is_active",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "range_is_active()：RC 设定值 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_profile_is_valid",
+      "type": "function",
+      "name": "rc_setpoint_profile_is_valid",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "rc_setpoint_profile_is_valid()：RC 设定值 中的函数（约 42 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_compute",
+      "type": "function",
+      "name": "rc_setpoint_compute",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "rc_setpoint_compute()：RC 设定值 中的函数（约 57 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:elapsed_ms",
+      "type": "function",
+      "name": "elapsed_ms",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "elapsed_ms()：RC 源仲裁 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:absolute_delta",
+      "type": "function",
+      "name": "absolute_delta",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "absolute_delta()：RC 源仲裁 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:authorization_is_active",
+      "type": "function",
+      "name": "authorization_is_active",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "authorization_is_active()：RC 源仲裁 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:takeover_is_requested",
+      "type": "function",
+      "name": "takeover_is_requested",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "takeover_is_requested()：RC 源仲裁 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:candidate_is_fresh",
+      "type": "function",
+      "name": "candidate_is_fresh",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "candidate_is_fresh()：RC 源仲裁 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:virtual_target_us",
+      "type": "function",
+      "name": "virtual_target_us",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "virtual_target_us()：RC 源仲裁 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:slew_toward",
+      "type": "function",
+      "name": "slew_toward",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "slew_toward()：RC 源仲裁 中的函数（约 31 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:exit_virtual",
+      "type": "function",
+      "name": "exit_virtual",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "exit_virtual()：RC 源仲裁 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_init",
+      "type": "function",
+      "name": "rc_source_arbiter_init",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "rc_source_arbiter_init()：RC 源仲裁 中的函数（约 10 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_update",
+      "type": "function",
+      "name": "rc_source_arbiter_update",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "rc_source_arbiter_update()：RC 源仲裁 中的函数（约 84 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_lock",
+      "type": "function",
+      "name": "app_state_lock",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_lock()：全局运行态快照 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_unlock",
+      "type": "function",
+      "name": "app_state_unlock",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_unlock()：全局运行态快照 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_init",
+      "type": "function",
+      "name": "app_state_init",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_init()：全局运行态快照 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_get_snapshot",
+      "type": "function",
+      "name": "app_state_get_snapshot",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_get_snapshot()：全局运行态快照 中的函数（约 12 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_get_rc_source_context",
+      "type": "function",
+      "name": "app_state_get_rc_source_context",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_get_rc_source_context()：全局运行态快照 中的函数（约 18 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_is_armed",
+      "type": "function",
+      "name": "app_state_is_armed",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_is_armed()：全局运行态快照 中的函数（约 8 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_set_runtime",
+      "type": "function",
+      "name": "app_state_set_runtime",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_set_runtime()：全局运行态快照 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_set_fault_flags",
+      "type": "function",
+      "name": "app_state_set_fault_flags",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_set_fault_flags()：全局运行态快照 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_parameters",
+      "type": "function",
+      "name": "app_state_publish_parameters",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_publish_parameters()：全局运行态快照 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_imu",
+      "type": "function",
+      "name": "app_state_publish_imu",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_publish_imu()：全局运行态快照 中的函数（约 57 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_attitude",
+      "type": "function",
+      "name": "app_state_publish_attitude",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_publish_attitude()：全局运行态快照 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_rc",
+      "type": "function",
+      "name": "app_state_publish_rc",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_publish_rc()：全局运行态快照 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_battery",
+      "type": "function",
+      "name": "app_state_publish_battery",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_publish_battery()：全局运行态快照 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_flight",
+      "type": "function",
+      "name": "app_state_publish_flight",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_publish_flight()：全局运行态快照 中的函数（约 8 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_set_configurator_arming_disabled",
+      "type": "function",
+      "name": "app_state_set_configurator_arming_disabled",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_set_configurator_arming_disabled()：全局运行态快照 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_set_host_rtc",
+      "type": "function",
+      "name": "app_state_set_host_rtc",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "app_state_set_host_rtc()：全局运行态快照 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_ring_next",
+      "type": "function",
+      "name": "crsf_uart_ring_next",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_ring_next()：CRSF UART 驱动 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_ring_write_from_isr",
+      "type": "function",
+      "name": "crsf_uart_ring_write_from_isr",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_ring_write_from_isr()：CRSF UART 驱动 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_notify_from_isr",
+      "type": "function",
+      "name": "crsf_uart_notify_from_isr",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_notify_from_isr()：CRSF UART 驱动 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_start_receive",
+      "type": "function",
+      "name": "crsf_uart_start_receive",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_start_receive()：CRSF UART 驱动 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_init",
+      "type": "function",
+      "name": "crsf_uart_init",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_init()：CRSF UART 驱动 中的函数（约 12 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_bind_current_task",
+      "type": "function",
+      "name": "crsf_uart_bind_current_task",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_bind_current_task()：CRSF UART 驱动 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_start",
+      "type": "function",
+      "name": "crsf_uart_start",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_start()：CRSF UART 驱动 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_service",
+      "type": "function",
+      "name": "crsf_uart_service",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_service()：CRSF UART 驱动 中的函数（约 21 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_read",
+      "type": "function",
+      "name": "crsf_uart_read",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_read()：CRSF UART 驱动 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_get_diagnostics",
+      "type": "function",
+      "name": "crsf_uart_get_diagnostics",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "crsf_uart_get_diagnostics()：CRSF UART 驱动 中的函数（约 9 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:HAL_UARTEx_RxEventCallback",
+      "type": "function",
+      "name": "HAL_UARTEx_RxEventCallback",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "HAL_UARTEx_RxEventCallback()：CRSF UART 驱动 中的函数（约 35 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:HAL_UART_ErrorCallback",
+      "type": "function",
+      "name": "HAL_UART_ErrorCallback",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "HAL_UART_ErrorCallback()：CRSF UART 驱动 中的函数（约 20 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:disable_stream",
+      "type": "function",
+      "name": "disable_stream",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "disable_stream()：DShot 电机驱动 中的函数（约 10 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:configure_motor_pins",
+      "type": "function",
+      "name": "configure_motor_pins",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "configure_motor_pins()：DShot 电机驱动 中的函数（约 11 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:motor_pins_are_outputs",
+      "type": "function",
+      "name": "motor_pins_are_outputs",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "motor_pins_are_outputs()：DShot 电机驱动 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:configure_pacer_timer",
+      "type": "function",
+      "name": "configure_pacer_timer",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "configure_pacer_timer()：DShot 电机驱动 中的函数（约 18 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:configure_dma",
+      "type": "function",
+      "name": "configure_dma",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "configure_dma()：DShot 电机驱动 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_encode_frame",
+      "type": "function",
+      "name": "dshot_encode_frame",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "dshot_encode_frame()：DShot 电机驱动 中的函数（约 11 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:build_dma_values",
+      "type": "function",
+      "name": "build_dma_values",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "build_dma_values()：DShot 电机驱动 中的函数（约 24 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_init",
+      "type": "function",
+      "name": "dshot_motor_init",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "dshot_motor_init()：DShot 电机驱动 中的函数（约 18 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:submit_frames",
+      "type": "function",
+      "name": "submit_frames",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "submit_frames()：DShot 电机驱动 中的函数（约 47 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit",
+      "type": "function",
+      "name": "dshot_motor_submit",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "dshot_motor_submit()：DShot 电机驱动 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit_command",
+      "type": "function",
+      "name": "dshot_motor_submit_command",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "dshot_motor_submit_command()：DShot 电机驱动 中的函数（约 19 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_force_safe",
+      "type": "function",
+      "name": "dshot_motor_force_safe",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "dshot_motor_force_safe()：DShot 电机驱动 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_get_diagnostics",
+      "type": "function",
+      "name": "dshot_motor_get_diagnostics",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "dshot_motor_get_diagnostics()：DShot 电机驱动 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_dma_irq_handler",
+      "type": "function",
+      "name": "dshot_motor_dma_irq_handler",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "dshot_motor_dma_irq_handler()：DShot 电机驱动 中的函数（约 23 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_lock",
+      "type": "function",
+      "name": "imu_bus_lock",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_lock()：SPI1 总线适配 中的函数（约 7 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_unlock",
+      "type": "function",
+      "name": "imu_bus_unlock",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_unlock()：SPI1 总线适配 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_dcache_enabled",
+      "type": "function",
+      "name": "imu_bus_dcache_enabled",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_dcache_enabled()：SPI1 总线适配 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_prepare_cache",
+      "type": "function",
+      "name": "imu_bus_dma_prepare_cache",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_dma_prepare_cache()：SPI1 总线适配 中的函数（约 10 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_complete_cache",
+      "type": "function",
+      "name": "imu_bus_dma_complete_cache",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_dma_complete_cache()：SPI1 总线适配 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_status_from_hal",
+      "type": "function",
+      "name": "imu_bus_status_from_hal",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_status_from_hal()：SPI1 总线适配 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_transfer",
+      "type": "function",
+      "name": "imu_bus_transfer",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_transfer()：SPI1 总线适配 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_complete_from_isr",
+      "type": "function",
+      "name": "imu_bus_dma_complete_from_isr",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_dma_complete_from_isr()：SPI1 总线适配 中的函数（约 26 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_init",
+      "type": "function",
+      "name": "imu_bus_init",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_init()：SPI1 总线适配 中的函数（约 11 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_read",
+      "type": "function",
+      "name": "imu_bus_read",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_read()：SPI1 总线适配 中的函数（约 22 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_write",
+      "type": "function",
+      "name": "imu_bus_write",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_write()：SPI1 总线适配 中的函数（约 18 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_set_dma_callback",
+      "type": "function",
+      "name": "imu_bus_set_dma_callback",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_set_dma_callback()：SPI1 总线适配 中的函数（约 8 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_read_dma_start",
+      "type": "function",
+      "name": "imu_bus_read_dma_start",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_read_dma_start()：SPI1 总线适配 中的函数（约 55 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_read_dma_finish",
+      "type": "function",
+      "name": "imu_bus_read_dma_finish",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_read_dma_finish()：SPI1 总线适配 中的函数（约 35 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_abort",
+      "type": "function",
+      "name": "imu_bus_dma_abort",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_dma_abort()：SPI1 总线适配 中的函数（约 22 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_busy",
+      "type": "function",
+      "name": "imu_bus_dma_busy",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_dma_busy()：SPI1 总线适配 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:imu_bus_clock_hz",
+      "type": "function",
+      "name": "imu_bus_clock_hz",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "imu_bus_clock_hz()：SPI1 总线适配 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:HAL_SPI_TxRxCpltCallback",
+      "type": "function",
+      "name": "HAL_SPI_TxRxCpltCallback",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "HAL_SPI_TxRxCpltCallback()：SPI1 总线适配 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/imu_bus.c:HAL_SPI_ErrorCallback",
+      "type": "function",
+      "name": "HAL_SPI_ErrorCallback",
+      "filePath": "APP/Src/bsp/imu_bus.c",
+      "summary": "HAL_SPI_ErrorCallback()：SPI1 总线适配 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:get_u16_le",
+      "type": "function",
+      "name": "get_u16_le",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "get_u16_le()：Linux RC 监视 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:get_u32_le",
+      "type": "function",
+      "name": "get_u32_le",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "get_u32_le()：Linux RC 监视 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:get_u64_le",
+      "type": "function",
+      "name": "get_u64_le",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "get_u64_le()：Linux RC 监视 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:sequence_is_newer",
+      "type": "function",
+      "name": "sequence_is_newer",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "sequence_is_newer()：Linux RC 监视 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:crc16_ccitt_false",
+      "type": "function",
+      "name": "crc16_ccitt_false",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "crc16_ccitt_false()：Linux RC 监视 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:channels_in_range",
+      "type": "function",
+      "name": "channels_in_range",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "channels_in_range()：Linux RC 监视 中的函数（约 13 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:channels_match_gesture",
+      "type": "function",
+      "name": "channels_match_gesture",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "channels_match_gesture()：Linux RC 监视 中的函数（约 27 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:validate_complete_frame",
+      "type": "function",
+      "name": "validate_complete_frame",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "validate_complete_frame()：Linux RC 监视 中的函数（约 88 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_init",
+      "type": "function",
+      "name": "linux_rc_monitor_init",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "linux_rc_monitor_init()：Linux RC 监视 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_uart_rx_byte",
+      "type": "function",
+      "name": "linux_rc_monitor_uart_rx_byte",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "linux_rc_monitor_uart_rx_byte()：Linux RC 监视 中的函数（约 27 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_uart_error",
+      "type": "function",
+      "name": "linux_rc_monitor_uart_error",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "linux_rc_monitor_uart_error()：Linux RC 监视 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_get_diagnostics",
+      "type": "function",
+      "name": "linux_rc_monitor_get_diagnostics",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "linux_rc_monitor_get_diagnostics()：Linux RC 监视 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_get_candidate",
+      "type": "function",
+      "name": "linux_rc_monitor_get_candidate",
+      "filePath": "APP/Src/bsp/linux_rc_monitor.c",
+      "summary": "linux_rc_monitor_get_candidate()：Linux RC 监视 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:irq_lock",
+      "type": "function",
+      "name": "irq_lock",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "irq_lock()：电源 ADC 驱动 中的函数（约 6 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:irq_unlock",
+      "type": "function",
+      "name": "irq_unlock",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "irq_unlock()：电源 ADC 驱动 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:disable_dma_stream",
+      "type": "function",
+      "name": "disable_dma_stream",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "disable_dma_stream()：电源 ADC 驱动 中的函数（约 10 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:configure_gpio",
+      "type": "function",
+      "name": "configure_gpio",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "configure_gpio()：电源 ADC 驱动 中的函数（约 15 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:configure_adc",
+      "type": "function",
+      "name": "configure_adc",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "configure_adc()：电源 ADC 驱动 中的函数（约 26 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:configure_dma",
+      "type": "function",
+      "name": "configure_dma",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "configure_dma()：电源 ADC 驱动 中的函数（约 16 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:power_adc_init",
+      "type": "function",
+      "name": "power_adc_init",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "power_adc_init()：电源 ADC 驱动 中的函数（约 38 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:power_adc_start_conversion",
+      "type": "function",
+      "name": "power_adc_start_conversion",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "power_adc_start_conversion()：电源 ADC 驱动 中的函数（约 49 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:power_adc_get_snapshot",
+      "type": "function",
+      "name": "power_adc_get_snapshot",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "power_adc_get_snapshot()：电源 ADC 驱动 中的函数（约 23 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/power_adc.c:power_adc_dma_irq_handler",
+      "type": "function",
+      "name": "power_adc_dma_irq_handler",
+      "filePath": "APP/Src/bsp/power_adc.c",
+      "summary": "power_adc_dma_irq_handler()：电源 ADC 驱动 中的函数（约 26 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_init",
+      "type": "function",
+      "name": "usb_cdc_transport_init",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_init()：USB CDC 传输 中的函数（约 7 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_bind_current_task",
+      "type": "function",
+      "name": "usb_cdc_transport_bind_current_task",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_bind_current_task()：USB CDC 传输 中的函数（约 5 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_receive_from_isr",
+      "type": "function",
+      "name": "usb_cdc_transport_receive_from_isr",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_receive_from_isr()：USB CDC 传输 中的函数（约 27 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_transmit_complete_from_isr",
+      "type": "function",
+      "name": "usb_cdc_transport_transmit_complete_from_isr",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_transmit_complete_from_isr()：USB CDC 传输 中的函数（约 4 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_read",
+      "type": "function",
+      "name": "usb_cdc_transport_read",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_read()：USB CDC 传输 中的函数（约 14 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_wait_tx_idle",
+      "type": "function",
+      "name": "usb_cdc_transport_wait_tx_idle",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_wait_tx_idle()：USB CDC 传输 中的函数（约 10 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_write",
+      "type": "function",
+      "name": "usb_cdc_transport_write",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_write()：USB CDC 传输 中的函数（约 36 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_rx_dropped",
+      "type": "function",
+      "name": "usb_cdc_transport_rx_dropped",
+      "filePath": "APP/Src/bsp/usb_cdc_transport.c",
+      "summary": "usb_cdc_transport_rx_dropped()：USB CDC 传输 中的函数（约 3 行）。",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:increment_saturating",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:clear_window",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:classify_sample",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:reject_window",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:final_window_is_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_initialize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_process",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_get_candidate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_persisted",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_save_failed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_apply",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_initialize",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_process",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_get_candidate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_persisted",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_save_failed",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_apply",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "target": "function:APP/Src/algorithms/angle_outer_loop.c:clampf",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "target": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_profile_is_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "target": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_compute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "target": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_profile_is_valid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "target": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_compute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:increment_saturating",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:clampf",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:vectors_are_finite",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:normalize_measured_down",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:normalize_quaternion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:update_euler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:seed_from_gravity",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_initialize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_initialize",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_update",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/flight_arming.c",
+      "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/flight_arming.c",
+      "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/flight_arming.c",
+      "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_is_armed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/flight_arming.c",
+      "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/flight_arming.c",
+      "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_update",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/flight_arming.c",
+      "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_is_armed",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:increment_saturating",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:clear_window",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:reject_window",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:sample_is_finite",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:sample_is_stationary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:window_variance_is_acceptable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_process",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_apply",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_process",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_apply",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/imu_filter.c",
+      "target": "function:APP/Src/algorithms/imu_filter.c:vectors_are_finite",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/imu_filter.c",
+      "target": "function:APP/Src/algorithms/imu_filter.c:seed_filter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/imu_filter.c",
+      "target": "function:APP/Src/algorithms/imu_filter.c:imu_filter_reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/imu_filter.c",
+      "target": "function:APP/Src/algorithms/imu_filter.c:imu_filter_process",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/imu_filter.c",
+      "target": "function:APP/Src/algorithms/imu_filter.c:imu_filter_reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/imu_filter.c",
+      "target": "function:APP/Src/algorithms/imu_filter.c:imu_filter_process",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:saturating_add_u32",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:classify_voltage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_voltage_cv",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_current_ca",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_detect_cell_count",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_mark_stale",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_voltage_cv",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_current_ca",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_detect_cell_count",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_update",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_mark_stale",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "target": "function:APP/Src/algorithms/quad_x_mixer.c:clampf",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "target": "function:APP/Src/algorithms/quad_x_mixer.c:quad_x_mixer_compute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "target": "function:APP/Src/algorithms/quad_x_mixer.c:quad_x_mixer_compute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "function:APP/Src/algorithms/rate_pid.c:clampf",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_profile_is_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_reset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_profile_is_valid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_reset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_update",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:elapsed_ms",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_map_aetr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_set_safe_channels",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_on_frame",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_control_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_map_aetr",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_set_safe_channels",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_on_frame",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_update",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "function:APP/Src/algorithms/rc_input.c:rc_input_control_valid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:clamp_channel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:normalize_axis",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:actual_rate_dps",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:range_is_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:range_is_active",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_profile_is_valid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_compute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_profile_is_valid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_compute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:elapsed_ms",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:absolute_delta",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:authorization_is_active",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:takeover_is_requested",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:candidate_is_fresh",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:virtual_target_us",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:slew_toward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:exit_virtual",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_update",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_lock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_unlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_get_snapshot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_get_rc_source_context",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_is_armed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_runtime",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_fault_flags",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_parameters",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_imu",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_attitude",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_rc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_battery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_flight",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_configurator_arming_disabled",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_host_rtc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_get_snapshot",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_get_rc_source_context",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_is_armed",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_runtime",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_fault_flags",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_parameters",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_imu",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_attitude",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_rc",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_battery",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_publish_flight",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_configurator_arming_disabled",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "function:APP/Src/app_state.c:app_state_set_host_rtc",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_ring_next",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_ring_write_from_isr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_notify_from_isr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_start_receive",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_bind_current_task",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_service",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_get_diagnostics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:HAL_UARTEx_RxEventCallback",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:HAL_UART_ErrorCallback",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_bind_current_task",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_service",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_read",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_get_diagnostics",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:HAL_UARTEx_RxEventCallback",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "function:APP/Src/bsp/crsf_uart.c:HAL_UART_ErrorCallback",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:disable_stream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:configure_motor_pins",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:motor_pins_are_outputs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:configure_pacer_timer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:configure_dma",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_encode_frame",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:build_dma_values",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:submit_frames",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit_command",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_force_safe",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_get_diagnostics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_dma_irq_handler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_encode_frame",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit_command",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_force_safe",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_get_diagnostics",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_dma_irq_handler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_lock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_unlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dcache_enabled",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_prepare_cache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_complete_cache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_status_from_hal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_transfer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_complete_from_isr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_write",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_set_dma_callback",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_read_dma_start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_read_dma_finish",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_abort",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_busy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_clock_hz",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:HAL_SPI_TxRxCpltCallback",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:HAL_SPI_ErrorCallback",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_read",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_write",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_set_dma_callback",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_read_dma_start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_read_dma_finish",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_abort",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_dma_busy",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:imu_bus_clock_hz",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:HAL_SPI_TxRxCpltCallback",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "function:APP/Src/bsp/imu_bus.c:HAL_SPI_ErrorCallback",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:get_u16_le",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:get_u32_le",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:get_u64_le",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:sequence_is_newer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:crc16_ccitt_false",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:channels_in_range",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:channels_match_gesture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:validate_complete_frame",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_uart_rx_byte",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_uart_error",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_get_diagnostics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_get_candidate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_uart_rx_byte",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_uart_error",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_get_diagnostics",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_get_candidate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:irq_lock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:irq_unlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:disable_dma_stream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:configure_gpio",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:configure_adc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:configure_dma",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_start_conversion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_get_snapshot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_dma_irq_handler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_start_conversion",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_get_snapshot",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "function:APP/Src/bsp/power_adc.c:power_adc_dma_irq_handler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_bind_current_task",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_receive_from_isr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_transmit_complete_from_isr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_wait_tx_idle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_write",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_rx_dropped",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_bind_current_task",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_receive_from_isr",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_transmit_complete_from_isr",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_read",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_write",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_rx_dropped",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:APP/Inc/rtos/flight_task.h",
+      "target": "file:APP/Inc/bsp/dshot_motor.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/rtos/imu_task.h",
+      "target": "file:APP/Inc/storage/parameter_store.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/storage/parameter_store.h",
+      "target": "file:APP/Inc/algorithms/angle_outer_loop.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/storage/parameter_store.h",
+      "target": "file:APP/Inc/algorithms/rate_pid.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Inc/storage/parameter_store.h",
+      "target": "file:APP/Inc/algorithms/rc_setpoint.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/accel_calibration.c",
+      "target": "file:APP/Inc/algorithms/accel_calibration.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "target": "file:APP/Inc/algorithms/angle_outer_loop.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/attitude_estimator.c",
+      "target": "file:APP/Inc/algorithms/attitude_estimator.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/flight_arming.c",
+      "target": "file:APP/Inc/algorithms/flight_arming.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/gyro_calibration.c",
+      "target": "file:APP/Inc/algorithms/gyro_calibration.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/imu_filter.c",
+      "target": "file:APP/Inc/algorithms/imu_filter.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/power_monitor.c",
+      "target": "file:APP/Inc/algorithms/power_monitor.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "target": "file:APP/Inc/algorithms/quad_x_mixer.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/rate_pid.c",
+      "target": "file:APP/Inc/algorithms/rate_pid.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_input.c",
+      "target": "file:APP/Inc/algorithms/rc_input.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_setpoint.c",
+      "target": "file:APP/Inc/algorithms/rc_setpoint.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "target": "file:APP/Inc/algorithms/rc_source_arbiter.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/app_state.c",
+      "target": "file:APP/Inc/app_state.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "file:APP/Inc/bsp/crsf_uart.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/bsp/crsf_uart.c",
+      "target": "file:APP/Inc/bsp/linux_rc_monitor.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/bsp/dshot_motor.c",
+      "target": "file:APP/Inc/bsp/dshot_motor.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/bsp/imu_bus.c",
+      "target": "file:APP/Inc/bsp/imu_bus.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/bsp/linux_rc_monitor.c",
+      "target": "file:APP/Inc/bsp/linux_rc_monitor.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/bsp/power_adc.c",
+      "target": "file:APP/Inc/bsp/power_adc.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:APP/Src/bsp/usb_cdc_transport.c",
+      "target": "file:APP/Inc/bsp/usb_cdc_transport.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:APP/Src/bsp/crsf_uart.c:HAL_UART_ErrorCallback",
+      "target": "function:APP/Src/bsp/linux_rc_monitor.c:linux_rc_monitor_uart_error",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "RcTask 链路 · 物理 / 虚拟输入源仲裁",
+    "quality_profile": "showcase",
+    "viewBox": [1200, 520]
+  },
+  "stages": [
+    { "label": "接收" },
+    { "label": "解码 / 校验" },
+    { "label": "来源仲裁" },
+    { "label": "发布" }
+  ],
+  "nodes": [
+    { "id": "s0_usart2", "type": "backend", "label": "USART2 CRSF", "sublabel": "DMA+IDLE ISR · 420k", "stage": 0, "row": 1, "width": 148, "height": 60, "tag": "物理遥控" },
+    { "id": "s0_usart6", "type": "backend", "label": "USART6 监视", "sublabel": "linux_rc_monitor ISR", "stage": 0, "row": 2, "width": 148, "height": 60, "tag": "虚拟手势" },
+    { "id": "s1_crsf", "type": "backend", "label": "CRSF 帧解码", "sublabel": "v1/v2 → 通道 + Link 统计", "stage": 1, "row": 1, "width": 148, "height": 60, "tag": "物理映射" },
+    { "id": "s1_vrc", "type": "backend", "label": "虚拟候选", "sublabel": "44B · CRC · 心跳", "stage": 1, "row": 2, "width": 148, "height": 60, "tag": "候选快照" },
+    { "id": "s2_ctx", "type": "database", "label": "来源上下文", "sublabel": "armed · inhibit · 授权通道", "stage": 2, "row": 0, "width": 148, "height": 60, "tag": "app_state" },
+    { "id": "s2_arb", "type": "backend", "label": "source_arbiter", "sublabel": "物理/虚拟 · 150ms 超时", "stage": 2, "row": 1, "width": 148, "height": 60, "tag": "S7.7" },
+    { "id": "s3_pub", "type": "database", "label": "app_state 发布", "sublabel": "mapped_channel_us", "stage": 3, "row": 1, "width": 148, "height": 60, "tag": "单写者" }
+  ],
+  "flows": [
+    { "id": "usart2-crsf", "from": "s0_usart2", "to": "s1_crsf", "label": "字节环", "classification": "输入", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "usart6-vrc", "from": "s0_usart6", "to": "s1_vrc", "label": "帧", "classification": "输入", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "crsf-arb", "from": "s1_crsf", "to": "s2_arb", "label": "物理 mapped", "classification": "物理候选", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "vrc-arb", "from": "s1_vrc", "to": "s2_arb", "label": "候选数据", "classification": "帧校验通过", "variant": "default", "fromSide": "right", "toSide": "bottom", "via": [[530, 386]], "labelAt": [459, 358] },
+    { "id": "ctx-arb", "from": "s2_ctx", "to": "s2_arb", "label": "armed/inhibit", "classification": "授权", "variant": "default", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [582, 205] },
+    { "id": "arb-pub", "from": "s2_arb", "to": "s3_pub", "label": "有效通道", "classification": "app_state", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "双输入源", "items": [
+      "物理: USART2 CRSF (420k) DMA+IDLE → CRSF 帧解码",
+      "虚拟: USART6 监视 → 44B 帧 CRC/格式/心跳校验",
+      "USART6 只给候选，不直接发布 RC"
+    ] },
+    { "dot": "emerald", "title": "S7.7 仲裁规则", "items": [
+      "AUX3 低高授权 · 物理 AUX 保持所有权",
+      "摇杆/油门接管 · 非法候选 · 150ms 超时立即退出",
+      "退出后禁止自动重入 · 保持物理映射"
+    ] },
+    { "dot": "amber", "title": "失效兜底", "items": [
+      "rc_input_failsafe: 丢帧/超时 → 安全通道值",
+      "Link 统计超时 → link_statistics_valid 置 0",
+      "safety_channel / 五通道抑制参与解锁"
+    ] },
+    { "dot": "rose", "title": "共享上下文", "items": [
+      "仲裁读 app_state: flight_armed · arming_inhibit · 授权通道",
+      "仅仲裁后的 mapped_channel_us 交给控制链",
+      "active_source / last_exit_reason / 授权状态入 app_state"
+    ] }
+  ]
+}

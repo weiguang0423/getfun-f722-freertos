@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GETFUN_F722 飞控运行时架构 · 飞行链路",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/weiguang0423/getfun-f722-freertos",
+      "revision": "a504227765e8c80120e29ac75c7e5148d47239ba"
+    },
+    "viewBox": [1720, 700]
+  },
+  "components": [
+    { "id": "rk3568", "type": "external", "label": "RK3568 Linux 伴随机", "sublabel": "手势虚拟 RC · USART6", "pos": [480, 60], "size": [160, 56], "sources": [{ "path": "Linux/RK3568/s7_6/s7_6_virtual_rc.cpp", "line": 1, "label": "s7_6_virtual_rc" }] },
+    { "id": "crsf-rx", "type": "external", "label": "CRSF 遥控接收机", "sublabel": "物理 RC · USART2", "pos": [780, 60], "size": [160, 56] },
+    { "id": "spi-imu", "type": "backend", "label": "SPI1 · ICM42688P", "sublabel": "DMA2 S0/S3 ISR · 1 kHz", "pos": [180, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/imu_bus.c", "line": 351, "label": "SPI TxRxCpltCallback" }] },
+    { "id": "usart6-linux", "type": "backend", "label": "USART6 RX 监视", "sublabel": "linux_rc_monitor · ISR", "pos": [480, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/linux_rc_monitor.c", "line": 209, "label": "linux_rc_monitor_init" }] },
+    { "id": "crsf-uart", "type": "backend", "label": "USART2 CRSF 输入", "sublabel": "DMA+IDLE ISR · 环缓冲", "pos": [780, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/crsf_uart.c", "line": 155, "label": "RxEventCallback" }] },
+    { "id": "dshot", "type": "backend", "label": "DShot 电机输出", "sublabel": "DMA2 S2 · 4 电机", "pos": [1380, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/dshot_motor.c", "line": 294, "label": "dma_irq_handler" }] },
+    { "id": "imutask", "type": "backend", "label": "ImuTask", "sublabel": "idle+4 · 1 kHz 采样所有者", "pos": [180, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/imu_task.c", "line": 645, "label": "imu_task()" }] },
+    { "id": "rctask", "type": "backend", "label": "RcTask", "sublabel": "idle+3 · 解析 + 源仲裁", "pos": [480, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/rc_task.c", "line": 130, "label": "rc_task()" }] },
+    { "id": "batterytask", "type": "backend", "label": "BatteryTask", "sublabel": "idle+1 · 50 Hz · ADC3 DMA", "pos": [1080, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/battery_task.c", "line": 69, "label": "battery_task()" }] },
+    { "id": "flighttask", "type": "backend", "label": "FlightTask", "sublabel": "idle+5 · 1 kHz 控制 + 安全链", "pos": [1380, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/flight_task.c", "line": 225, "label": "flight_task()" }] },
+    { "id": "app_state", "type": "database", "label": "app_state 快照中心", "sublabel": "PRIMASK+DMB 临界区 · 单写者", "pos": [540, 500], "size": [300, 72], "sources": [{ "path": "APP/Inc/app_state.h", "line": 336, "label": "app_state_snapshot_t" }] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "外部参与者", "wraps": ["rk3568", "crsf-rx"] },
+    { "kind": "region", "label": "中断 / 外设路径 (ISR)", "wraps": ["spi-imu", "usart6-linux", "crsf-uart", "dshot"] },
+    { "kind": "region", "label": "FreeRTOS 运行时 · CM7 @216 MHz", "wraps": ["imutask", "rctask", "batterytask", "flighttask", "app_state"] }
+  ],
+  "connections": [
+    { "id": "linux-frame", "from": "rk3568", "to": "usart6-linux", "label": "44B 手势 RC 帧", "labelDy": 40 },
+    { "id": "linux-cand", "from": "usart6-linux", "to": "rctask", "label": "候选快照", "labelDy": 40 },
+    { "id": "crsf-stream", "from": "crsf-rx", "to": "crsf-uart", "label": "CRSF 流 (420k)", "labelDy": 40 },
+    { "id": "crsf-bytes", "from": "crsf-uart", "to": "rctask", "label": "字节环 · 通知", "labelDy": 40 },
+    { "id": "spi-link", "from": "spi-imu", "to": "imutask", "label": "DMA 采样 · 完成通知", "labelDy": 40 },
+    { "id": "imu-pub", "from": "imutask", "to": "app_state", "label": "发布 IMU / 姿态", "fromSide": "bottom", "toSide": "top" },
+    { "id": "rc-pub", "from": "rctask", "to": "app_state", "label": "发布 RC 快照", "fromSide": "bottom", "toSide": "top" },
+    { "id": "bat-pub", "from": "batterytask", "to": "app_state", "label": "发布电池快照", "fromSide": "bottom", "toSide": "top" },
+    { "id": "state-flight", "from": "app_state", "to": "flighttask", "label": "快照 (IMU/RC/参数)", "fromSide": "right", "toSide": "bottom" },
+    { "id": "flight-dshot", "from": "flighttask", "to": "dshot", "label": "DShot 帧 · DMA2 S2", "labelDy": -40 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "RTOS 调度 (优先级)", "items": [
+      "FlightTask idle+5 · 1 kHz 控制 / 输出",
+      "ImuTask idle+4 · 1 kHz 采样 / 校准 / 姿态",
+      "RcTask idle+3 · CRSF 解析 + 源仲裁",
+      "BatteryTask idle+1 · 50 Hz 电源采样"
+    ] },
+    { "dot": "emerald", "title": "共享数据中心", "items": [
+      "app_state 快照: IMU / 姿态 / RC / 电池 / 飞行 / 参数",
+      "PRIMASK 关中断 + DMB 短临界区 (非互斥锁)",
+      "单写者: ImuTask · RcTask · BatteryTask · FlightTask",
+      "发布者整体拷贝 · 消费者只读快照 · 互不阻塞"
+    ] },
+    { "dot": "amber", "title": "ISR 唤醒 + 安全链", "items": [
+      "SPI1 DMA 完成 → ImuTask · ADC3 → BatteryTask",
+      "USART2 / USART6 候选 → RcTask",
+      "FlightTask 四态 ARM 链: 仅 ARMED 映射 mixer → 电机",
+      "故障 / 超时 / 低电压 → 禁 ARM · 强制电机低电平停机"
+    ] }
+  ]
+}

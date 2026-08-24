@@ -1,121 +1,68 @@
-# .understandignore — patterns for files/dirs to exclude from analysis
-# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
-# Lines below are suggestions — uncomment to activate.
-# Use ! prefix to force-include something excluded by defaults.
+﻿# .understandignore — 本仓库知识图谱的排除规则
+# 语法同 .gitignore（glob、# 注释、! 取反、尾部 / 表示目录）
+# 目标：图谱只聚焦 APP/ 自研应用层 C 代码，排除第三方/生成/构建/文档/配置/工具噪声。
 #
-# Built-in defaults (always excluded unless negated):
-#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
-#
+# 内置默认已排除（无需重复写）：node_modules/ .git/ dist/ build/ obj/
+#   *.lock *.min.js 等。下面为针对本仓库显式激活的排除项。
 
-# --- From .gitignore (uncomment to exclude) ---
+# --- 构建产物（elf/hex/bin/map/rknn 等）---
+/build/
 
-# /out/
-# /RelWithDebInfo/
-# /MinSizeRel/
-# /cmake-build-*/
-# /build/
-# /CMakeCache.txt
-# /CMakeFiles/
-# /cmake_install.cmake
-# /CTestTestfile.cmake
-# /CPackConfig.cmake
-# /CPackSourceConfig.cmake
-# /compile_commands.json
-# /Makefile
-# /build.ninja
-# /.ninja_deps
-# /.ninja_log
-# /.cmake/
-# *.o
-# *.obj
-# *.lo
-# *.d
-# *.su
-# *.a
-# *.lib
-# *.elf
-# *.axf
-# *.out
-# *.hex
-# *.bin
-# *.dfu
-# *.uf2
-# *.srec
-# *.lst
-# *.dis
-# *.sym
-# *.gcda
-# *.gcno
-# *.gcov
-# *.py[cod]
-# /Linux/RK3568/s7_3/s7_3_board_infer
-# /Linux/RK3568/s7_4/s7_4_live
-# /Linux/RK3568/s7_5/s7_5_live
-# /Linux/RK3568/s7_6/s7_6_live
-# *.rknn
-# /.metadata/
-# /.settings/
-# /.project
-# /.cproject
-# *.launch
-# /.vscode/
-# /.idea/
-# *.code-workspace
-# *.swp
-# *.swo
-# *~
-# *.jlink
-# JLinkLog.txt
-# JLinkSettings.ini
-# OpenOCD.log
-# openocd.log
-# *.svd.patched
-# *.tmp
-# *.temp
-# *.bak
-# *.orig
-# *.rej
-# *.stackdump
-# Thumbs.db
-# Desktop.ini
-# .DS_Store
+# --- 第三方 HAL 驱动（STM32Cube 生成，非业务代码）---
+/Drivers/
+
+# --- 第三方中间件（FreeRTOS、STM32 USB 库）---
+/Middlewares/
+
+# --- CubeMX 生成的 Cube 应用层（main.c/freertos.c/gpio.c/usbd_cdc_if.c 等）---
+/Core/
+/USB_DEVICE/
+
+# --- CubeMX 构建配置（cmake 封装，非业务代码）---
+/cmake/
+
+# --- CubeMX 工程文件（生成，非代码）---
+GETFUN_F722_FreeRTOS.ioc
+
+# --- 启动汇编与链接脚本（构建基础设施）---
+startup_stm32f722xx.s
+STM32F722XX_FLASH.ld
+
+# --- 开发文档目录（计划/验收记录，噪声主要来源）---
+/Docs/
+
+# --- RK3568 Linux 伴随计算机子项目（独立技术栈，与固件解耦）---
+/Linux/
+
+# --- 临时/工具/历史产物目录 ---
 /tmp/
-# /ELSE/
-# /ELSE/
-# .env
-# .env.*
-# !.env.example
+/ELSE/
+/Tools/
+/ua-run/
 
-# --- Detected directories (uncomment to exclude) ---
+# --- 根目录零散文件（编辑器/工程元数据/临时）---
+.clangd
+.mxproject
+move-src.txt
 
-Docs/
+# --- 文档层（项目说明与开发指南，非代码）---
+README.md
+CLAUDE.md
 
-# --- Test file patterns (uncomment to exclude) ---
+# --- 构建与配置（CMake 根构建，非业务代码）---
+CMakeLists.txt
+CMakePresets.json
 
-# JS / TS
-# *.test.*
-# *.spec.*
-# *.snap
-# C# / .NET
-# **/*Tests.cs
-# **/*Test.cs
-# **/*Fixture.cs
-# **/*.Tests.csproj
-# Java / Kotlin
-# **/src/test/**
-# **/*Test.java
-# **/*IT.java
-# **/*Spec.kt
-# Go
-# **/*_test.go
-# C++
-# **/*_test.cc
-# **/*_test.cpp
-# **/*_test.cxx
-# **/*Test.cc
-# **/*Test.cpp
-# **/*_unittest.cc
-# **/*_unittest.cpp
-# **/*_browsertest.cc
-# **/*_benchmark.cc
-# **/*Benchmark.cpp
+# --- 插件自身输出目录 ---
+/.understand-anything/
+
+# --- 编辑器 / OS 噪声 ---
+.vscode/
+.idea/
+*.swp
+
+# --- Agent / 工具元数据（非固件代码）---
+.agents/
+.codex/
+.serena/
+*.jsonl
