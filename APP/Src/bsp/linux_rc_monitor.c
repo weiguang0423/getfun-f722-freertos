@@ -95,19 +95,23 @@ static bool channels_match_gesture(const uint8_t *frame)
     const int16_t throttle = (int16_t)get_u16_le(&frame[38]);
     const int16_t aux = (int16_t)get_u16_le(&frame[40]);
 
-    if ((roll != 0) || (throttle != 0) || (aux != 0)) {
+    if ((yaw != 0) || (throttle != 0) || (aux != 0)) {
         return false;
     }
+    if (frame[5] == 0U) {
+        return (roll == 0) && (pitch == 0) && (frame[6] == 0U);
+    }
     if (frame[5] == 1U) {
-        return (pitch == 0) && (yaw == 0);
+        return (roll == 0) && (pitch >= -LINUX_RC_CHANNEL_LIMIT) &&
+               (pitch <= 0);
     }
     if (frame[5] == 3U) {
-        return (pitch >= -LINUX_RC_CHANNEL_LIMIT) && (pitch <= 0) &&
-               (yaw == 0);
+        return (roll == 0) && (pitch >= 0) &&
+               (pitch <= LINUX_RC_CHANNEL_LIMIT);
     }
     if (frame[5] == 4U) {
-        return (pitch == 0) && (yaw >= 0) &&
-               (yaw <= LINUX_RC_CHANNEL_LIMIT);
+        return (roll >= -LINUX_RC_CHANNEL_LIMIT) && (roll <= 0) &&
+               (pitch == 0);
     }
     return false;
 }
@@ -138,8 +142,8 @@ static void validate_complete_frame(void)
         diagnostics->format_errors++;
         return;
     }
-    if (frame_valid && ((frame[5] == 0U) || (frame[5] == 2U) ||
-                        (frame[6] < 75U) ||
+    if (frame_valid && ((frame[5] == 2U) ||
+                        ((frame[5] != 0U) && (frame[6] < 75U)) ||
                         !channels_match_gesture(frame))) {
         diagnostics->format_errors++;
         return;

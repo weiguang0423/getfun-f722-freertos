@@ -12,9 +12,7 @@
 #include <string.h>
 
 #define RC_SOURCE_AXIS_MID_US 1500U
-#define RC_SOURCE_THROTTLE_MIN_US 1000U
 #define RC_SOURCE_AXIS_RATE_PER_S 600U
-#define RC_SOURCE_THROTTLE_RATE_PER_S 400U
 #define RC_SOURCE_MAX_SLEW_DT_MS 100U
 
 static uint32_t elapsed_ms(uint32_t now_ms, uint32_t then_ms)
@@ -42,8 +40,7 @@ static bool takeover_is_requested(
            (absolute_delta(physical[1], RC_SOURCE_AXIS_MID_US) >
             RC_SOURCE_TAKEOVER_AXIS_DELTA_US) ||
            (absolute_delta(physical[2], RC_SOURCE_AXIS_MID_US) >
-            RC_SOURCE_TAKEOVER_AXIS_DELTA_US) ||
-           (physical[3] > RC_SOURCE_TAKEOVER_THROTTLE_US);
+            RC_SOURCE_TAKEOVER_AXIS_DELTA_US);
 }
 
 static bool candidate_is_fresh(const rc_virtual_candidate_t *candidate,
@@ -54,11 +51,9 @@ static bool candidate_is_fresh(const rc_virtual_candidate_t *candidate,
             RC_SOURCE_VIRTUAL_TIMEOUT_MS);
 }
 
-static uint16_t virtual_target_us(int16_t value, bool throttle)
+static uint16_t virtual_target_us(int16_t value)
 {
-    const int32_t target = (int32_t)(throttle ? RC_SOURCE_THROTTLE_MIN_US
-                                              : RC_SOURCE_AXIS_MID_US) +
-                           value;
+    const int32_t target = (int32_t)RC_SOURCE_AXIS_MID_US + value;
     return (uint16_t)target;
 }
 
@@ -192,14 +187,14 @@ void rc_source_arbiter_update(
         return;
     }
 
-    for (channel = 0U; channel < 4U; ++channel) {
-        const uint16_t target = virtual_target_us(candidate->channel[channel],
-                                                   channel == 3U);
-        const uint32_t rate = channel == 3U ? RC_SOURCE_THROTTLE_RATE_PER_S
-                                            : RC_SOURCE_AXIS_RATE_PER_S;
+    /* output[] already contains the current physical snapshot. Linux only
+     * replaces Roll/Pitch/Yaw; physical Throttle and every AUX stay live. */
+    for (channel = 0U; channel < 3U; ++channel) {
+        const uint16_t target = virtual_target_us(candidate->channel[channel]);
         state->virtual_channel_us[channel] =
             slew_toward(state->virtual_channel_us[channel], target,
-                        rate, dt_ms, &state->slew_remainder[channel]);
+                        RC_SOURCE_AXIS_RATE_PER_S, dt_ms,
+                        &state->slew_remainder[channel]);
         output[channel] = state->virtual_channel_us[channel];
     }
 }

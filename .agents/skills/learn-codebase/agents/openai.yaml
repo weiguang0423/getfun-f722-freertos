@@ -1,0 +1,7 @@
+interface:
+  display_name: "Codebase Learning Tutor"
+  short_description: "Socratic, journaled learning for an existing codebase"
+  default_prompt: "Use $learn-codebase to help me build a structured understanding of this project."
+
+policy:
+  allow_implicit_invocation: false
