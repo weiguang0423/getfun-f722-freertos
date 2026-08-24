@@ -1,0 +1,460 @@
+{
+  "nodes": [
+    {
+      "id": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "file",
+      "name": "cmsis_compiler.h",
+      "filePath": "Drivers/CMSIS/Include/cmsis_compiler.h",
+      "summary": "CMSIS 编译器通用头文件，根据当前编译器宏（__GNUC__、__ARMCC_VERSION、__ICCARM__ 等）选择并包含对应的编译器适配头，统一提供 __ASM / __STATIC_INLINE / __WEAK / __PACKED 等跨编译器宏定义。",
+      "tags": ["cmsis", "compiler-abstraction", "header", "vendor"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "file",
+      "name": "cmsis_version.h",
+      "filePath": "Drivers/CMSIS/Include/cmsis_version.h",
+      "summary": "CMSIS Core(M) 版本定义头文件，以 __CM_CMSIS_VERSION_MAIN/SUB 宏声明 CMSIS 5.1 版本号，被各 core_cm*.h 头文件引用。",
+      "tags": ["cmsis", "version", "header", "vendor"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_armv8mbl.h",
+      "type": "file",
+      "name": "core_armv8mbl.h",
+      "filePath": "Drivers/CMSIS/Include/core_armv8mbl.h",
+      "summary": "CMSIS Cortex-M23/M33（无 TrustZone，Baseline）内核外设访问层头文件，提供 NVIC、系统复位等内核寄存器的内联访问函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_armv8mml.h",
+      "type": "file",
+      "name": "core_armv8mml.h",
+      "filePath": "Drivers/CMSIS/Include/core_armv8mml.h",
+      "summary": "CMSIS Cortex-M23/M33（含 TrustZone，Mainline）内核外设访问层头文件，在 Baseline 基础上增加安全扩展寄存器的内联访问函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm0.h",
+      "type": "file",
+      "name": "core_cm0.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm0.h",
+      "summary": "CMSIS Cortex-M0 内核外设访问层头文件，提供 NVIC、系统复位等最小内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m0", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm0plus.h",
+      "type": "file",
+      "name": "core_cm0plus.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm0plus.h",
+      "summary": "CMSIS Cortex-M0+ 内核外设访问层头文件，提供 NVIC、系统复位等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m0plus", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm1.h",
+      "type": "file",
+      "name": "core_cm1.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm1.h",
+      "summary": "CMSIS Cortex-M1 内核外设访问层头文件，提供 NVIC、系统复位等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m1", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm23.h",
+      "type": "file",
+      "name": "core_cm23.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm23.h",
+      "summary": "CMSIS Cortex-M23 内核外设访问层头文件，提供 NVIC、系统复位等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m23", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm3.h",
+      "type": "file",
+      "name": "core_cm3.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm3.h",
+      "summary": "CMSIS Cortex-M3 内核外设访问层头文件，提供 NVIC 优先级分组、系统复位、ITM 等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m3", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm33.h",
+      "type": "file",
+      "name": "core_cm33.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm33.h",
+      "summary": "CMSIS Cortex-M33 内核外设访问层头文件，提供 NVIC、安全扩展、系统复位、ITM 等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m33", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm4.h",
+      "type": "file",
+      "name": "core_cm4.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm4.h",
+      "summary": "CMSIS Cortex-M4 内核外设访问层头文件，提供 NVIC、FPU 检测、系统复位、ITM 等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-m4", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "type": "file",
+      "name": "core_cm7.h",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "CMSIS Cortex-M7 内核外设访问层头文件，是 STM32F722（Cortex-M7 @ 216MHz，含 FPU 与 I/D Cache）实际编译依赖的内核接口头文件，提供 NVIC 优先级控制、SCB 缓存/复位/FPU 等内联访问函数。",
+      "tags": ["cmsis", "cortex-m7", "header", "vendor", "kernel-access"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_sc000.h",
+      "type": "file",
+      "name": "core_sc000.h",
+      "filePath": "Drivers/CMSIS/Include/core_sc000.h",
+      "summary": "CMSIS Cortex-SC000（SecurCore）内核外设访问层头文件，提供 NVIC、系统复位等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-sc000", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/CMSIS/Include/core_sc300.h",
+      "type": "file",
+      "name": "core_sc300.h",
+      "filePath": "Drivers/CMSIS/Include/core_sc300.h",
+      "summary": "CMSIS Cortex-SC300（SecurCore）内核外设访问层头文件，提供 NVIC、系统复位、ITM 等内核接口内联函数。本项目芯片为 Cortex-M7，此变体不被实际编译。",
+      "tags": ["cmsis", "cortex-sc300", "header", "vendor"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_SetPriority",
+      "type": "function",
+      "name": "__NVIC_SetPriority",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "设置指定 IRQn 的中断优先级（写入 NVIC->IPR 寄存器），FreeRTOS 与 HAL 据此配置中断抢占层级。",
+      "tags": ["nvic", "interrupt", "priority", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_GetPriority",
+      "type": "function",
+      "name": "__NVIC_GetPriority",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "读取指定 IRQn 的中断优先级（从 NVIC->IPR 寄存器），用于优先级查询与调试。",
+      "tags": ["nvic", "interrupt", "priority", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:NVIC_EncodePriority",
+      "type": "function",
+      "name": "NVIC_EncodePriority",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "按给定的优先级分组方案（NVIC_GetPriorityGrouping）将 group/sub 优先级编码为单个 8 位优先级值。",
+      "tags": ["nvic", "priority-grouping", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_EnableIRQ",
+      "type": "function",
+      "name": "__NVIC_EnableIRQ",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "使能指定 IRQ（置位 NVIC->ISER 对应位），例如 DMA、SPI、USART 等外设中断的开启入口。",
+      "tags": ["nvic", "interrupt", "enable", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_DisableIRQ",
+      "type": "function",
+      "name": "__NVIC_DisableIRQ",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "关闭指定 IRQ（置位 NVIC->ICER 对应位），用于临界区或外设去初始化时屏蔽中断。",
+      "tags": ["nvic", "interrupt", "disable", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_SystemReset",
+      "type": "function",
+      "name": "__NVIC_SystemReset",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "通过 SCB->AIRCR 触发处理器系统复位（SYSRESETREQ），MSP 服务器等模块的软件重启请求最终依赖此路径。",
+      "tags": ["nvic", "system-reset", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_EnableICache",
+      "type": "function",
+      "name": "SCB_EnableICache",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "使能 Cortex-M7 指令缓存（ICache），main.c 初始化阶段调用以提升取指性能。",
+      "tags": ["scb", "cache", "icache", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_EnableDCache",
+      "type": "function",
+      "name": "SCB_EnableDCache",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "使能 Cortex-M7 数据缓存（DCache），main.c 初始化阶段调用；需配合按地址范围的缓存清理/失效操作使用。",
+      "tags": ["scb", "cache", "dcache", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_CleanDCache_by_Addr",
+      "type": "function",
+      "name": "SCB_CleanDCache_by_Addr",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "按给定地址范围将 DCache 脏数据回写主存，DMA 传输前/后保证内存与缓存一致性时使用。",
+      "tags": ["scb", "cache", "dcache", "dma-coherency", "inline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_GetFPUType",
+      "type": "function",
+      "name": "SCB_GetFPUType",
+      "filePath": "Drivers/CMSIS/Include/core_cm7.h",
+      "summary": "检测并返回当前内核的 FPU 类型（FPv5-SP-D16 等），STM32F722 配置下指示单精度 FPU 存在。",
+      "tags": ["scb", "fpu", "inline"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Drivers/CMSIS/Include/core_armv8mbl.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_armv8mbl.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_armv8mml.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_armv8mml.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm0.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm0.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm0plus.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm0plus.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm1.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm1.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm23.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm23.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm3.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm3.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm33.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm33.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm4.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm4.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_sc000.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_sc000.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_sc300.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_compiler.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_sc300.h",
+      "target": "file:Drivers/CMSIS/Include/cmsis_version.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_SetPriority",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_GetPriority",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:NVIC_EncodePriority",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_EnableIRQ",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_DisableIRQ",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:__NVIC_SystemReset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_EnableICache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_EnableDCache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_CleanDCache_by_Addr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Drivers/CMSIS/Include/core_cm7.h",
+      "target": "function:Drivers/CMSIS/Include/core_cm7.h:SCB_GetFPUType",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

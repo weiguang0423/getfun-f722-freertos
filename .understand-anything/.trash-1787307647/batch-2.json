@@ -1,0 +1,226 @@
+{
+  "nodes": [
+    {
+      "id": "file:USB_DEVICE/App/usb_device.c",
+      "type": "file",
+      "name": "usb_device.c",
+      "filePath": "USB_DEVICE/App/usb_device.c",
+      "summary": "CubeMX 生成的 USB Device 初始化文件，提供 MX_USB_DEVICE_Init() 把 CDC 类和设备描述符注册进 USB 核心并启动设备。声明全局句柄 hUsbDeviceFS，由 freertos.c 的 InitTask 调用。",
+      "tags": ["usb-device", "初始", "cdc", "virtual-com-port", "cube-generated"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:USB_DEVICE/App/usb_device.h",
+      "type": "file",
+      "name": "usb_device.h",
+      "filePath": "USB_DEVICE/App/usb_device.h",
+      "summary": "usb_device.c 的头文件，包含保护宏与 MX_USB_DEVICE_Init() 的对外声明，供 CubeMX 生成层与 APP 层引用。",
+      "tags": ["usb-device", "header", "declaration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:USB_DEVICE/App/usbd_cdc_if.c",
+      "type": "file",
+      "name": "usbd_cdc_if.c",
+      "filePath": "USB_DEVICE/App/usbd_cdc_if.c",
+      "summary": "CDC 类接口实现，定义收发缓冲与 USBD_Interface_fops_FS 回调表。接收回调把 USB 字节转发到 APP 层 usb_cdc_transport，发送完成回调通知 APP 层，是 USB ISR 与 APP 传输层之间的桥。",
+      "tags": ["usb-cdc", "transport-bridge", "isr", "virtual-com-port", "rx-tx-callback"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:USB_DEVICE/App/usbd_cdc_if.h",
+      "type": "file",
+      "name": "usbd_cdc_if.h",
+      "filePath": "USB_DEVICE/App/usbd_cdc_if.h",
+      "summary": "CDC 接口头文件，定义收发缓冲大小 APP_RX_DATA_SIZE / APP_TX_DATA_SIZE(2048) 与对外 CDC_Transmit_FS() 声明及回调表 extern。",
+      "tags": ["usb-cdc", "header", "buffer-size", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:USB_DEVICE/App/usbd_desc.c",
+      "type": "file",
+      "name": "usbd_desc.c",
+      "filePath": "USB_DEVICE/App/usbd_desc.c",
+      "summary": "USB 设备描述符实现，硬编码 VID/PID/厂商/产品字符串并聚合 FS_Desc 描述符表，从芯片 UID 寄存器派生唯一序列号字符串。",
+      "tags": ["usb-device", "descriptor", "serial-number", "vid-pid", "cube-generated"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:USB_DEVICE/App/usbd_desc.h",
+      "type": "file",
+      "name": "usbd_desc.h",
+      "filePath": "USB_DEVICE/App/usbd_desc.h",
+      "summary": "描述符头文件，声明 FS_Desc 描述符表 extern 与序列号 UID 基址宏，供 usb_device.c 注册使用。",
+      "tags": ["usb-device", "header", "descriptor", "declaration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:USB_DEVICE/App/usb_device.c:MX_USB_DEVICE_Init",
+      "type": "function",
+      "name": "MX_USB_DEVICE_Init",
+      "filePath": "USB_DEVICE/App/usb_device.c",
+      "lineRange": [64, 91],
+      "summary": "初始化 USB 设备库：调用 USBD_Init 加载 FS_Desc、USBD_RegisterClass 注册 CDC 类、USBD_CDC_RegisterInterface 注册 fops 回调表、USBD_Start 启动；任一步失败即 Error_Handler。",
+      "tags": ["usb-device", "初始化", "entry-point", "cdc-register"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_Receive_FS",
+      "type": "function",
+      "name": "CDC_Receive_FS",
+      "filePath": "USB_DEVICE/App/usbd_cdc_if.c",
+      "lineRange": [263, 271],
+      "summary": "USB OUT 端点接收回调（ISR 上下文）。把收到的字节交给 usb_cdc_transport_receive_from_isr，再重新设置 RX 缓冲并准备下一包接收。",
+      "tags": ["usb-cdc", "rx-callback", "isr", "transport-bridge"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_Transmit_FS",
+      "type": "function",
+      "name": "CDC_Transmit_FS",
+      "filePath": "USB_DEVICE/App/usbd_cdc_if.c",
+      "lineRange": [284, 296],
+      "summary": "通过 USB IN 端点发送一帧数据。若底层 TxState 忙则返回 USBD_BUSY，否则设置 TX 缓冲并触发 USBD_CDC_TransmitPacket。由 APP 层 usb_cdc_transport_write 调用。",
+      "tags": ["usb-cdc", "tx", "api", "transport-bridge"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_TransmitCplt_FS",
+      "type": "function",
+      "name": "CDC_TransmitCplt_FS",
+      "filePath": "USB_DEVICE/App/usbd_cdc_if.c",
+      "lineRange": [310, 320],
+      "summary": "IN 端点传输完成回调（ISR 上下文）。调用 usb_cdc_transport_transmit_complete_from_isr 置位 tx_idle 标志以唤醒阻塞的发送者。",
+      "tags": ["usb-cdc", "tx-complete", "isr", "transport-bridge"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:USB_DEVICE/App/usbd_desc.c:Get_SerialNum",
+      "type": "function",
+      "name": "Get_SerialNum",
+      "filePath": "USB_DEVICE/App/usbd_desc.c",
+      "lineRange": [388, 405],
+      "summary": "从 STM32 唯一 ID 寄存器(UID_BASE)读取三段序列值，拼合后通过 IntToUnicode 写入 USBD_StringSerial，生成每块板唯一的 USB 序列号字符串。",
+      "tags": ["usb-device", "serial-number", "uid", "descriptor"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:USB_DEVICE/App/usb_device.c",
+      "target": "file:USB_DEVICE/App/usb_device.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:USB_DEVICE/App/usb_device.c",
+      "target": "file:USB_DEVICE/App/usbd_cdc_if.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:USB_DEVICE/App/usb_device.c",
+      "target": "file:USB_DEVICE/App/usbd_desc.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:USB_DEVICE/App/usbd_cdc_if.c",
+      "target": "file:USB_DEVICE/App/usbd_cdc_if.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:USB_DEVICE/App/usbd_desc.c",
+      "target": "file:USB_DEVICE/App/usbd_desc.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:USB_DEVICE/App/usb_device.c",
+      "target": "file:USB_DEVICE/App/usbd_desc.c",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "MX_USB_DEVICE_Init 引用 usbd_desc.c 定义的 FS_Desc 描述符表"
+    },
+    {
+      "source": "file:USB_DEVICE/App/usb_device.c",
+      "target": "file:USB_DEVICE/App/usbd_cdc_if.c",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "MX_USB_DEVICE_Init 注册 usbd_cdc_if.c 定义的 USBD_Interface_fops_FS 回调表"
+    },
+    {
+      "source": "file:USB_DEVICE/App/usb_device.c",
+      "target": "function:USB_DEVICE/App/usb_device.c:MX_USB_DEVICE_Init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:USB_DEVICE/App/usbd_cdc_if.c",
+      "target": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_Receive_FS",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:USB_DEVICE/App/usbd_cdc_if.c",
+      "target": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_Transmit_FS",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:USB_DEVICE/App/usbd_cdc_if.c",
+      "target": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_TransmitCplt_FS",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:USB_DEVICE/App/usbd_desc.c",
+      "target": "function:USB_DEVICE/App/usbd_desc.c:Get_SerialNum",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:USB_DEVICE/App/usb_device.c",
+      "target": "function:USB_DEVICE/App/usb_device.c:MX_USB_DEVICE_Init",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:USB_DEVICE/App/usbd_cdc_if.c",
+      "target": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_Transmit_FS",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_Receive_FS",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_receive_from_isr",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "USB 接收回调把字节转发给 APP 层环形缓冲接收函数"
+    },
+    {
+      "source": "function:USB_DEVICE/App/usbd_cdc_if.c:CDC_TransmitCplt_FS",
+      "target": "function:APP/Src/bsp/usb_cdc_transport.c:usb_cdc_transport_transmit_complete_from_isr",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "发送完成回调通知 APP 层传输完成，置位 tx_idle"
+    }
+  ]
+}

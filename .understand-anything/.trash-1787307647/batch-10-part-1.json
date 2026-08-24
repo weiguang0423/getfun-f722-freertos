@@ -1,0 +1,594 @@
+{
+  "nodes": [
+    {
+      "id": "file:APP/Inc/platform/platform_time.h",
+      "type": "file",
+      "name": "platform_time.h",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "Cortex-M7 DWT 微秒时间源接口，提供不占用 Timer/DMA/中断的微秒时基，由 ImuTask 完成 32 位回绕扩展与微秒余数累计。",
+      "tags": ["platform", "time-base", "dwt", "interface", "no-rtos-dependency"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/protocol/crsf.h",
+      "type": "file",
+      "name": "crsf.h",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "CRSF 字节流解析器与 S3.7 载荷解码器的类型及接口声明，独立于 HAL/FreeRTOS，支持 RC 通道与链路统计解码。",
+      "tags": ["protocol", "crsf", "rc", "interface", "no-rtos-dependency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/protocol/msp_server.h",
+      "type": "file",
+      "name": "msp_server.h",
+      "filePath": "APP/Inc/protocol/msp_server.h",
+      "summary": "MSP 协议业务层（命令派发）接口，声明把已解析 MSP 请求翻译为响应内容的入口，是协议命令与 app_state 之间的桥梁。",
+      "tags": ["protocol", "msp", "command-dispatch", "interface"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/protocol/msp_transport.h",
+      "type": "file",
+      "name": "msp_transport.h",
+      "filePath": "APP/Inc/protocol/msp_transport.h",
+      "summary": "MSP 协议纯传输层接口（无 RTOS 依赖），定义 V1/V2 帧解析状态机、请求/响应结构及构造回包帧的契约。",
+      "tags": ["protocol", "msp", "transport", "interface", "no-rtos-dependency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/rtos/app_task.h",
+      "type": "file",
+      "name": "app_task.h",
+      "filePath": "APP/Inc/rtos/app_task.h",
+      "summary": "应用层 RTOS 任务初始化接口，仅暴露 app_tasks_init()，由 CubeMX 的 MX_FREERTOS_Init() 调用以静态创建各应用任务。",
+      "tags": ["rtos", "task-init", "interface", "entry-point"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/battery_task.h",
+      "type": "file",
+      "name": "battery_task.h",
+      "filePath": "APP/Inc/rtos/battery_task.h",
+      "summary": "50 Hz ADC3 电池监测任务的创建与栈高水位接口声明。",
+      "tags": ["rtos", "battery", "task", "interface"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/flight_task.h",
+      "type": "file",
+      "name": "flight_task.h",
+      "filePath": "APP/Inc/rtos/flight_task.h",
+      "summary": "FlightTask 创建与 DShot 命令/电机测试的接口，依赖 dshot_motor.h 定义电机数量等宏。",
+      "tags": ["rtos", "flight", "task", "dshot", "interface"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/rtos/imu_task.h",
+      "type": "file",
+      "name": "imu_task.h",
+      "filePath": "APP/Inc/rtos/imu_task.h",
+      "summary": "DMA IMU 采样的静态 FreeRTOS 任务接口，暴露 ImuTask 创建、加速度校准请求与参数保存入口，并定义保存结果枚举。",
+      "tags": ["rtos", "imu", "task", "dma", "interface"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Inc/rtos/rc_task.h",
+      "type": "file",
+      "name": "rc_task.h",
+      "filePath": "APP/Inc/rtos/rc_task.h",
+      "summary": "RcTask 接口，拥有 CRSF 解析并向系统发布单一一致的 RC 快照，声明创建与栈诊断函数。",
+      "tags": ["rtos", "rc", "task", "interface"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:APP/Inc/storage/parameter_store.h",
+      "type": "file",
+      "name": "parameter_store.h",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "STM32F722 内部 Flash 双槽 A/B 参数存储接口，定义飞参值结构、加载/保存结果与状态，以及 v1 迁移与校验契约。",
+      "tags": ["storage", "parameters", "flash", "interface"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/accel_calibration.c",
+      "type": "file",
+      "name": "accel_calibration.c",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "水平单面加速度校准实现，使用 250 预热 + 2000 Welford 窗口，按运动/水平/方差/偏置门限筛选候选并在持久化后切换。",
+      "tags": ["algorithm", "calibration", "accel", "welford", "no-rtos-dependency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/angle_outer_loop.c",
+      "type": "file",
+      "name": "angle_outer_loop.c",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "S4.8 Angle 外环实现，把 Roll/Pitch 角误差乘以 Angle P 得到有界 Rate 设定，Yaw 透传 Rate 模式。",
+      "tags": ["algorithm", "angle-mode", "pid", "no-rtos-dependency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/attitude_estimator.c",
+      "type": "file",
+      "name": "attitude_estimator.c",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "六轴 Mahony 四元数姿态估计实现，以 measured_down × estimated_down 反馈校正 Roll/Pitch，无磁强计时 Yaw 由陀螺积分。",
+      "tags": ["algorithm", "attitude", "mahony", "quaternion", "no-rtos-dependency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Inc/platform/platform_time.h:platform_time_initialize",
+      "type": "function",
+      "name": "platform_time_initialize",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "初始化 DWT CYCCNT 微秒时间源，使能 Cortex-M7 周期计数器。",
+      "tags": ["time", "init", "dwt"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/platform/platform_time.h:platform_time_ready",
+      "type": "function",
+      "name": "platform_time_ready",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "返回 DWT 时间源是否已就绪（CYCCNT 已使能）。",
+      "tags": ["time", "status", "dwt"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/platform/platform_time.h:platform_time_capture_cycles",
+      "type": "function",
+      "name": "platform_time_capture_cycles",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "在 ISR 上下文捕获原始 CYCCNT 周期计数，供 ImuTask 后续扩展。",
+      "tags": ["time", "isr", "capture"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/platform/platform_time.h:platform_time_resolve_cycles",
+      "type": "function",
+      "name": "platform_time_resolve_cycles",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "把原始周期计数解析为微秒时间戳（含 32 位回绕扩展与余数累计）。",
+      "tags": ["time", "resolve", "microseconds"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/platform/platform_time.h:platform_time_maintain",
+      "type": "function",
+      "name": "platform_time_maintain",
+      "filePath": "APP/Inc/platform/platform_time.h",
+      "summary": "维护微秒时间源扩展，相邻调用须严格短于约 19.88 秒回绕周期。",
+      "tags": ["time", "maintain", "wrap-around"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/protocol/crsf.h:crsf_parser_init",
+      "type": "function",
+      "name": "crsf_parser_init",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "初始化 CRSF 逐字节解析器上下文（环形缓冲状态、统计计数器归零）。",
+      "tags": ["crsf", "parser", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/protocol/crsf.h:crsf_parser_process_byte",
+      "type": "function",
+      "name": "crsf_parser_process_byte",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "喂入单个字节，按帧类型/长度/CRC 校验输出完整 CRSF 帧。",
+      "tags": ["crsf", "parser", "state-machine"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/protocol/crsf.h:crsf_crc8",
+      "type": "function",
+      "name": "crsf_crc8",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "计算 CRSF 载荷的 CRC-8/DVB-S2 校验值。",
+      "tags": ["crsf", "crc", "checksum"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/protocol/crsf.h:crsf_decode_channels",
+      "type": "function",
+      "name": "crsf_decode_channels",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "把 RC 通道打包帧解码为 16 路 raw 与 pulse_us 通道值。",
+      "tags": ["crsf", "decode", "rc-channels"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/protocol/crsf.h:crsf_decode_link_statistics",
+      "type": "function",
+      "name": "crsf_decode_link_statistics",
+      "filePath": "APP/Inc/protocol/crsf.h",
+      "summary": "把链路统计帧解码为 RSSI/SNR/链路质量/天线等遥测字段。",
+      "tags": ["crsf", "decode", "link-stats"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/protocol/msp_server.h:msp_server_init",
+      "type": "function",
+      "name": "msp_server_init",
+      "filePath": "APP/Inc/protocol/msp_server.h",
+      "summary": "MSP 业务层初始化入口（当前为空，预留扩展点）。",
+      "tags": ["msp", "server", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/protocol/msp_server.h:msp_server_process",
+      "type": "function",
+      "name": "msp_server_process",
+      "filePath": "APP/Inc/protocol/msp_server.h",
+      "summary": "MSP 命令派发主入口，按 command 读 app_state 快照并填充响应负载或排队校准请求。",
+      "tags": ["msp", "dispatch", "command"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Inc/protocol/msp_server.h:msp_server_take_reboot_request",
+      "type": "function",
+      "name": "msp_server_take_reboot_request",
+      "filePath": "APP/Inc/protocol/msp_server.h",
+      "summary": "取出并清除 Configurator 下发的重启请求标志。",
+      "tags": ["msp", "reboot", "flag"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/protocol/msp_transport.h:msp_parser_init",
+      "type": "function",
+      "name": "msp_parser_init",
+      "filePath": "APP/Inc/protocol/msp_transport.h",
+      "summary": "初始化 MSP 逐字节解析状态机上下文。",
+      "tags": ["msp", "parser", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/protocol/msp_transport.h:msp_parser_process_byte",
+      "type": "function",
+      "name": "msp_parser_process_byte",
+      "filePath": "APP/Inc/protocol/msp_transport.h",
+      "summary": "喂入一个字节，帧完整且校验通过时输出 msp_request_t 请求结构。",
+      "tags": ["msp", "parser", "state-machine"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/protocol/msp_transport.h:msp_transport_build_response",
+      "type": "function",
+      "name": "msp_transport_build_response",
+      "filePath": "APP/Inc/protocol/msp_transport.h",
+      "summary": "把 msp_response_t 打包成可发送的字节流帧（V1/V2、CRC）。",
+      "tags": ["msp", "build", "response"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/rtos/app_task.h:app_tasks_init",
+      "type": "function",
+      "name": "app_tasks_init",
+      "filePath": "APP/Inc/rtos/app_task.h",
+      "summary": "应用层初始化入口，初始化 app_state/USB CDC transport 并静态创建 ImuTask/RcTask/MspTask。",
+      "tags": ["rtos", "init", "entry-point"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/rtos/battery_task.h:battery_task_create",
+      "type": "function",
+      "name": "battery_task_create",
+      "filePath": "APP/Inc/rtos/battery_task.h",
+      "summary": "创建 50 Hz ADC3 电池监测 FreeRTOS 任务。",
+      "tags": ["rtos", "battery", "task-create"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/battery_task.h:battery_task_stack_high_water_mark",
+      "type": "function",
+      "name": "battery_task_stack_high_water_mark",
+      "filePath": "APP/Inc/rtos/battery_task.h",
+      "summary": "返回电池任务的最小空闲栈字数（栈高水位）。",
+      "tags": ["rtos", "stack", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/flight_task.h:flight_task_create",
+      "type": "function",
+      "name": "flight_task_create",
+      "filePath": "APP/Inc/rtos/flight_task.h",
+      "summary": "创建 1 kHz FlightTask，消费 RC/PID/Angle 参数并驱动 Mixer 与电机安全链。",
+      "tags": ["rtos", "flight", "task-create"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/flight_task.h:flight_task_request_motor_test",
+      "type": "function",
+      "name": "flight_task_request_motor_test",
+      "filePath": "APP/Inc/rtos/flight_task.h",
+      "summary": "请求一次性电机测试，输出给定电机值以验证转向与响应。",
+      "tags": ["flight", "motor-test", "debug"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/flight_task.h:flight_task_execute_dshot_commands",
+      "type": "function",
+      "name": "flight_task_execute_dshot_commands",
+      "filePath": "APP/Inc/rtos/flight_task.h",
+      "summary": "向指定电机发送 DShot 命令序列（如转向反转、蜂鸣）并在超时内等待完成。",
+      "tags": ["flight", "dshot", "command"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/rtos/flight_task.h:flight_task_stack_high_water_mark",
+      "type": "function",
+      "name": "flight_task_stack_high_water_mark",
+      "filePath": "APP/Inc/rtos/flight_task.h",
+      "summary": "返回 FlightTask 的最小空闲栈字数（栈高水位）。",
+      "tags": ["rtos", "stack", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/imu_task.h:imu_task_create",
+      "type": "function",
+      "name": "imu_task_create",
+      "filePath": "APP/Inc/rtos/imu_task.h",
+      "summary": "创建 1 kHz DRDY 门控的 DMA ImuTask，是 SPI1/ICM42688P 的唯一所有者。",
+      "tags": ["rtos", "imu", "task-create", "dma"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/imu_task.h:imu_task_request_accel_calibration",
+      "type": "function",
+      "name": "imu_task_request_accel_calibration",
+      "filePath": "APP/Inc/rtos/imu_task.h",
+      "summary": "排队一次水平加速度校准请求，由 ImuTask 在安全状态执行。",
+      "tags": ["imu", "calibration", "accel", "request"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/imu_task.h:imu_task_save_parameters",
+      "type": "function",
+      "name": "imu_task_save_parameters",
+      "filePath": "APP/Inc/rtos/imu_task.h",
+      "summary": "把新参数值安全写入 Flash 双槽，ARMED 或被占用时拒绝保存。",
+      "tags": ["imu", "parameters", "flash", "save"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/rtos/imu_task.h:imu_task_stack_high_water_mark",
+      "type": "function",
+      "name": "imu_task_stack_high_water_mark",
+      "filePath": "APP/Inc/rtos/imu_task.h",
+      "summary": "返回 ImuTask 的最小空闲栈字数（栈高水位）。",
+      "tags": ["rtos", "stack", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/rc_task.h:rc_task_create",
+      "type": "function",
+      "name": "rc_task_create",
+      "filePath": "APP/Inc/rtos/rc_task.h",
+      "summary": "创建 RcTask，负责物理 CRSF 解析与最终 RC 快照单一写者。",
+      "tags": ["rtos", "rc", "task-create"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/rtos/rc_task.h:rc_task_stack_high_water_mark",
+      "type": "function",
+      "name": "rc_task_stack_high_water_mark",
+      "filePath": "APP/Inc/rtos/rc_task.h",
+      "summary": "返回 RcTask 的最小空闲栈字数（栈高水位）。",
+      "tags": ["rtos", "stack", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/storage/parameter_store.h:parameter_store_values_set_defaults",
+      "type": "function",
+      "name": "parameter_store_values_set_defaults",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "把飞参值结构填充为安全默认值（偏置、RC、PID、Angle、motor_idle 等）。",
+      "tags": ["parameters", "defaults", "config"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/storage/parameter_store.h:parameter_store_values_are_valid",
+      "type": "function",
+      "name": "parameter_store_values_are_valid",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "校验飞参值结构各字段范围是否合法（偏置、PID、Rate、Angle 等）。",
+      "tags": ["parameters", "validate", "config"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/storage/parameter_store.h:parameter_store_init",
+      "type": "function",
+      "name": "parameter_store_init",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "初始化参数存储，选择有效 A/B 槽（含 v1 迁移）或回退默认值。",
+      "tags": ["parameters", "init", "flash", "migration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Inc/storage/parameter_store.h:parameter_store_get_values",
+      "type": "function",
+      "name": "parameter_store_get_values",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "读出当前生效的飞参值拷贝（仅在已提交记录校验后可见）。",
+      "tags": ["parameters", "get", "config"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/storage/parameter_store.h:parameter_store_get_status",
+      "type": "function",
+      "name": "parameter_store_get_status",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "读出参数存储状态（有效位、活动槽、序列号、错误计数与迁移标记）。",
+      "tags": ["parameters", "status", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Inc/storage/parameter_store.h:parameter_store_save",
+      "type": "function",
+      "name": "parameter_store_save",
+      "filePath": "APP/Inc/storage/parameter_store.h",
+      "summary": "把飞参值擦除非活动槽、编程并校验，仅最后写入提交位。",
+      "tags": ["parameters", "save", "flash", "commit"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_initialize",
+      "type": "function",
+      "name": "accel_calibration_initialize",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "初始化加速度校准状态机，载入已知偏置或置为未校准。",
+      "tags": ["calibration", "accel", "init"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_start",
+      "type": "function",
+      "name": "accel_calibration_start",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "开始一次水平单面校准，清空窗口并进入 CALIBRATING 状态。",
+      "tags": ["calibration", "accel", "start"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_process",
+      "type": "function",
+      "name": "accel_calibration_process",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "处理一个样本，按运动/水平门限累计 Welford 窗口，达标后产出候选偏置。",
+      "tags": ["calibration", "accel", "welford", "process"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_get_candidate",
+      "type": "function",
+      "name": "accel_calibration_get_candidate",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "取出当前就绪的加速度偏置候选值供持久化验证。",
+      "tags": ["calibration", "accel", "candidate"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_persisted",
+      "type": "function",
+      "name": "accel_calibration_mark_persisted",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "持久化成功后把候选偏置切换为生效偏置并置 READY。",
+      "tags": ["calibration", "accel", "persist"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_save_failed",
+      "type": "function",
+      "name": "accel_calibration_mark_save_failed",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "标记候选偏置保存失败，避免错误偏置被激活。",
+      "tags": ["calibration", "accel", "fail"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_apply",
+      "type": "function",
+      "name": "accel_calibration_apply",
+      "filePath": "APP/Src/algorithms/accel_calibration.c",
+      "summary": "从加速度样本中减去生效偏置，输出校正后的 m/s² 值。",
+      "tags": ["calibration", "accel", "apply"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_profile_is_valid",
+      "type": "function",
+      "name": "angle_outer_loop_profile_is_valid",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "校验 Angle 外环配置（角度限幅、P、速率限幅）各字段范围合法。",
+      "tags": ["angle", "validate", "profile"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_compute",
+      "type": "function",
+      "name": "angle_outer_loop_compute",
+      "filePath": "APP/Src/algorithms/angle_outer_loop.c",
+      "summary": "把归一化摇杆与当前姿态转为有界 Rate 设定（Roll/Pitch 角误差×P，Yaw 透传）。",
+      "tags": ["angle", "compute", "rate-setpoint"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_initialize",
+      "type": "function",
+      "name": "attitude_estimator_initialize",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "初始化 Mahony 姿态估计器，单位四元数并清零积分反馈。",
+      "tags": ["attitude", "init", "mahony"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_reset",
+      "type": "function",
+      "name": "attitude_estimator_reset",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "重置姿态估计器状态（单位四元数、非就绪、计数加一）。",
+      "tags": ["attitude", "reset", "mahony"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_update",
+      "type": "function",
+      "name": "attitude_estimator_update",
+      "filePath": "APP/Src/algorithms/attitude_estimator.c",
+      "summary": "按加速度/角速度与 dt 更新姿态四元数，未初始化时以重力播种，含积分反馈与归一化。",
+      "tags": ["attitude", "update", "mahony", "quaternion"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {"source": "file:APP/Inc/platform/platform_time.h", "target": "function:APP/Inc/platform/platform_time.h:platform_time_initialize", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/platform/platform_time.h", "target": "function:APP/Inc/platform/platform_time.h:platform_time_ready", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/platform/platform_time.h", "target": "function:APP/Inc/platform/platform_time.h:platform_time_capture_cycles", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/platform/platform_time.h", "target": "function:APP/Inc/platform/platform_time.h:platform_time_resolve_cycles", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/platform/platform_time.h", "target": "function:APP/Inc/platform/platform_time.h:platform_time_maintain", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/crsf.h", "target": "function:APP/Inc/protocol/crsf.h:crsf_parser_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/crsf.h", "target": "function:APP/Inc/protocol/crsf.h:crsf_parser_process_byte", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/crsf.h", "target": "function:APP/Inc/protocol/crsf.h:crsf_crc8", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/crsf.h", "target": "function:APP/Inc/protocol/crsf.h:crsf_decode_channels", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/crsf.h", "target": "function:APP/Inc/protocol/crsf.h:crsf_decode_link_statistics", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/msp_server.h", "target": "function:APP/Inc/protocol/msp_server.h:msp_server_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/msp_server.h", "target": "function:APP/Inc/protocol/msp_server.h:msp_server_process", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/msp_server.h", "target": "function:APP/Inc/protocol/msp_server.h:msp_server_take_reboot_request", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/msp_transport.h", "target": "function:APP/Inc/protocol/msp_transport.h:msp_parser_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/msp_transport.h", "target": "function:APP/Inc/protocol/msp_transport.h:msp_parser_process_byte", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/protocol/msp_transport.h", "target": "function:APP/Inc/protocol/msp_transport.h:msp_transport_build_response", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/app_task.h", "target": "function:APP/Inc/rtos/app_task.h:app_tasks_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/battery_task.h", "target": "function:APP/Inc/rtos/battery_task.h:battery_task_create", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/battery_task.h", "target": "function:APP/Inc/rtos/battery_task.h:battery_task_stack_high_water_mark", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/flight_task.h", "target": "function:APP/Inc/rtos/flight_task.h:flight_task_create", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/flight_task.h", "target": "function:APP/Inc/rtos/flight_task.h:flight_task_request_motor_test", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/flight_task.h", "target": "function:APP/Inc/rtos/flight_task.h:flight_task_execute_dshot_commands", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/flight_task.h", "target": "function:APP/Inc/rtos/flight_task.h:flight_task_stack_high_water_mark", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/imu_task.h", "target": "function:APP/Inc/rtos/imu_task.h:imu_task_create", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/imu_task.h", "target": "function:APP/Inc/rtos/imu_task.h:imu_task_request_accel_calibration", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/imu_task.h", "target": "function:APP/Inc/rtos/imu_task.h:imu_task_save_parameters", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/imu_task.h", "target": "function:APP/Inc/rtos/imu_task.h:imu_task_stack_high_water_mark", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/rc_task.h", "target": "function:APP/Inc/rtos/rc_task.h:rc_task_create", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/rtos/rc_task.h", "target": "function:APP/Inc/rtos/rc_task.h:rc_task_stack_high_water_mark", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/storage/parameter_store.h", "target": "function:APP/Inc/storage/parameter_store.h:parameter_store_values_set_defaults", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/storage/parameter_store.h", "target": "function:APP/Inc/storage/parameter_store.h:parameter_store_values_are_valid", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/storage/parameter_store.h", "target": "function:APP/Inc/storage/parameter_store.h:parameter_store_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/storage/parameter_store.h", "target": "function:APP/Inc/storage/parameter_store.h:parameter_store_get_values", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/storage/parameter_store.h", "target": "function:APP/Inc/storage/parameter_store.h:parameter_store_get_status", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Inc/storage/parameter_store.h", "target": "function:APP/Inc/storage/parameter_store.h:parameter_store_save", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/accel_calibration.c", "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_initialize", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/accel_calibration.c", "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_start", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/accel_calibration.c", "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_process", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/accel_calibration.c", "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_get_candidate", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/accel_calibration.c", "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_persisted", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/accel_calibration.c", "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_mark_save_failed", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/accel_calibration.c", "target": "function:APP/Src/algorithms/accel_calibration.c:accel_calibration_apply", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/angle_outer_loop.c", "target": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_profile_is_valid", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/angle_outer_loop.c", "target": "function:APP/Src/algorithms/angle_outer_loop.c:angle_outer_loop_compute", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/attitude_estimator.c", "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_initialize", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/attitude_estimator.c", "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_reset", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/attitude_estimator.c", "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_update", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_update", "target": "function:APP/Src/algorithms/attitude_estimator.c:attitude_estimator_reset", "type": "calls", "direction": "forward", "weight": 0.8, "description": "更新失败时重置估计器"}
+  ]
+}

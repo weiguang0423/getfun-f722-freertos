@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    {
+      "id": "document:Linux/RK3568/s7_3/README.md",
+      "type": "document",
+      "name": "s7_3 README.md",
+      "filePath": "Linux/RK3568/s7_3/README.md",
+      "summary": "S7.3 阶段说明文档，描述把 S7.2 冻结的两级 TFLite 模型转换为 RK3568 RKNN 模型，并完成板端离线误差、性能与稳定性验收的范围、交付物与运行命令。",
+      "tags": ["documentation", "rknn", "model-conversion", "acceptance", "rk3568"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/board_stability.sh",
+      "type": "file",
+      "name": "board_stability.sh",
+      "filePath": "Linux/RK3568/s7_3/board_stability.sh",
+      "summary": "可选诊断脚本：后台运行 1800 秒的推理程序，每 10 秒采样其 RSS、文件描述符数、SoC 温度和 NPU 负载并写入 resources.csv，供稳定性排查使用。",
+      "tags": ["script", "diagnostic", "monitoring", "rk3568"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/build_board.sh",
+      "type": "file",
+      "name": "build_board.sh",
+      "filePath": "Linux/RK3568/s7_3/build_board.sh",
+      "summary": "使用 Buildroot SDK 的 aarch64 交叉编译器把 s7_3_board_infer.cpp 链接 OpenCV 4.5.5（core/imgproc/imgcodecs）与 rknn 运行时，交叉生成 ARM64 板端推理程序。",
+      "tags": ["script", "cross-compile", "build", "rk3568"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/build_opencv.sh",
+      "type": "file",
+      "name": "build_opencv.sh",
+      "filePath": "Linux/RK3568/s7_3/build_opencv.sh",
+      "summary": "从 SDK 缓存的 OpenCV 4.5.5 源码离线交叉构建最小运行库，仅启用 core/imgproc/imgcodecs 并关闭所有编解码与第三方依赖。",
+      "tags": ["script", "cross-compile", "opencv", "build", "rk3568"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:Linux/RK3568/s7_3/README.md",
+      "target": "file:Linux/RK3568/s7_3/build_board.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "README 说明了 build_board.sh 的用途：交叉编译板端推理程序。"
+    },
+    {
+      "source": "document:Linux/RK3568/s7_3/README.md",
+      "target": "file:Linux/RK3568/s7_3/build_opencv.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "README 说明了 build_opencv.sh 从 SDK 缓存源码离线构建最小 OpenCV 运行库。"
+    },
+    {
+      "source": "document:Linux/RK3568/s7_3/README.md",
+      "target": "file:Linux/RK3568/s7_3/board_stability.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "README 说明 board_stability.sh 仅作为可选诊断工具，不作为完成关口。"
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/build_board.sh",
+      "target": "file:Linux/RK3568/s7_3/build_opencv.sh",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "build_board.sh 链接的 OpenCV 安装目录由 build_opencv.sh 生成。"
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/board_stability.sh",
+      "target": "file:Linux/RK3568/s7_3/build_board.sh",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "board_stability.sh 后台运行的 APP 即 build_board.sh 交叉编译产出的 s7_3_board_infer 程序。"
+    }
+  ]
+}

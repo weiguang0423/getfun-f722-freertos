@@ -1,0 +1,241 @@
+{
+  "nodes": [
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h",
+      "type": "file",
+      "name": "stm32f7xx_hal.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h",
+      "summary": "HAL 顶层头文件，聚合所有 HAL 模块的公共类型、常量与宏定义，并引用 stm32f7xx_hal_conf.h 打开各模块开关。",
+      "tags": ["hal", "stm32", "driver", "library", "header"],
+      "complexity": "simple",
+      "languageNotes": "所有 HAL 源文件统一通过本头文件间接包含，模块使能由 stm32f7xx_hal_conf.h 的 HAL_*_MODULE_ENABLED 宏控制。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_bus.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_bus.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_bus.h",
+      "summary": "LL 层总线时钟与复位宏集合，提供各外设 RCC 时钟使能/失能与复位操作，无函数体、纯内联宏。",
+      "tags": ["hal", "ll", "rcc", "driver", "header"],
+      "complexity": "moderate",
+      "languageNotes": "纯宏头文件，按 AHB1/2/3、APB1/2 分组提供 __HAL_RCC_*_CLK_ENABLE 等内联宏。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_cortex.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_cortex.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_cortex.h",
+      "summary": "LL 层 Cortex-M7 核心宏，封装 NVIC、SysTick、MPU、FPU 与 Cache 的底层寄存器访问。",
+      "tags": ["hal", "ll", "cortex", "driver", "header"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_dma.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_dma.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_dma.h",
+      "summary": "LL 层 DMA 宏定义，提供 DMA 流/通道配置、传输启动、中断标志操作等底层寄存器接口。",
+      "tags": ["hal", "ll", "dma", "driver", "header"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_exti.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_exti.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_exti.h",
+      "summary": "LL 层 EXTI 外部中断/事件控制器宏，配置中断线、触发沿与挂起标志清除。",
+      "tags": ["hal", "ll", "exti", "driver", "header"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_gpio.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_gpio.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_gpio.h",
+      "summary": "LL 层 GPIO 宏，提供引脚模式/速度/上拉与复用功能的直接寄存器配置接口。",
+      "tags": ["hal", "ll", "gpio", "driver", "header"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_pwr.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_pwr.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_pwr.h",
+      "summary": "LL 层 PWR 电源控制宏，配置低功耗模式、电压调节与唤醒控制。",
+      "tags": ["hal", "ll", "pwr", "driver", "header"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_rcc.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_rcc.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_rcc.h",
+      "summary": "LL 层 RCC 复位与时钟控制宏（本批最大头文件），提供时钟源、倍频、分频与振荡器配置的底层接口。",
+      "tags": ["hal", "ll", "rcc", "clock", "driver", "header"],
+      "complexity": "complex",
+      "languageNotes": "5170 行的纯宏头，覆盖 HSE/HSI/PLL 及外设时钟树配置，是系统时钟 216MHz 配置的基础。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_spi.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_spi.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_spi.h",
+      "summary": "LL 层 SPI 宏，提供 SPI 主从模式、时钟极性/相位、数据帧与 DMA 请求的寄存器级配置。",
+      "tags": ["hal", "ll", "spi", "driver", "header"],
+      "complexity": "complex",
+      "languageNotes": "IMU 总线 SPI1 的底层寄存器接口来源之一。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_system.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_system.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_system.h",
+      "summary": "LL 层系统宏，封装 DBGMCU、Cache 控制与芯片级配置寄存器访问。",
+      "tags": ["hal", "ll", "system", "driver", "header"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usart.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_usart.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usart.h",
+      "summary": "LL 层 USART 宏，提供串口波特率、字长、停止位、中断与 DMA 的寄存器级配置。",
+      "tags": ["hal", "ll", "usart", "uart", "driver", "header"],
+      "complexity": "complex",
+      "languageNotes": "UART4 诊断与 USART6 Linux 通信的底层接口来源之一。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_usb.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h",
+      "summary": "LL 层 USB OTG 宏，封装 USB 设备/主机核心寄存器访问，供 PCD 驱动使用。",
+      "tags": ["hal", "ll", "usb", "driver", "header"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_utils.h",
+      "type": "file",
+      "name": "stm32f7xx_ll_utils.h",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_utils.h",
+      "summary": "LL 层工具函数声明，提供基于 HAL_GetTick 的毫秒延时与系统滴答计数辅助函数。",
+      "tags": ["hal", "ll", "utility", "driver", "header"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/LICENSE.txt",
+      "type": "file",
+      "name": "LICENSE.txt",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/LICENSE.txt",
+      "summary": "STMicroelectronics HAL 驱动组件的开源许可证声明（BSD 风格，提供 AS-IS）。",
+      "tags": ["license", "documentation", "stm32"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_cortex.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c",
+      "summary": "CORTEX HAL 驱动实现，提供 NVIC 优先级分组/设置/使能中断与 SysTick 配置的 HAL 封装函数。",
+      "tags": ["hal", "cortex", "nvic", "driver", "library"],
+      "complexity": "moderate",
+      "languageNotes": "HAL_NVIC_* 与 HAL_SYSTICK_Config 等的实现，系统启动中断配置依赖此文件。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_dma_ex.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c",
+      "summary": "DMA 扩展 HAL 驱动，提供双缓冲/多缓冲传输模式等高级 DMA 功能。",
+      "tags": ["hal", "dma", "driver", "library"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_dma.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c",
+      "summary": "DMA HAL 驱动主体，实现初始化、轮询/中断/DMA 传输启动、终止与状态查询（HAL_DMA_* 族）。",
+      "tags": ["hal", "dma", "driver", "library"],
+      "complexity": "complex",
+      "languageNotes": "SPI1 的 14 字节样本 DMA 传输依赖本文件的 HAL_DMA_Start_IT 等接口。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_exti.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_exti.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_exti.c",
+      "summary": "EXTI HAL 驱动，实现外部中断线配置、回调分发与挂起标志管理（HAL_EXTI_* 族）。",
+      "tags": ["hal", "exti", "driver", "library"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_flash_ex.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c",
+      "summary": "FLASH 扩展 HAL 驱动，实现扇区擦除、双 Bank、选项字节编程等扩展 Flash 操作。",
+      "tags": ["hal", "flash", "driver", "library"],
+      "complexity": "moderate",
+      "languageNotes": "参数保存 Sector 6/7 双槽擦写依赖本文件的 HAL_FLASHEx_Erase 等接口。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_flash.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c",
+      "summary": "FLASH HAL 驱动主体，实现 Flash 解锁/加锁、编程、读保护等基础操作（HAL_FLASH_* 族）。",
+      "tags": ["hal", "flash", "driver", "library"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_gpio.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c",
+      "summary": "GPIO HAL 驱动，实现引脚初始化、读写、复用配置与中断回调管理（HAL_GPIO_* 族）。",
+      "tags": ["hal", "gpio", "driver", "library"],
+      "complexity": "moderate",
+      "languageNotes": "8 路电机安全输出与 SPI/USART 引脚配置均经本文件。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_i2c_ex.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c",
+      "summary": "I2C 扩展 HAL 驱动，提供模拟/数字噪声滤波与 FastModePlus 配置等扩展功能。",
+      "tags": ["hal", "i2c", "driver", "library"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_i2c.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c",
+      "summary": "I2C HAL 驱动主体（本批最大源文件），实现主/从模式初始化、轮询/中断/DMA 收发与错误恢复。",
+      "tags": ["hal", "i2c", "driver", "library"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_pcd_ex.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c",
+      "summary": "PCD（USB 外设控制器）扩展 HAL 驱动，提供 USB OTG 端点与 PHY 相关扩展功能。",
+      "tags": ["hal", "usb", "pcd", "driver", "library"],
+      "complexity": "simple",
+      "languageNotes": "CDC 虚拟串口（USB Device）底层依赖 PCD 层。"
+    },
+    {
+      "id": "file:Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_pcd.c",
+      "filePath": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c",
+      "summary": "PCD（USB 外设控制器）HAL 驱动主体，实现 USB 设备核心初始化、端点管理与传输调度（HAL_PCD_* 族）。",
+      "tags": ["hal", "usb", "pcd", "driver", "library"],
+      "complexity": "complex",
+      "languageNotes": "USB CDC 虚拟串口的上层驱动，MSP 主机经此与 PC 通信。"
+    }
+  ],
+  "edges": []
+}

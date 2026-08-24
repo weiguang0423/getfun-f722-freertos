@@ -1,0 +1,493 @@
+{
+  "nodes": [
+    {
+      "id": "file:Core/Inc/stm32f7xx_it.h",
+      "type": "file",
+      "name": "stm32f7xx_it.h",
+      "filePath": "Core/Inc/stm32f7xx_it.h",
+      "summary": "CubeMX 生成的异常与中断向量处理函数原型声明头文件，列出 NMI/HardFault/各 DMA 流/USART/USB 等 IRQ 处理函数签名。",
+      "tags": ["cubemx", "header", "interrupt", "prototype"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Inc/usart.h",
+      "type": "file",
+      "name": "usart.h",
+      "filePath": "Core/Inc/usart.h",
+      "summary": "CubeMX 生成的 USART 外设句柄声明与初始化函数原型，导出 huart2/huart4/huart6 及 MX_USARTx_UART_Init 等接口。",
+      "tags": ["cubemx", "header", "uart", "handle"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/dma.c",
+      "type": "file",
+      "name": "dma.c",
+      "filePath": "Core/Src/dma.c",
+      "summary": "CubeMX 生成的 DMA 时钟与中断初始化，使能 DMA1/DMA2 并配置 DMA1 Stream5 与 DMA2 Stream0/1/3 在抢占优先级 5，供 USART2 CRSF 与 SPI1 IMU 流量使用。",
+      "tags": ["cubemx", "dma", "interrupt", "initialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/dma.c:MX_DMA_Init",
+      "type": "function",
+      "name": "MX_DMA_Init",
+      "filePath": "Core/Src/dma.c",
+      "lineRange": [55, 76],
+      "summary": "使能 DMA1/DMA2 时钟并配置 DMA1_Stream5、DMA2_Stream0/1/3 的中断优先级(5)与使能，DMA 完成路径会调用 FreeRTOS FromISR API。",
+      "tags": ["cubemx", "dma", "init", "interrupt"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/freertos.c",
+      "type": "file",
+      "name": "freertos.c",
+      "filePath": "Core/Src/freertos.c",
+      "summary": "CubeMX 生成的 FreeRTOS 应用层：创建 InitTask(静态栈 3KB, osPriorityIdle)、注册栈溢出与内存分配失败钩子，并在 USER CODE 段调用 app_tasks_init 启动 APP 静态任务。",
+      "tags": ["cubemx", "freertos", "rtos-task", "init"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/freertos.c:MX_FREERTOS_Init",
+      "type": "function",
+      "name": "MX_FREERTOS_Init",
+      "filePath": "Core/Src/freertos.c",
+      "lineRange": [102, 135],
+      "summary": "FreeRTOS 对象初始化入口，创建 InitTask 并在 RTOS_THREADS 段调用 app_tasks_init 启动 APP 应用层任务。",
+      "tags": ["freertos", "init", "rtos-task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/freertos.c:StartInitTask",
+      "type": "function",
+      "name": "StartInitTask",
+      "filePath": "Core/Src/freertos.c",
+      "lineRange": [144, 159],
+      "summary": "InitTask 线程体：初始化 USB 设备、标记 RTOS 启动、随后每 1 秒输出一次维护诊断心跳。",
+      "tags": ["rtos-task", "usb", "diagnostics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/freertos.c:vApplicationStackOverflowHook",
+      "type": "function",
+      "name": "vApplicationStackOverflowHook",
+      "filePath": "Core/Src/freertos.c",
+      "lineRange": [82, 87],
+      "summary": "FreeRTOS 栈溢出钩子，触发平台故障停机(PLATFORM_FAULT_STACK_OVERFLOW)。",
+      "tags": ["freertos", "hook", "fault"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/freertos.c:vApplicationMallocFailedHook",
+      "type": "function",
+      "name": "vApplicationMallocFailedHook",
+      "filePath": "Core/Src/freertos.c",
+      "lineRange": [91, 94],
+      "summary": "FreeRTOS 内存分配失败钩子，触发平台故障停机(PLATFORM_FAULT_MALLOC_FAILED)。",
+      "tags": ["freertos", "hook", "fault"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/gpio.c",
+      "type": "file",
+      "name": "gpio.c",
+      "filePath": "Core/Src/gpio.c",
+      "summary": "CubeMX 生成的 GPIO 初始化：开启 GPIOA/B/C/H 时钟，配置 IMU CS(PA4)、8 路电机输出引脚及 ADC3 模拟输入引脚(PC0-3)。",
+      "tags": ["cubemx", "gpio", "init", "motor", "imu"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/gpio.c:MX_GPIO_Init",
+      "type": "function",
+      "name": "MX_GPIO_Init",
+      "filePath": "Core/Src/gpio.c",
+      "lineRange": [42, 99],
+      "summary": "配置所有已用 GPIO：IMU CS 推挽输出、8 路电机(MOTOR1-8)低速推挽输出、PC0-3 模拟输入供 ADC3 电源采样。",
+      "tags": ["cubemx", "gpio", "init", "motor"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/main.c",
+      "type": "file",
+      "name": "main.c",
+      "filePath": "Core/Src/main.c",
+      "summary": "程序入口：配置 MPU、使能 I-Cache、HAL 初始化、系统时钟(HSE 8MHz→PLL→216MHz OverDrive)、外设初始化、强制电机安全后启动 FreeRTOS 调度器。",
+      "tags": ["entry-point", "cubemx", "clock", "mpu", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/main.c:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "Core/Src/main.c",
+      "lineRange": [74, 140],
+      "summary": "应用主入口：MPU_Config→SCB_EnableICache→HAL_Init→SystemClock_Config→外设初始化→platform_motor_outputs_force_safe→osKernelInitialize→MX_FREERTOS_Init→osKernelStart。",
+      "tags": ["entry-point", "init", "clock"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/main.c:SystemClock_Config",
+      "type": "function",
+      "name": "SystemClock_Config",
+      "filePath": "Core/Src/main.c",
+      "lineRange": [146, 192],
+      "summary": "系统时钟配置：HSE 8MHz 经 PLL(PLLN=432, PLLP=DIV2, PLLQ=9)得到 216MHz SYSCLK，开启 OverDrive，APB1/APB2 分频并设 FLASH 等待周期 7。",
+      "tags": ["clock", "pll", "rcc", "init"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/main.c:MPU_Config",
+      "type": "function",
+      "name": "MPU_Config",
+      "filePath": "Core/Src/main.c",
+      "lineRange": [200, 225],
+      "summary": "配置 MPU Region0 为 4GB 无访问(子区 0x87 关闭)，禁用指令执行，作为默认存储保护区域。",
+      "tags": ["mpu", "security", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/main.c:Error_Handler",
+      "type": "function",
+      "name": "Error_Handler",
+      "filePath": "Core/Src/main.c",
+      "lineRange": [253, 258],
+      "summary": "CubeMX 错误处理：调用 platform_fault_halt(PLATFORM_FAULT_HAL_ERROR) 进入安全停机。",
+      "tags": ["error-handling", "fault"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/main.c:HAL_TIM_PeriodElapsedCallback",
+      "type": "function",
+      "name": "HAL_TIM_PeriodElapsedCallback",
+      "filePath": "Core/Src/main.c",
+      "lineRange": [235, 247],
+      "summary": "TIM6 周期溢出回调，在 TIM6 中断内直接调用 HAL_IncTick 递增 uwTick 时基。",
+      "tags": ["callback", "tim", "tick"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/spi.c",
+      "type": "file",
+      "name": "spi.c",
+      "filePath": "Core/Src/spi.c",
+      "summary": "CubeMX 生成的 SPI1 初始化与 MSP：配置 8 位 MSB 先发 Mode0 主模式 1.6875MHz，并初始化 SPI1 RX/TX 的 DMA2 Stream0/3(Channel3)。",
+      "tags": ["cubemx", "spi", "dma", "imu", "init"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/spi.c:MX_SPI1_Init",
+      "type": "function",
+      "name": "MX_SPI1_Init",
+      "filePath": "Core/Src/spi.c",
+      "lineRange": [46, 78],
+      "summary": "初始化 SPI1 为主机、8 位、Mode0、软件 NSS、1.6875MHz，供板载 ICM42688P IMU 使用。",
+      "tags": ["spi", "init", "imu"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/spi.c:HAL_SPI_MspInit",
+      "type": "function",
+      "name": "HAL_SPI_MspInit",
+      "filePath": "Core/Src/spi.c",
+      "lineRange": [80, 146],
+      "summary": "SPI1 MSP 初始化：开启 SPI1/GPIOA 时钟，配置 PA5/6/7 为 AF5 SPI1，链接 DMA2_Stream0(RX)/Stream3(TX) 到 SPI1 句柄。",
+      "tags": ["spi", "msp", "dma", "gpio"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/spi.c:HAL_SPI_MspDeInit",
+      "type": "function",
+      "name": "HAL_SPI_MspDeInit",
+      "filePath": "Core/Src/spi.c",
+      "lineRange": [148, 173],
+      "summary": "SPI1 MSP 反初始化：关闭 SPI1 时钟、复位 PA5/6/7 GPIO、反初始化 SPI1 的 RX/TX DMA 句柄。",
+      "tags": ["spi", "msp", "deinit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/stm32f7xx_hal_msp.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_msp.c",
+      "filePath": "Core/Src/stm32f7xx_hal_msp.c",
+      "summary": "CubeMX 生成的全局 MSP 初始化：开启 PWR/SYSCFG 时钟，设置 PendSV 中断优先级为最低(15)。",
+      "tags": ["cubemx", "msp", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_hal_msp.c:HAL_MspInit",
+      "type": "function",
+      "name": "HAL_MspInit",
+      "filePath": "Core/Src/stm32f7xx_hal_msp.c",
+      "lineRange": [62, 79],
+      "summary": "全局 MSP 初始化：使能 PWR/SYSCFG 时钟，配置 PendSV_IRQn 优先级为 15(最低)。",
+      "tags": ["msp", "init", "nvic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/stm32f7xx_hal_timebase_tim.c",
+      "type": "file",
+      "name": "stm32f7xx_hal_timebase_tim.c",
+      "filePath": "Core/Src/stm32f7xx_hal_timebase_tim.c",
+      "summary": "基于 TIM6 的 HAL 时基实现：用 TIM6 产生 1ms 节拍中断替代默认 SysTick，提供启动/挂起/恢复接口。",
+      "tags": ["cubemx", "tim", "timebase", "tick"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_hal_timebase_tim.c:HAL_InitTick",
+      "type": "function",
+      "name": "HAL_InitTick",
+      "filePath": "Core/Src/stm32f7xx_hal_timebase_tim.c",
+      "lineRange": [41, 113],
+      "summary": "配置 TIM6 为 1MHz 计数时钟、1ms 周期，以中断方式启动并配置 TIM6_DAC_IRQn 优先级为 TickPriority。",
+      "tags": ["tim", "timebase", "tick", "init"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_hal_timebase_tim.c:HAL_SuspendTick",
+      "type": "function",
+      "name": "HAL_SuspendTick",
+      "filePath": "Core/Src/stm32f7xx_hal_timebase_tim.c",
+      "lineRange": [121, 125],
+      "summary": "挂起节拍：禁用 TIM6 更新中断，停止 uwTick 递增。",
+      "tags": ["tim", "tick", "suspend"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_hal_timebase_tim.c:HAL_ResumeTick",
+      "type": "function",
+      "name": "HAL_ResumeTick",
+      "filePath": "Core/Src/stm32f7xx_hal_timebase_tim.c",
+      "lineRange": [133, 137],
+      "summary": "恢复节拍：重新使能 TIM6 更新中断，恢复 uwTick 递增。",
+      "tags": ["tim", "tick", "resume"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/stm32f7xx_it.c",
+      "type": "file",
+      "name": "stm32f7xx_it.c",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "summary": "CubeMX 生成的中断服务例程集合：异常(硬 fault/总线 fault 等)转平台停机，DMA/SPI/USART/USB 中断转发至对应 HAL 或 APP 层 IRQ 处理函数。",
+      "tags": ["cubemx", "interrupt", "isr", "fault"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:HardFault_Handler",
+      "type": "function",
+      "name": "HardFault_Handler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [94, 106],
+      "summary": "硬 fault 处理函数，调用 platform_fault_halt(PLATFORM_FAULT_HARD) 后死循环。",
+      "tags": ["isr", "fault"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:TIM6_DAC_IRQHandler",
+      "type": "function",
+      "name": "TIM6_DAC_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [182, 191],
+      "summary": "TIM6 全局中断(含 DAC 下溢)，转发至 HAL_TIM_IRQHandler(&htim6)。",
+      "tags": ["isr", "tim"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:DMA1_Stream5_IRQHandler",
+      "type": "function",
+      "name": "DMA1_Stream5_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [196, 205],
+      "summary": "DMA1 Stream5 中断(USART2 CRSF RX)，转发至 HAL_DMA_IRQHandler(&hdma_usart2_rx)。",
+      "tags": ["isr", "dma", "crsf"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream0_IRQHandler",
+      "type": "function",
+      "name": "DMA2_Stream0_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [220, 229],
+      "summary": "DMA2 Stream0 中断(SPI1 IMU RX)，转发至 HAL_DMA_IRQHandler(&hdma_spi1_rx)。",
+      "tags": ["isr", "dma", "imu"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream1_IRQHandler",
+      "type": "function",
+      "name": "DMA2_Stream1_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [234, 244],
+      "summary": "DMA2 Stream1 中断(ADC3 电源采样)，转发至 power_adc_dma_irq_handler()。",
+      "tags": ["isr", "dma", "power"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream2_IRQHandler",
+      "type": "function",
+      "name": "DMA2_Stream2_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [249, 256],
+      "summary": "DMA2 Stream2 中断(DShot 电机)，转发至 dshot_motor_dma_irq_handler()。",
+      "tags": ["isr", "dma", "dshot", "motor"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream3_IRQHandler",
+      "type": "function",
+      "name": "DMA2_Stream3_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [261, 270],
+      "summary": "DMA2 Stream3 中断(SPI1 IMU TX)，转发至 HAL_DMA_IRQHandler(&hdma_spi1_tx)。",
+      "tags": ["isr", "dma", "imu"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:USART2_IRQHandler",
+      "type": "function",
+      "name": "USART2_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [275, 284],
+      "summary": "USART2 中断(CRSF RC)，转发至 HAL_UART_IRQHandler(&huart2)。",
+      "tags": ["isr", "uart", "crsf"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:USART6_IRQHandler",
+      "type": "function",
+      "name": "USART6_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [289, 292],
+      "summary": "USART6 中断(Linux 通信)，转发至 HAL_UART_IRQHandler(&huart6)。",
+      "tags": ["isr", "uart", "linux"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/stm32f7xx_it.c:OTG_FS_IRQHandler",
+      "type": "function",
+      "name": "OTG_FS_IRQHandler",
+      "filePath": "Core/Src/stm32f7xx_it.c",
+      "lineRange": [307, 316],
+      "summary": "USB OTG FS 全局中断，转发至 HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS)。",
+      "tags": ["isr", "usb", "otg"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/syscalls.c",
+      "type": "file",
+      "name": "syscalls.c",
+      "filePath": "Core/Src/syscalls.c",
+      "summary": "CubeMX 生成的 Newlib/Picolibc 系统调用桩：实现 _read/_write 等弱符号并将标准 I/O 重定向至 __io_putchar/__io_getchar，含 Picolibc 别名段。",
+      "tags": ["cubemx", "syscall", "libc", "stdio"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/syscalls.c:_write",
+      "type": "function",
+      "name": "_write",
+      "filePath": "Core/Src/syscalls.c",
+      "lineRange": [80, 90],
+      "summary": "弱符号写系统调用，逐字符转发至 __io_putchar 实现标准输出重定向。",
+      "tags": ["syscall", "stdio", "weak"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/syscalls.c:_read",
+      "type": "function",
+      "name": "_read",
+      "filePath": "Core/Src/syscalls.c",
+      "lineRange": [67, 78],
+      "summary": "弱符号读系统调用，逐字符从 __io_getchar 读取实现标准输入重定向。",
+      "tags": ["syscall", "stdio", "weak"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/sysmem.c",
+      "type": "file",
+      "name": "sysmem.c",
+      "filePath": "Core/Src/sysmem.c",
+      "summary": "CubeMX 生成的堆内存管理：_sbrk 从 _end 向上分配至 MSP 栈保留边界之前，并支持 Picolibc 的 sbrk 别名。",
+      "tags": ["cubemx", "heap", "libc", "sbrk"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/sysmem.c:_sbrk",
+      "type": "function",
+      "name": "_sbrk",
+      "filePath": "Core/Src/sysmem.c",
+      "lineRange": [54, 80],
+      "summary": "堆分配器：从 _end 起始向上增长，禁止越过 _estack - _Min_Stack_Size 的栈上限，越界则返回 ENOMEM。",
+      "tags": ["heap", "sbrk", "memory"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Core/Src/system_stm32f7xx.c",
+      "type": "file",
+      "name": "system_stm32f7xx.c",
+      "filePath": "Core/Src/system_stm32f7xx.c",
+      "summary": "CMSIS 设备系统源文件：提供 SystemInit(启动早期 FPU/向量表配置)与 SystemCoreClockUpdate(根据 RCC 寄存器重算 HCLK)，维护 SystemCoreClock 全局变量。",
+      "tags": ["cmsis", "system", "clock", "startup"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Core/Src/system_stm32f7xx.c:SystemInit",
+      "type": "function",
+      "name": "SystemInit",
+      "filePath": "Core/Src/system_stm32f7xx.c",
+      "lineRange": [151, 162],
+      "summary": "复位后最早执行的系统初始化：启用 FPU(CP10/CP11 全访问)，可选重定位向量表(VTOR)。",
+      "tags": ["cmsis", "startup", "fpu"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Core/Src/system_stm32f7xx.c:SystemCoreClockUpdate",
+      "type": "function",
+      "name": "SystemCoreClockUpdate",
+      "filePath": "Core/Src/system_stm32f7xx.c",
+      "lineRange": [200, 246],
+      "summary": "依据 RCC CFGR/PLL 寄存器重算 SystemCoreClock(HCLK) 频率，含 AHB 预分频处理。",
+      "tags": ["cmsis", "clock", "rcc"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    { "source": "file:Core/Src/dma.c", "target": "function:Core/Src/dma.c:MX_DMA_Init", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/freertos.c", "target": "function:Core/Src/freertos.c:MX_FREERTOS_Init", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/freertos.c", "target": "function:Core/Src/freertos.c:StartInitTask", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/freertos.c", "target": "function:Core/Src/freertos.c:vApplicationStackOverflowHook", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/freertos.c", "target": "function:Core/Src/freertos.c:vApplicationMallocFailedHook", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/gpio.c", "target": "function:Core/Src/gpio.c:MX_GPIO_Init", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/main.c:main", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/main.c:SystemClock_Config", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/main.c:MPU_Config", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/main.c:Error_Handler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/main.c:HAL_TIM_PeriodElapsedCallback", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/spi.c", "target": "function:Core/Src/spi.c:MX_SPI1_Init", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/spi.c", "target": "function:Core/Src/spi.c:HAL_SPI_MspInit", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/spi.c", "target": "function:Core/Src/spi.c:HAL_SPI_MspDeInit", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_hal_msp.c", "target": "function:Core/Src/stm32f7xx_hal_msp.c:HAL_MspInit", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_hal_timebase_tim.c", "target": "function:Core/Src/stm32f7xx_hal_timebase_tim.c:HAL_InitTick", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_hal_timebase_tim.c", "target": "function:Core/Src/stm32f7xx_hal_timebase_tim.c:HAL_SuspendTick", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_hal_timebase_tim.c", "target": "function:Core/Src/stm32f7xx_hal_timebase_tim.c:HAL_ResumeTick", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:HardFault_Handler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:TIM6_DAC_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:DMA1_Stream5_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream0_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream1_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream2_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:DMA2_Stream3_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:USART2_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:USART6_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/stm32f7xx_it.c", "target": "function:Core/Src/stm32f7xx_it.c:OTG_FS_IRQHandler", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/syscalls.c", "target": "function:Core/Src/syscalls.c:_write", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/syscalls.c", "target": "function:Core/Src/syscalls.c:_read", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/sysmem.c", "target": "function:Core/Src/sysmem.c:_sbrk", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/system_stm32f7xx.c", "target": "function:Core/Src/system_stm32f7xx.c:SystemInit", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/system_stm32f7xx.c", "target": "function:Core/Src/system_stm32f7xx.c:SystemCoreClockUpdate", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/gpio.c:MX_GPIO_Init", "type": "calls", "direction": "forward", "weight": 0.8, "description": "main 调用 MX_GPIO_Init 初始化 GPIO" },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/dma.c:MX_DMA_Init", "type": "calls", "direction": "forward", "weight": 0.8, "description": "main 调用 MX_DMA_Init 初始化 DMA" },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/spi.c:MX_SPI1_Init", "type": "calls", "direction": "forward", "weight": 0.8, "description": "main 调用 MX_SPI1_Init 初始化 SPI1" },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/usart.c:MX_USART2_UART_Init", "type": "calls", "direction": "forward", "weight": 0.8, "description": "main 调用 MX_USART2_UART_Init 初始化 CRSF UART" },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/usart.c:MX_UART4_Init", "type": "calls", "direction": "forward", "weight": 0.8, "description": "main 调用 MX_UART4_Init 初始化诊断 UART" },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/usart.c:MX_USART6_UART_Init", "type": "calls", "direction": "forward", "weight": 0.8, "description": "main 调用 MX_USART6_UART_Init 初始化 Linux 通信 UART" },
+    { "source": "file:Core/Src/main.c", "target": "function:Core/Src/freertos.c:MX_FREERTOS_Init", "type": "calls", "direction": "forward", "weight": 0.8, "description": "main 调用 MX_FREERTOS_Init 初始化 RTOS 对象" }
+  ]
+}

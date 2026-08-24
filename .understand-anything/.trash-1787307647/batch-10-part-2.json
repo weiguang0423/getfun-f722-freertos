@@ -1,0 +1,568 @@
+{
+  "nodes": [
+    {
+      "id": "file:APP/Src/algorithms/flight_arming.c",
+      "type": "file",
+      "name": "flight_arming.c",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "S4.7 解锁状态机实现，PREARM 为每次上电/FAILSAFE 后的强制安全握手，按阻塞/FAILSAFE 标志在四态间转移。",
+      "tags": ["algorithm", "arming", "safety", "state-machine", "no-rtos-dependency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/gyro_calibration.c",
+      "type": "file",
+      "name": "gyro_calibration.c",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "上电陀螺静态零偏校准状态机，SI 换算后按 5 deg/s 静止与 0.8~1.2 g 门限累计 Welford 窗口，冻结三轴零偏。",
+      "tags": ["algorithm", "calibration", "gyro", "welford", "no-rtos-dependency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/imu_filter.c",
+      "type": "file",
+      "name": "imu_filter.c",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "三轴 PT1 低通实现，按真实 dt 更新，Gyro 固定 100 Hz、Accel 固定 30 Hz，dt 越界或非有限值会重置。",
+      "tags": ["algorithm", "filter", "pt1", "imu", "no-rtos-dependency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/power_monitor.c",
+      "type": "file",
+      "name": "power_monitor.c",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "电源监测实现，对 ADC 电压/电流做 Q8 指数滤波、电芯计数、状态迟滞分类并累计消耗容量（mAh）。",
+      "tags": ["algorithm", "power", "battery", "adc", "no-rtos-dependency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/quad_x_mixer.c",
+      "type": "file",
+      "name": "quad_x_mixer.c",
+      "filePath": "APP/Src/algorithms/quad_x_mixer.c",
+      "summary": "Quad-X 混控器实现，把三轴修正量经固定混合矩阵映射到四路电机并做油门饱和限幅。",
+      "tags": ["algorithm", "mixer", "quad-x", "motor", "no-rtos-dependency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rate_pid.c",
+      "type": "file",
+      "name": "rate_pid.c",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "Rate PID 控制器实现，含 P/可选 I/D、两级 D 项低通与抗积分饱和钳位，按真实 dt 更新。",
+      "tags": ["algorithm", "pid", "rate", "control", "no-rtos-dependency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_input.c",
+      "type": "file",
+      "name": "rc_input.c",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "RC 输入处理实现，含 AETR 通道映射、安全通道默认值与帧超时/恢复的健康相位状态机。",
+      "tags": ["algorithm", "rc", "failsafe", "channel-map", "no-rtos-dependency"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_setpoint.c",
+      "type": "file",
+      "name": "rc_setpoint.c",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "RC 设定点实现，把映射通道转为归一化摇杆、带 Expo 的实际速率与油门，并解析 ARM/Angle 模式。",
+      "tags": ["algorithm", "rc", "setpoint", "rate", "no-rtos-dependency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/algorithms/rc_source_arbiter.c",
+      "type": "file",
+      "name": "rc_source_arbiter.c",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "S7.7 物理/虚拟 RC 仲裁实现，fail-closed 选择源并以受控摆率从物理切换至 Linux 虚拟 RC，退出后禁自动重入。",
+      "tags": ["algorithm", "rc", "arbiter", "virtual-rc", "slew", "no-rtos-dependency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/app_state.c",
+      "type": "file",
+      "name": "app_state.c",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "全局运行态快照实现，用关中断+DMB 临界区提供多任务安全的读/写，并发布 IMU/姿态/RC/电池/参数等状态。",
+      "tags": ["app-state", "critical-section", "snapshot", "publish", "no-rtos-blocking"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/crsf_uart.c",
+      "type": "file",
+      "name": "crsf_uart.c",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "UART2 RX 循环 DMA + IDLE 传输层，把 CRSF 字节写入 512 B 环形缓冲并通知 RcTask，含错误恢复。",
+      "tags": ["bsp", "crsf", "uart", "dma", "ring-buffer"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:APP/Src/bsp/dshot_motor.c",
+      "type": "file",
+      "name": "dshot_motor.c",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "四路 DShot600 电机传输实现，TIM8 作 DMA 节拍器，DMA2 Stream2 经 GPIOA BSRR 位bang 四路电机输出。",
+      "tags": ["bsp", "dshot", "motor", "dma", "gpio", "bitbang"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/algorithms/flight_arming.c:flight_arming_init",
+      "type": "function",
+      "name": "flight_arming_init",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "初始化解锁状态机，默认进入 PREARM（安全握手）状态。",
+      "tags": ["arming", "init", "prearm"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/flight_arming.c:flight_arming_update",
+      "type": "function",
+      "name": "flight_arming_update",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "按解锁请求与阻塞/FAILSAFE 标志在 PREARM/DISARMED/ARMED/FAILSAFE 间转移，返回是否已解锁。",
+      "tags": ["arming", "update", "state-machine"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/flight_arming.c:flight_arming_is_armed",
+      "type": "function",
+      "name": "flight_arming_is_armed",
+      "filePath": "APP/Src/algorithms/flight_arming.c",
+      "summary": "返回当前是否处于 ARMED 状态。",
+      "tags": ["arming", "status"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_reset",
+      "type": "function",
+      "name": "gyro_calibration_reset",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "重置陀螺校准状态机为 NOT_STARTED，清零窗口与计数。",
+      "tags": ["calibration", "gyro", "reset"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_start",
+      "type": "function",
+      "name": "gyro_calibration_start",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "重置并开始陀螺零偏校准，进入 CALIBRATING 状态。",
+      "tags": ["calibration", "gyro", "start"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_process",
+      "type": "function",
+      "name": "gyro_calibration_process",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "处理一个样本，按静止门限累计 Welford 窗口，方差达标后冻结三轴零偏为 READY。",
+      "tags": ["calibration", "gyro", "welford", "process"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_apply",
+      "type": "function",
+      "name": "gyro_calibration_apply",
+      "filePath": "APP/Src/algorithms/gyro_calibration.c",
+      "summary": "从角速度中扣除 READY 后的零偏，输出校正后的 rad/s 值。",
+      "tags": ["calibration", "gyro", "apply"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/imu_filter.c:imu_filter_reset",
+      "type": "function",
+      "name": "imu_filter_reset",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "重置 PT1 低通滤波器状态为零。",
+      "tags": ["filter", "reset", "pt1"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/imu_filter.c:imu_filter_process",
+      "type": "function",
+      "name": "imu_filter_process",
+      "filePath": "APP/Src/algorithms/imu_filter.c",
+      "summary": "按真实 dt 对三轴加速度/角速度做 PT1 低通，首样本播种，dt 越界或非有限值重置。",
+      "tags": ["filter", "process", "pt1", "dt"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_voltage_cv",
+      "type": "function",
+      "name": "power_monitor_raw_to_voltage_cv",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "把 ADC 原始值转换为厘伏（cV）电压，含分压/倍率与四舍五入。",
+      "tags": ["power", "adc", "voltage"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_current_ca",
+      "type": "function",
+      "name": "power_monitor_raw_to_current_ca",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "把 ADC 原始值转换为厘安（cA）电流，含标度与偏移校准与饱和钳位。",
+      "tags": ["power", "adc", "current"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_detect_cell_count",
+      "type": "function",
+      "name": "power_monitor_detect_cell_count",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "按总电压推断电芯串数，并对上限做饱和钳位。",
+      "tags": ["power", "cells", "detect"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_init",
+      "type": "function",
+      "name": "power_monitor_init",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "初始化电源监测器状态为 INIT。",
+      "tags": ["power", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_update",
+      "type": "function",
+      "name": "power_monitor_update",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "滤波并分类电压/电流，确认电池存在、检测电芯、迟滞状态切换并累计消耗容量。",
+      "tags": ["power", "update", "battery", "filter"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/algorithms/power_monitor.c:power_monitor_mark_stale",
+      "type": "function",
+      "name": "power_monitor_mark_stale",
+      "filePath": "APP/Src/algorithms/power_monitor.c",
+      "summary": "标记电源数据失效，复位存在/电芯/状态与确认计时。",
+      "tags": ["power", "stale", "reset"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/quad_x_mixer.c:quad_x_mixer_compute",
+      "type": "function",
+      "name": "quad_x_mixer_compute",
+      "filePath": "APP/Src/algorithms/quad_x_mixer.c",
+      "summary": "把油门与三轴修正量经 Quad-X 混合矩阵映射到四路电机，做全局饱和限幅输出 0~1。",
+      "tags": ["mixer", "compute", "quad-x", "motor"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rate_pid.c:rate_pid_profile_is_valid",
+      "type": "function",
+      "name": "rate_pid_profile_is_valid",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "校验 Rate PID 配置（增益、限幅、dt 范围）各字段合法。",
+      "tags": ["pid", "validate", "profile"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rate_pid.c:rate_pid_reset",
+      "type": "function",
+      "name": "rate_pid_reset",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "重置 Rate PID 状态（积分、微分历史、测量初始化）。",
+      "tags": ["pid", "reset"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rate_pid.c:rate_pid_update",
+      "type": "function",
+      "name": "rate_pid_update",
+      "filePath": "APP/Src/algorithms/rate_pid.c",
+      "summary": "按设定/测量/真实 dt 计算三轴 P+I+D 修正，含 D 项两级低通与抗积分饱和钳位。",
+      "tags": ["pid", "update", "rate", "dterm-lpf"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_map_aetr",
+      "type": "function",
+      "name": "rc_input_map_aetr",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "把原始通道按 Betaflight AETR 顺序映射为内部通道顺序（Roll/Pitch/Yaw/Throttle/AUX）。",
+      "tags": ["rc", "channel-map", "aetr"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_set_safe_channels",
+      "type": "function",
+      "name": "rc_input_set_safe_channels",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "把所有通道设为安全值（油门 1000，其余 1500）。",
+      "tags": ["rc", "safe", "failsafe"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_init",
+      "type": "function",
+      "name": "rc_input_failsafe_init",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "初始化 RC 失效保护状态为等待信号且 failsafe 激活。",
+      "tags": ["rc", "failsafe", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_on_frame",
+      "type": "function",
+      "name": "rc_input_failsafe_on_frame",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "收到有效帧后推进健康恢复相位，满足帧数/时间门槛则退出 failsafe。",
+      "tags": ["rc", "failsafe", "recovery"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_update",
+      "type": "function",
+      "name": "rc_input_failsafe_update",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "按帧超时检测信号丢失，置 LOSS/failsafe 激活并累计计数。",
+      "tags": ["rc", "failsafe", "timeout"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_input.c:rc_input_control_valid",
+      "type": "function",
+      "name": "rc_input_control_valid",
+      "filePath": "APP/Src/algorithms/rc_input.c",
+      "summary": "返回 RC 控制是否健康且未处于 failsafe。",
+      "tags": ["rc", "valid", "failsafe"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_profile_is_valid",
+      "type": "function",
+      "name": "rc_setpoint_profile_is_valid",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "校验 RC 设定点配置（行程、死区、ARM/Angle 通道与范围）各字段合法且互斥。",
+      "tags": ["rc", "validate", "profile"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_compute",
+      "type": "function",
+      "name": "rc_setpoint_compute",
+      "filePath": "APP/Src/algorithms/rc_setpoint.c",
+      "summary": "把映射通道转为归一化摇杆、带 Expo 的实际速率、油门及 ARM/Angle 模式输出。",
+      "tags": ["rc", "compute", "setpoint", "rate"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_init",
+      "type": "function",
+      "name": "rc_source_arbiter_init",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "初始化 RC 源仲裁器，默认活动源为物理 RC。",
+      "tags": ["rc", "arbiter", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_update",
+      "type": "function",
+      "name": "rc_source_arbiter_update",
+      "filePath": "APP/Src/algorithms/rc_source_arbiter.c",
+      "summary": "按授权/AUX3 握手/接管/候选新鲜度在物理与虚拟 RC 间切换，虚拟源做受控摆率输出。",
+      "tags": ["rc", "arbiter", "virtual-rc", "slew", "update"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_init",
+      "type": "function",
+      "name": "app_state_init",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "在临界区内清零全局快照并默认置位全部解锁抑制位。",
+      "tags": ["app-state", "init", "critical-section"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_imu",
+      "type": "function",
+      "name": "app_state_publish_imu",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "发布 IMU 样本并原子更新 IMU/陀螺/加速度/时间有效性对应的解锁抑制位。",
+      "tags": ["app-state", "publish", "imu", "arming-inhibit"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_attitude",
+      "type": "function",
+      "name": "app_state_publish_attitude",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "发布姿态状态并原子更新 ATTITUDE 解锁抑制位。",
+      "tags": ["app-state", "publish", "attitude", "arming-inhibit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_rc",
+      "type": "function",
+      "name": "app_state_publish_rc",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "发布 RC 状态并在通道有效且未 failsafe 时清除 RC 解锁抑制位。",
+      "tags": ["app-state", "publish", "rc", "arming-inhibit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_publish_battery",
+      "type": "function",
+      "name": "app_state_publish_battery",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "发布电池状态并在 ADC 运行/存在/非临界时清除电池解锁抑制位。",
+      "tags": ["app-state", "publish", "battery", "arming-inhibit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/app_state.c:app_state_get_rc_source_context",
+      "type": "function",
+      "name": "app_state_get_rc_source_context",
+      "filePath": "APP/Src/app_state.c",
+      "summary": "原子读取 RC 源仲裁所需的 ARM、inhibit 与 AUX3 配置所有权，避免复制整份快照。",
+      "tags": ["app-state", "rc-context", "critical-section"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_init",
+      "type": "function",
+      "name": "crsf_uart_init",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "初始化 CRSF UART 传输层（缓冲、环形、诊断、任务句柄清零）。",
+      "tags": ["crsf", "uart", "init"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_bind_current_task",
+      "type": "function",
+      "name": "crsf_uart_bind_current_task",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "绑定当前任务句柄，供 ISR 在收到新数据时发出任务通知。",
+      "tags": ["crsf", "uart", "bind", "notify"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_read",
+      "type": "function",
+      "name": "crsf_uart_read",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "从环形缓冲读出已接收的 CRSF 字节供 RcTask 消费。",
+      "tags": ["crsf", "uart", "read", "ring-buffer"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/crsf_uart.c:HAL_UARTEx_RxEventCallback",
+      "type": "function",
+      "name": "HAL_UARTEx_RxEventCallback",
+      "filePath": "APP/Src/bsp/crsf_uart.c",
+      "summary": "UART2 RX DMA/IDLE 回调，把新跨度字节写入环形缓冲并通知 RcTask。",
+      "tags": ["crsf", "uart", "isr", "callback", "dma"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_encode_frame",
+      "type": "function",
+      "name": "dshot_encode_frame",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "把 11 位油门/命令值与遥测位编码为 16 位 DShot 帧（含 4 位 CRC）。",
+      "tags": ["dshot", "encode", "frame", "crc"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_init",
+      "type": "function",
+      "name": "dshot_motor_init",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "初始化 DShot600 电机输出：使能时钟、配置 GPIO/TIM8 节拍器/DMA2，就绪失败则进入安全锁存。",
+      "tags": ["dshot", "motor", "init", "dma", "timer"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit",
+      "type": "function",
+      "name": "dshot_motor_submit",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "提交四路油门帧经 DMA 位bang 输出，校验范围与忙状态。",
+      "tags": ["dshot", "motor", "submit", "dma"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit_command",
+      "type": "function",
+      "name": "dshot_motor_submit_command",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "向指定或全体电机发送 DShot 命令帧（遥测开启）。",
+      "tags": ["dshot", "motor", "command", "dma"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_force_safe",
+      "type": "function",
+      "name": "dshot_motor_force_safe",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "强制电机输出安全（复位 GPIO、停止 DMA、锁存故障）。",
+      "tags": ["dshot", "motor", "safe", "fault"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_dma_irq_handler",
+      "type": "function",
+      "name": "dshot_motor_dma_irq_handler",
+      "filePath": "APP/Src/bsp/dshot_motor.c",
+      "summary": "DMA2 Stream2 完成/错误中断处理，完成则清忙标志，错误则锁存并强制安全。",
+      "tags": ["dshot", "motor", "dma", "isr"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {"source": "file:APP/Src/algorithms/flight_arming.c", "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/flight_arming.c", "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_update", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/flight_arming.c", "target": "function:APP/Src/algorithms/flight_arming.c:flight_arming_is_armed", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/gyro_calibration.c", "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_reset", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/gyro_calibration.c", "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_start", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/gyro_calibration.c", "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_process", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/gyro_calibration.c", "target": "function:APP/Src/algorithms/gyro_calibration.c:gyro_calibration_apply", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/imu_filter.c", "target": "function:APP/Src/algorithms/imu_filter.c:imu_filter_reset", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/imu_filter.c", "target": "function:APP/Src/algorithms/imu_filter.c:imu_filter_process", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/power_monitor.c", "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_voltage_cv", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/power_monitor.c", "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_raw_to_current_ca", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/power_monitor.c", "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_detect_cell_count", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/power_monitor.c", "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/power_monitor.c", "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_update", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/power_monitor.c", "target": "function:APP/Src/algorithms/power_monitor.c:power_monitor_mark_stale", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/quad_x_mixer.c", "target": "function:APP/Src/algorithms/quad_x_mixer.c:quad_x_mixer_compute", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rate_pid.c", "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_profile_is_valid", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rate_pid.c", "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_reset", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rate_pid.c", "target": "function:APP/Src/algorithms/rate_pid.c:rate_pid_update", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_input.c", "target": "function:APP/Src/algorithms/rc_input.c:rc_input_map_aetr", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_input.c", "target": "function:APP/Src/algorithms/rc_input.c:rc_input_set_safe_channels", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_input.c", "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_input.c", "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_on_frame", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_input.c", "target": "function:APP/Src/algorithms/rc_input.c:rc_input_failsafe_update", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_input.c", "target": "function:APP/Src/algorithms/rc_input.c:rc_input_control_valid", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_setpoint.c", "target": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_profile_is_valid", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_setpoint.c", "target": "function:APP/Src/algorithms/rc_setpoint.c:rc_setpoint_compute", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_source_arbiter.c", "target": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/algorithms/rc_source_arbiter.c", "target": "function:APP/Src/algorithms/rc_source_arbiter.c:rc_source_arbiter_update", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/app_state.c", "target": "function:APP/Src/app_state.c:app_state_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/app_state.c", "target": "function:APP/Src/app_state.c:app_state_publish_imu", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/app_state.c", "target": "function:APP/Src/app_state.c:app_state_publish_attitude", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/app_state.c", "target": "function:APP/Src/app_state.c:app_state_publish_rc", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/app_state.c", "target": "function:APP/Src/app_state.c:app_state_publish_battery", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/app_state.c", "target": "function:APP/Src/app_state.c:app_state_get_rc_source_context", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/crsf_uart.c", "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/crsf_uart.c", "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_bind_current_task", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/crsf_uart.c", "target": "function:APP/Src/bsp/crsf_uart.c:crsf_uart_read", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/crsf_uart.c", "target": "function:APP/Src/bsp/crsf_uart.c:HAL_UARTEx_RxEventCallback", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/dshot_motor.c", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_encode_frame", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/dshot_motor.c", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_init", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/dshot_motor.c", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/dshot_motor.c", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit_command", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/dshot_motor.c", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_force_safe", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:APP/Src/bsp/dshot_motor.c", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_dma_irq_handler", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_encode_frame", "type": "calls", "direction": "forward", "weight": 0.8, "description": "提交前对每路帧做 DShot 编码"},
+    {"source": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_submit_command", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_encode_frame", "type": "calls", "direction": "forward", "weight": 0.8, "description": "命令提交前做 DShot 编码"},
+    {"source": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_dma_irq_handler", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_force_safe", "type": "calls", "direction": "forward", "weight": 0.8, "description": "DMA 错误时强制电机安全"},
+    {"source": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_init", "target": "function:APP/Src/bsp/dshot_motor.c:dshot_motor_force_safe", "type": "calls", "direction": "forward", "weight": 0.8, "description": "初始化就绪失败时强制安全"}
+  ]
+}

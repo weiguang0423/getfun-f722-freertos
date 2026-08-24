@@ -1,0 +1,936 @@
+{
+  "nodes": [
+    {
+      "id": "file:Linux/RK3568/s7_2/validation/run3/results.jsonl",
+      "type": "file",
+      "name": "run3 results.jsonl",
+      "filePath": "Linux/RK3568/s7_2/validation/run3/results.jsonl",
+      "summary": "S7.2 固定测试集在 RK3568 板端推理产出的逐帧 JSONL 证据，含检测框、关键点、presence/handedness 分数与 timing，共 2860 条记录。",
+      "tags": [
+        "evidence",
+        "data",
+        "rk3568",
+        "inference",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Linux/RK3568/s7_2/validation/run3/summary.json",
+      "type": "config",
+      "name": "run3 summary.json",
+      "filePath": "Linux/RK3568/s7_2/validation/run3/summary.json",
+      "summary": "S7.2 验证 run3 汇总，记录 2860 条记录中 727 有效、2133 拒绝及结果 SHA-256，作为板端/PC 一致性对比的验收基线。",
+      "tags": [
+        "evidence",
+        "config",
+        "validation",
+        "summary",
+        "rk3568"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/compare_results.py",
+      "type": "file",
+      "name": "compare_results.py",
+      "filePath": "Linux/RK3568/s7_3/compare_results.py",
+      "summary": "对比板端 RKNN JSONL 与冻结 PC JSONL，按检测框/关键点/landmarks/presence 等字段计算绝对误差与百分位，并汇总各阶段延迟。",
+      "tags": [
+        "python",
+        "validation",
+        "comparison",
+        "rk3568",
+        "tooling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_3/compare_results.py:flatten",
+      "type": "function",
+      "name": "flatten",
+      "filePath": "Linux/RK3568/s7_3/compare_results.py",
+      "lineRange": [
+        21,
+        24
+      ],
+      "summary": "递归把嵌套列表拍平为浮点列表，便于逐元素比较张量字段。",
+      "tags": [
+        "python",
+        "utility",
+        "flatten"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_3/compare_results.py:percentile",
+      "type": "function",
+      "name": "percentile",
+      "filePath": "Linux/RK3568/s7_3/compare_results.py",
+      "lineRange": [
+        27,
+        33
+      ],
+      "summary": "对排序后的值做线性插值求指定百分位（如 p95/p99）。",
+      "tags": [
+        "python",
+        "statistics",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_3/compare_results.py:read",
+      "type": "function",
+      "name": "read",
+      "filePath": "Linux/RK3568/s7_3/compare_results.py",
+      "lineRange": [
+        36,
+        38
+      ],
+      "summary": "按 (source, frame_index) 主键读入 JSONL，供板端/PC 记录对齐比较。",
+      "tags": [
+        "python",
+        "io",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/convert_models.py",
+      "type": "file",
+      "name": "convert_models.py",
+      "filePath": "Linux/RK3568/s7_3/convert_models.py",
+      "summary": "用 RKNN toolkit 把冻结的 S7.2 TFLite 手部检测/关键点模型转换为 RK3568 的 fp16/int8 RKNN，并写出含 SHA-256 的转换清单。",
+      "tags": [
+        "python",
+        "model-conversion",
+        "rknn",
+        "rk3568",
+        "tooling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_3/convert_models.py:convert",
+      "type": "function",
+      "name": "convert",
+      "filePath": "Linux/RK3568/s7_3/convert_models.py",
+      "lineRange": [
+        20,
+        43
+      ],
+      "summary": "配置输入归一化、加载 TFLite、构建（可选量化）并导出 RKNN，最后释放上下文。",
+      "tags": [
+        "python",
+        "model-conversion",
+        "rknn"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_3/convert_models.py:sha256",
+      "type": "function",
+      "name": "sha256",
+      "filePath": "Linux/RK3568/s7_3/convert_models.py",
+      "lineRange": [
+        12,
+        17
+      ],
+      "summary": "分块读取文件计算 SHA-256，用于模型来源与产物指纹登记。",
+      "tags": [
+        "python",
+        "hashing",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Linux/RK3568/s7_3/evidence/host_preparation.json",
+      "type": "config",
+      "name": "host_preparation.json",
+      "filePath": "Linux/RK3568/s7_3/evidence/host_preparation.json",
+      "summary": "S7.3 板端验收总证据：工具链版本与 SHA、源模型/FP16/INT8 模型指纹、固定语料与 PC 冻结参考摘要，以及冻结的验收阈值与板端结果。",
+      "tags": [
+        "evidence",
+        "config",
+        "rk3568",
+        "acceptance",
+        "model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/make_quant_dataset.py",
+      "type": "file",
+      "name": "make_quant_dataset.py",
+      "filePath": "Linux/RK3568/s7_3/make_quant_dataset.py",
+      "summary": "从固定测试集确定性均匀抽样图像，用冻结 S7.2 参考解码生成检测列表与关键点 ROI 裁剪，供 RKNN INT8 量化标定。",
+      "tags": [
+        "python",
+        "quantization",
+        "dataset",
+        "rk3568",
+        "tooling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/prepare_testset.py",
+      "type": "file",
+      "name": "prepare_testset.py",
+      "filePath": "Linux/RK3568/s7_3/prepare_testset.py",
+      "summary": "把 S7.2 图片/视频逐帧冻结为板端可解码的 JPEG 语料，并写出含源/帧序号与 SHA-256 的 manifest 和汇总。",
+      "tags": [
+        "python",
+        "dataset",
+        "preparation",
+        "rk3568",
+        "tooling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_3/prepare_testset.py:frames",
+      "type": "function",
+      "name": "frames",
+      "filePath": "Linux/RK3568/s7_3/prepare_testset.py",
+      "lineRange": [
+        28,
+        40
+      ],
+      "summary": "逐帧读取图片或视频，yielding (frame_index, frame) 供冻结语料生成。",
+      "tags": [
+        "python",
+        "video",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/run_fixed_pc.py",
+      "type": "file",
+      "name": "run_fixed_pc.py",
+      "filePath": "Linux/RK3568/s7_3/run_fixed_pc.py",
+      "summary": "在字节一致的板端 JPEG 语料上运行冻结的 S7.2 PC 参考推理，产出 results.jsonl 与含多模型 SHA-256 的汇总，作为板端对比基准。",
+      "tags": [
+        "python",
+        "reference",
+        "pc-inference",
+        "rk3568",
+        "tooling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "type": "file",
+      "name": "s7_3_board_infer.cpp",
+      "filePath": "Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "summary": "RK3568 板端两级手部推理（检测+关键点）主程序：V4L2 摄像头或图片语料驱动 RKNN 模型，输出与 PC 参考字节对齐的 JSONL，并集成 S7.5 手势与 S7.6 虚拟 RC。",
+      "tags": [
+        "cpp",
+        "rk3568",
+        "inference",
+        "rknn",
+        "entry-point"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Linux/RK3568/s7_3/s7_3_board_infer.cpp:Camera",
+      "type": "class",
+      "name": "Camera",
+      "filePath": "Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "lineRange": [
+        92,
+        263
+      ],
+      "summary": "V4L2 多平面 NV12 摄像头封装：open/REQBUFS/mmap/STREAMON，latest() 取最新帧并统计丢帧，release() 归还缓冲。",
+      "tags": [
+        "cpp",
+        "v4l2",
+        "camera",
+        "rk3568"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:Linux/RK3568/s7_3/s7_3_board_infer.cpp:Model",
+      "type": "class",
+      "name": "Model",
+      "filePath": "Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "lineRange": [
+        291,
+        349
+      ],
+      "summary": "RKNN 模型封装：rknn_init/query/inputs_set/run/outputs_get，返回多输出浮点张量。",
+      "tags": [
+        "cpp",
+        "rknn",
+        "inference",
+        "rk3568"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_3/s7_3_board_infer.cpp:decode",
+      "type": "function",
+      "name": "decode",
+      "filePath": "Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "lineRange": [
+        378,
+        419
+      ],
+      "summary": "把检测器输出按 anchor 解码为检测框+7 关键点，sigmoid 过滤后做加权 NMS 合并。",
+      "tags": [
+        "cpp",
+        "decode",
+        "nms",
+        "inference"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_3/test_s7_3_tools.py",
+      "type": "file",
+      "name": "test_s7_3_tools.py",
+      "filePath": "Linux/RK3568/s7_3/test_s7_3_tools.py",
+      "summary": "S7.3 对比辅助函数的最小自检测：断言 flatten/percentile/read 的已知行为，零依赖直接 import compare_results.py。",
+      "tags": [
+        "python",
+        "test",
+        "self-check",
+        "tooling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_4/evidence/live_20260814/live180.jsonl",
+      "type": "file",
+      "name": "live180.jsonl",
+      "filePath": "Linux/RK3568/s7_4/evidence/live_20260814/live180.jsonl",
+      "summary": "S7.4 真人长时实时运行的逐帧 JSONL 证据（180 秒），含延迟、丢帧、valid/拒绝原因与手势字段；前两行为 SSH 隧道警告而非 JSONL 记录。",
+      "tags": [
+        "evidence",
+        "data",
+        "rk3568",
+        "live",
+        "inference"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Linux/RK3568/s7_4/evidence/live_20260814/summary.json",
+      "type": "config",
+      "name": "live summary.json",
+      "filePath": "Linux/RK3568/s7_4/evidence/live_20260814/summary.json",
+      "summary": "S7.4 真人实时运行汇总：800x600 NV12 相机、20fps、200ms 延迟上限，8779 条记录中仅 2 valid、平均延迟 65ms、温度与 NPU 负载。",
+      "tags": [
+        "evidence",
+        "config",
+        "rk3568",
+        "live",
+        "summary"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Linux/RK3568/s7_4/evidence/stability_summary.json",
+      "type": "config",
+      "name": "stability_summary.json",
+      "filePath": "Linux/RK3568/s7_4/evidence/stability_summary.json",
+      "summary": "S7.4 屏上实时显示+真人关键点可视确认汇总：DSI 720x1280 屏、180 秒运行、773 帧 valid 手部识别、presence 最高 0.994，实物关口关闭。",
+      "tags": [
+        "evidence",
+        "config",
+        "rk3568",
+        "display",
+        "acceptance"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_4/s7_4_display.cpp",
+      "type": "file",
+      "name": "s7_4_display.cpp",
+      "filePath": "Linux/RK3568/s7_4/s7_4_display.cpp",
+      "summary": "S7.4 屏显观测后端：仅用内核 uapi 头与裸 ioctl（不依赖 libdrm/OpenCV 显示栈）的 DRM/KMS 直显实现，双缓冲 dumb framebuffer + page flip。",
+      "tags": [
+        "cpp",
+        "drm",
+        "kms",
+        "display",
+        "rk3568"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_4/s7_4_display.cpp:display_open",
+      "type": "function",
+      "name": "display_open",
+      "filePath": "Linux/RK3568/s7_4/s7_4_display.cpp",
+      "lineRange": [
+        163,
+        227
+      ],
+      "summary": "打开 DRM 设备、枚举首个已连接 connector 首选模式、创建双 dumb framebuffer 并点亮 crtc，失败返回 nullptr。",
+      "tags": [
+        "cpp",
+        "drm",
+        "display",
+        "rk3568"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_4/s7_4_display.cpp:display_show",
+      "type": "function",
+      "name": "display_show",
+      "filePath": "Linux/RK3568/s7_4/s7_4_display.cpp",
+      "lineRange": [
+        232,
+        288
+      ],
+      "summary": "letterbox 缩放 BGR888 到屏分辨率、填 XRGB8888、待上一帧 flip 完成后做 page flip 双缓冲交换。",
+      "tags": [
+        "cpp",
+        "drm",
+        "page-flip",
+        "display"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_4/s7_4_display.cpp:wait_flip",
+      "type": "function",
+      "name": "wait_flip",
+      "filePath": "Linux/RK3568/s7_4/s7_4_display.cpp",
+      "lineRange": [
+        143,
+        159
+      ],
+      "summary": "用 poll+read 消费内核 flip complete 事件，避免事件队列满导致后续 flip 返回 EBUSY。",
+      "tags": [
+        "cpp",
+        "drm",
+        "event",
+        "display"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_4/s7_4_display.hpp",
+      "type": "file",
+      "name": "s7_4_display.hpp",
+      "filePath": "Linux/RK3568/s7_4/s7_4_display.hpp",
+      "summary": "S7.4 屏显后端对外接口头文件：display_open/width/height/show/close，供推理主程序与 S7.6 实时链调用。",
+      "tags": [
+        "cpp",
+        "header",
+        "display",
+        "interface"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_4/s7_4_drm_smoke",
+      "type": "file",
+      "name": "s7_4_drm_smoke",
+      "filePath": "Linux/RK3568/s7_4/s7_4_drm_smoke",
+      "summary": "S7.4 屏显链路冒烟程序编译产物（ARM64 ELF）：显示渐变色块验证 DRM/KMS 点亮链路，是屏显后端的前置验收。",
+      "tags": [
+        "binary",
+        "drm",
+        "smoke-test",
+        "rk3568",
+        "artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_4/s7_4_drm_smoke.cpp",
+      "type": "file",
+      "name": "s7_4_drm_smoke.cpp",
+      "filePath": "Linux/RK3568/s7_4/s7_4_drm_smoke.cpp",
+      "summary": "S7.4 屏显冒烟程序源码：裸 ioctl 枚举 connector/模式/crtc，创建 dumb fb 并在屏上逐秒显示渐变色块，验证 KMS 链路可用。",
+      "tags": [
+        "cpp",
+        "drm",
+        "smoke-test",
+        "rk3568",
+        "tooling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_5/evaluate_results.py",
+      "type": "file",
+      "name": "evaluate_results.py",
+      "filePath": "Linux/RK3568/s7_5/evaluate_results.py",
+      "summary": "评估 S7.5 手势识别 JSONL：按 CSV 序号区间统计 ACTIVE 混淆矩阵、首次进入延迟与标注区间外误触发，只用标准库。",
+      "tags": [
+        "python",
+        "evaluation",
+        "gesture",
+        "validation",
+        "tooling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Linux/RK3568/s7_5/evaluate_results.py:evaluate",
+      "type": "function",
+      "name": "evaluate",
+      "filePath": "Linux/RK3568/s7_5/evaluate_results.py",
+      "lineRange": [
+        38,
+        66
+      ],
+      "summary": "逐记录对照标注计算混淆矩阵、误触发序列与各段进入延迟，输出结构化评估。",
+      "tags": [
+        "python",
+        "evaluation",
+        "confusion-matrix"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_6/build_board.sh",
+      "type": "file",
+      "name": "build_board.sh",
+      "filePath": "Linux/RK3568/s7_6/build_board.sh",
+      "summary": "S7.6 板端 ARM64 交叉构建脚本：用 Buildroot 工具链把 S7.3 推理、S7.4 显示、S7.5 手势与 S7.6 虚拟 RC/串口源编译为 s7_6_live。",
+      "tags": [
+        "shell",
+        "build",
+        "cross-compile",
+        "rk3568",
+        "script"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:Linux/RK3568/s7_6/README.md",
+      "type": "document",
+      "name": "s7_6 README.md",
+      "filePath": "Linux/RK3568/s7_6/README.md",
+      "summary": "S7.6 手势到虚拟 RC 映射与发送链说明：冻结映射表、44 字节线协议（115200 8N1、CRC16-CCITT-FALSE）、实物接线与板端运行步骤。",
+      "tags": [
+        "documentation",
+        "virtual-rc",
+        "protocol",
+        "rk3568",
+        "readme"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_6/s7_6_serial_test.cpp",
+      "type": "file",
+      "name": "s7_6_serial_test.cpp",
+      "filePath": "Linux/RK3568/s7_6/s7_6_serial_test.cpp",
+      "summary": "S7.6 串口写出最小回环自检测：向临时文件发两帧，再按接收契约 decode 校验 valid/通道值/心跳递增。",
+      "tags": [
+        "cpp",
+        "test",
+        "serial",
+        "self-check",
+        "tooling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_6/s7_6_serial.cpp",
+      "type": "file",
+      "name": "s7_6_serial.cpp",
+      "filePath": "Linux/RK3568/s7_6/s7_6_serial.cpp",
+      "summary": "S7.6 固定 115200 8N1 原始串口写出薄封装：SerialLink 把手势快照经 Mapper 编码后写出，写失败即终止进程不重连。",
+      "tags": [
+        "cpp",
+        "serial",
+        "uart",
+        "rk3568",
+        "transport"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:Linux/RK3568/s7_6/s7_6_serial.cpp:SerialLink",
+      "type": "class",
+      "name": "SerialLink",
+      "filePath": "Linux/RK3568/s7_6/s7_6_serial.cpp",
+      "lineRange": [
+        15,
+        62
+      ],
+      "summary": "串口链路封装：cfmakeraw + 115200 配置，send() 编码并阻塞写尽帧、tcdrain 等待发送完成，失败抛异常终止。",
+      "tags": [
+        "cpp",
+        "serial",
+        "uart",
+        "transport"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:Linux/RK3568/s7_6/s7_6_serial.hpp",
+      "type": "file",
+      "name": "s7_6_serial.hpp",
+      "filePath": "Linux/RK3568/s7_6/s7_6_serial.hpp",
+      "summary": "S7.6 串口输出薄封装头文件：SerialLink 声明（构造/析构/send），设备名由运行环境通过 S7_6_RC_OUTPUT 提供。",
+      "tags": [
+        "cpp",
+        "header",
+        "serial",
+        "interface"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h",
+      "type": "file",
+      "name": "usbd_cdc.h",
+      "filePath": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h",
+      "summary": "ST USB 设备 CDC 类驱动头文件：端点地址/包大小宏、LineCoding/接口回调/句柄结构定义，及注册与收发缓冲接口声明。",
+      "tags": [
+        "c",
+        "usb",
+        "cdc",
+        "stm32",
+        "header"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "type": "file",
+      "name": "usbd_cdc.c",
+      "filePath": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "summary": "ST USB 设备 CDC 类驱动实现：设备枚举、配置描述符、IN/OUT 数据传输、类请求管理与收发缓冲/包接口，本仓库 USB CDC 虚拟串口的基础。",
+      "tags": [
+        "c",
+        "usb",
+        "cdc",
+        "stm32",
+        "middleware"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_Init",
+      "type": "function",
+      "name": "USBD_CDC_Init",
+      "filePath": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "lineRange": [
+        287,
+        379
+      ],
+      "summary": "分配 CDC 句柄、按 HS/FS 打开 IN/OUT/CMD 端点并准备首次接收，回调底层 Init。",
+      "tags": [
+        "c",
+        "usb",
+        "cdc",
+        "init"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_Setup",
+      "type": "function",
+      "name": "USBD_CDC_Setup",
+      "filePath": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "lineRange": [
+        432,
+        527
+      ],
+      "summary": "处理 CDC 类请求（Line Coding、控制线状态等）与标准请求（状态/接口/清除特性）。",
+      "tags": [
+        "c",
+        "usb",
+        "cdc",
+        "request"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_DataOut",
+      "type": "function",
+      "name": "USBD_CDC_DataOut",
+      "filePath": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "lineRange": [
+        577,
+        595
+      ],
+      "summary": "OUT 端点收到数据后取长度并回调底层 Receive，把字节交给应用层（本项目为 usb_cdc_transport）。",
+      "tags": [
+        "c",
+        "usb",
+        "cdc",
+        "receive"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_TransmitPacket",
+      "type": "function",
+      "name": "USBD_CDC_TransmitPacket",
+      "filePath": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "lineRange": [
+        813,
+        845
+      ],
+      "summary": "在 TxState 空闲时把缓存帧经 IN 端点发出，置位 TxState 防重入，本仓库 CDC_Transmit_FS 调用它。",
+      "tags": [
+        "c",
+        "usb",
+        "cdc",
+        "transmit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_RegisterInterface",
+      "type": "function",
+      "name": "USBD_CDC_RegisterInterface",
+      "filePath": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "lineRange": [
+        735,
+        746
+      ],
+      "summary": "把应用层实现的接口回调（Init/Control/Receive/TransmitCplt）挂到 CDC 类实例。",
+      "tags": [
+        "c",
+        "usb",
+        "cdc",
+        "registration"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Linux/RK3568/s7_4/s7_4_display.cpp",
+      "target": "file:Linux/RK3568/s7_4/s7_4_display.hpp",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Linux/RK3568/s7_6/s7_6_serial_test.cpp",
+      "target": "file:Linux/RK3568/s7_6/s7_6_serial.hpp",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/compare_results.py",
+      "target": "function:Linux/RK3568/s7_3/compare_results.py:flatten",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/compare_results.py",
+      "target": "function:Linux/RK3568/s7_3/compare_results.py:percentile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/compare_results.py",
+      "target": "function:Linux/RK3568/s7_3/compare_results.py:read",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/test_s7_3_tools.py",
+      "target": "file:Linux/RK3568/s7_3/compare_results.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "description": "动态 import compare_results 做自检测"
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/convert_models.py",
+      "target": "function:Linux/RK3568/s7_3/convert_models.py:convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/convert_models.py",
+      "target": "function:Linux/RK3568/s7_3/convert_models.py:sha256",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/prepare_testset.py",
+      "target": "function:Linux/RK3568/s7_3/prepare_testset.py:frames",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "target": "class:Linux/RK3568/s7_3/s7_3_board_infer.cpp:Camera",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "target": "class:Linux/RK3568/s7_3/s7_3_board_infer.cpp:Model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "target": "function:Linux/RK3568/s7_3/s7_3_board_infer.cpp:decode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "target": "file:Linux/RK3568/s7_4/s7_4_display.hpp",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "description": "S7_5/S7_6 宏下 include s7_4_display.hpp 等头"
+    },
+    {
+      "source": "file:Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "target": "file:Linux/RK3568/s7_6/s7_6_serial.hpp",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "description": "S7_6_VIRTUAL_RC 宏下 include s7_6_serial.hpp"
+    },
+    {
+      "source": "file:Linux/RK3568/s7_4/s7_4_display.cpp",
+      "target": "function:Linux/RK3568/s7_4/s7_4_display.cpp:display_open",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_4/s7_4_display.cpp",
+      "target": "function:Linux/RK3568/s7_4/s7_4_display.cpp:display_show",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_4/s7_4_display.cpp",
+      "target": "function:Linux/RK3568/s7_4/s7_4_display.cpp:wait_flip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_4/s7_4_drm_smoke.cpp",
+      "target": "file:Linux/RK3568/s7_4/s7_4_drm_smoke",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "编译产物为 s7_4_drm_smoke 可执行文件"
+    },
+    {
+      "source": "file:Linux/RK3568/s7_5/evaluate_results.py",
+      "target": "function:Linux/RK3568/s7_5/evaluate_results.py:evaluate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_6/s7_6_serial.cpp",
+      "target": "class:Linux/RK3568/s7_6/s7_6_serial.cpp:SerialLink",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Linux/RK3568/s7_6/s7_6_serial.hpp",
+      "target": "file:Linux/RK3568/s7_6/s7_6_serial.cpp",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "头文件与实现配套"
+    },
+    {
+      "source": "file:Linux/RK3568/s7_6/build_board.sh",
+      "target": "file:Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Linux/RK3568/s7_6/build_board.sh",
+      "target": "file:Linux/RK3568/s7_4/s7_4_display.cpp",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Linux/RK3568/s7_6/build_board.sh",
+      "target": "file:Linux/RK3568/s7_6/s7_6_serial.cpp",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "target": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_Init",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "target": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_Setup",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "target": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_DataOut",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "target": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_TransmitPacket",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "target": "function:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c:USBD_CDC_RegisterInterface",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "target": "file:Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:Linux/RK3568/s7_2/validation/run3/results.jsonl",
+      "target": "config:Linux/RK3568/s7_2/validation/run3/summary.json",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "汇总由逐帧结果统计得出"
+    }
+  ]
+}

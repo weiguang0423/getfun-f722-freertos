@@ -1,0 +1,1836 @@
+{
+  "scriptCompleted": true,
+  "files": [
+    {
+      "path": ".clangd",
+      "language": "unknown",
+      "sizeLines": 2,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".mxproject",
+      "language": "unknown",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "sizeLines": 121,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".understand-anything/config.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": "APP/Inc/algorithms/accel_calibration.h",
+      "language": "c",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/angle_outer_loop.h",
+      "language": "c",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/attitude_estimator.h",
+      "language": "c",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/flight_arming.h",
+      "language": "c",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/gyro_calibration.h",
+      "language": "c",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/imu_filter.h",
+      "language": "c",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/power_monitor.h",
+      "language": "c",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/quad_x_mixer.h",
+      "language": "c",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/rate_pid.h",
+      "language": "c",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/rc_input.h",
+      "language": "c",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/rc_setpoint.h",
+      "language": "c",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/algorithms/rc_source_arbiter.h",
+      "language": "c",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/app_state.h",
+      "language": "c",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/bsp/crsf_uart.h",
+      "language": "c",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/bsp/dshot_motor.h",
+      "language": "c",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/bsp/imu_bus.h",
+      "language": "c",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/bsp/linux_rc_monitor.h",
+      "language": "c",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/bsp/power_adc.h",
+      "language": "c",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/bsp/usb_cdc_transport.h",
+      "language": "c",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/drivers/icm42688p.h",
+      "language": "c",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/platform/platform_diag.h",
+      "language": "c",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/platform/platform_time.h",
+      "language": "c",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/protocol/crsf.h",
+      "language": "c",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/protocol/msp_server.h",
+      "language": "c",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/protocol/msp_transport.h",
+      "language": "c",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/rtos/app_task.h",
+      "language": "c",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/rtos/battery_task.h",
+      "language": "c",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/rtos/flight_task.h",
+      "language": "c",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/rtos/imu_task.h",
+      "language": "c",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/rtos/rc_task.h",
+      "language": "c",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Inc/storage/parameter_store.h",
+      "language": "c",
+      "sizeLines": 105,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/accel_calibration.c",
+      "language": "c",
+      "sizeLines": 351,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/angle_outer_loop.c",
+      "language": "c",
+      "sizeLines": 98,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/attitude_estimator.c",
+      "language": "c",
+      "sizeLines": 346,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/flight_arming.c",
+      "language": "c",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/gyro_calibration.c",
+      "language": "c",
+      "sizeLines": 226,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/imu_filter.c",
+      "language": "c",
+      "sizeLines": 171,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/power_monitor.c",
+      "language": "c",
+      "sizeLines": 275,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/quad_x_mixer.c",
+      "language": "c",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/rate_pid.c",
+      "language": "c",
+      "sizeLines": 182,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/rc_input.c",
+      "language": "c",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/rc_setpoint.c",
+      "language": "c",
+      "sizeLines": 208,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/algorithms/rc_source_arbiter.c",
+      "language": "c",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/app_state.c",
+      "language": "c",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/bsp/crsf_uart.c",
+      "language": "c",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/bsp/dshot_motor.c",
+      "language": "c",
+      "sizeLines": 317,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/bsp/imu_bus.c",
+      "language": "c",
+      "sizeLines": 363,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/bsp/linux_rc_monitor.c",
+      "language": "c",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/bsp/power_adc.c",
+      "language": "c",
+      "sizeLines": 257,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/bsp/usb_cdc_transport.c",
+      "language": "c",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/drivers/icm42688p.c",
+      "language": "c",
+      "sizeLines": 270,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/platform/platform_diag.c",
+      "language": "c",
+      "sizeLines": 150,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/platform/platform_time.c",
+      "language": "c",
+      "sizeLines": 110,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/protocol/crsf.c",
+      "language": "c",
+      "sizeLines": 196,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/protocol/msp_server.c",
+      "language": "c",
+      "sizeLines": 2404,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/protocol/msp_transport.c",
+      "language": "c",
+      "sizeLines": 263,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/rtos/app_task.c",
+      "language": "c",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/rtos/battery_task.c",
+      "language": "c",
+      "sizeLines": 151,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/rtos/flight_task.c",
+      "language": "c",
+      "sizeLines": 641,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/rtos/imu_task.c",
+      "language": "c",
+      "sizeLines": 875,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/rtos/rc_task.c",
+      "language": "c",
+      "sizeLines": 44,
+      "fileCategory": "code"
+    },
+    {
+      "path": "APP/Src/storage/parameter_store.c",
+      "language": "c",
+      "sizeLines": 673,
+      "fileCategory": "code"
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "sizeLines": 165,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "cmake/gcc-arm-none-eabi.cmake",
+      "language": "cmake",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "cmake/starm-clang.cmake",
+      "language": "cmake",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "cmake/stm32cubemx/CMakeLists.txt",
+      "language": "txt",
+      "sizeLines": 143,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "language": "txt",
+      "sizeLines": 110,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CMakePresets.json",
+      "language": "json",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Core/Inc/dma.h",
+      "language": "c",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Inc/FreeRTOSConfig.h",
+      "language": "c",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Inc/gpio.h",
+      "language": "c",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Inc/main.h",
+      "language": "c",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Inc/spi.h",
+      "language": "c",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Inc/stm32f7xx_hal_conf.h",
+      "language": "c",
+      "sizeLines": 484,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Inc/stm32f7xx_it.h",
+      "language": "c",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Inc/usart.h",
+      "language": "c",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/dma.c",
+      "language": "c",
+      "sizeLines": 81,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/freertos.c",
+      "language": "c",
+      "sizeLines": 165,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/gpio.c",
+      "language": "c",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/main.c",
+      "language": "c",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/spi.c",
+      "language": "c",
+      "sizeLines": 178,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/stm32f7xx_hal_msp.c",
+      "language": "c",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/stm32f7xx_hal_timebase_tim.c",
+      "language": "c",
+      "sizeLines": 138,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/stm32f7xx_it.c",
+      "language": "c",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/syscalls.c",
+      "language": "c",
+      "sizeLines": 244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/sysmem.c",
+      "language": "c",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/system_stm32f7xx.c",
+      "language": "c",
+      "sizeLines": 259,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Core/Src/usart.c",
+      "language": "c",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F7xx/Include/stm32f722xx.h",
+      "language": "c",
+      "sizeLines": 15469,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F7xx/Include/stm32f7xx.h",
+      "language": "c",
+      "sizeLines": 273,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F7xx/Include/system_stm32f7xx.h",
+      "language": "c",
+      "sizeLines": 105,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F7xx/LICENSE.txt",
+      "language": "txt",
+      "sizeLines": 6,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_armcc.h",
+      "language": "c",
+      "sizeLines": 865,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_armclang.h",
+      "language": "c",
+      "sizeLines": 1869,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_compiler.h",
+      "language": "c",
+      "sizeLines": 266,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_gcc.h",
+      "language": "c",
+      "sizeLines": 2085,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_iccarm.h",
+      "language": "c",
+      "sizeLines": 935,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_version.h",
+      "language": "c",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_armv8mbl.h",
+      "language": "c",
+      "sizeLines": 1918,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_armv8mml.h",
+      "language": "c",
+      "sizeLines": 2927,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm0.h",
+      "language": "c",
+      "sizeLines": 949,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm0plus.h",
+      "language": "c",
+      "sizeLines": 1083,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm1.h",
+      "language": "c",
+      "sizeLines": 976,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm23.h",
+      "language": "c",
+      "sizeLines": 1993,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm3.h",
+      "language": "c",
+      "sizeLines": 1941,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm33.h",
+      "language": "c",
+      "sizeLines": 3002,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm4.h",
+      "language": "c",
+      "sizeLines": 2129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm7.h",
+      "language": "c",
+      "sizeLines": 2671,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_sc000.h",
+      "language": "c",
+      "sizeLines": 1022,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_sc300.h",
+      "language": "c",
+      "sizeLines": 1915,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/mpu_armv7.h",
+      "language": "c",
+      "sizeLines": 270,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/mpu_armv8.h",
+      "language": "c",
+      "sizeLines": 333,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/tz_context.h",
+      "language": "c",
+      "sizeLines": 70,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/CMSIS/LICENSE.txt",
+      "language": "txt",
+      "sizeLines": 201,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h",
+      "language": "c",
+      "sizeLines": 4422,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_cortex.h",
+      "language": "c",
+      "sizeLines": 406,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_def.h",
+      "language": "c",
+      "sizeLines": 220,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dma_ex.h",
+      "language": "c",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dma.h",
+      "language": "c",
+      "sizeLines": 747,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_exti.h",
+      "language": "c",
+      "sizeLines": 317,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_flash_ex.h",
+      "language": "c",
+      "sizeLines": 697,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_flash.h",
+      "language": "c",
+      "sizeLines": 415,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_gpio_ex.h",
+      "language": "c",
+      "sizeLines": 656,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_gpio.h",
+      "language": "c",
+      "sizeLines": 323,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_i2c_ex.h",
+      "language": "c",
+      "sizeLines": 212,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_i2c.h",
+      "language": "c",
+      "sizeLines": 838,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h",
+      "language": "c",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd.h",
+      "language": "c",
+      "sizeLines": 453,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pwr_ex.h",
+      "language": "c",
+      "sizeLines": 260,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pwr.h",
+      "language": "c",
+      "sizeLines": 402,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc_ex.h",
+      "language": "c",
+      "sizeLines": 3555,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h",
+      "language": "c",
+      "sizeLines": 1307,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spi_ex.h",
+      "language": "c",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spi.h",
+      "language": "c",
+      "sizeLines": 855,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h",
+      "language": "c",
+      "sizeLines": 360,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim.h",
+      "language": "c",
+      "sizeLines": 2422,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h",
+      "language": "c",
+      "sizeLines": 432,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h",
+      "language": "c",
+      "sizeLines": 1659,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h",
+      "language": "c",
+      "sizeLines": 275,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_bus.h",
+      "language": "c",
+      "sizeLines": 1973,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_cortex.h",
+      "language": "c",
+      "sizeLines": 639,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_dma.h",
+      "language": "c",
+      "sizeLines": 2891,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_exti.h",
+      "language": "c",
+      "sizeLines": 948,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_gpio.h",
+      "language": "c",
+      "sizeLines": 981,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_pwr.h",
+      "language": "c",
+      "sizeLines": 1016,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_rcc.h",
+      "language": "c",
+      "sizeLines": 5170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_spi.h",
+      "language": "c",
+      "sizeLines": 2297,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_system.h",
+      "language": "c",
+      "sizeLines": 1018,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usart.h",
+      "language": "c",
+      "sizeLines": 3804,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h",
+      "language": "c",
+      "sizeLines": 600,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_utils.h",
+      "language": "c",
+      "sizeLines": 304,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/LICENSE.txt",
+      "language": "txt",
+      "sizeLines": 6,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c",
+      "language": "c",
+      "sizeLines": 529,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c",
+      "language": "c",
+      "sizeLines": 308,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c",
+      "language": "c",
+      "sizeLines": 1312,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_exti.c",
+      "language": "c",
+      "sizeLines": 547,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c",
+      "language": "c",
+      "sizeLines": 1119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c",
+      "language": "c",
+      "sizeLines": 825,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c",
+      "language": "c",
+      "sizeLines": 528,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c",
+      "language": "c",
+      "sizeLines": 270,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c",
+      "language": "c",
+      "sizeLines": 7600,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c",
+      "language": "c",
+      "sizeLines": 204,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c",
+      "language": "c",
+      "sizeLines": 2273,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c",
+      "language": "c",
+      "sizeLines": 552,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c",
+      "language": "c",
+      "sizeLines": 600,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c",
+      "language": "c",
+      "sizeLines": 1773,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c",
+      "language": "c",
+      "sizeLines": 1239,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_spi_ex.c",
+      "language": "c",
+      "sizeLines": 112,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_spi.c",
+      "language": "c",
+      "sizeLines": 4532,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c",
+      "language": "c",
+      "sizeLines": 2588,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c",
+      "language": "c",
+      "sizeLines": 7894,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart_ex.c",
+      "language": "c",
+      "sizeLines": 792,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c",
+      "language": "c",
+      "sizeLines": 4106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c",
+      "language": "c",
+      "sizeLines": 620,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c",
+      "language": "c",
+      "sizeLines": 2403,
+      "fileCategory": "code"
+    },
+    {
+      "path": "GETFUN_F722_FreeRTOS.ioc",
+      "language": "ioc",
+      "sizeLines": 339,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/README.md",
+      "language": "markdown",
+      "sizeLines": 42,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Linux/RK3568/s7_1_rknn_smoke.c",
+      "language": "c",
+      "sizeLines": 171,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/README.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/s7_2_pc_reference.py",
+      "language": "python",
+      "sizeLines": 374,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/test_s7_2_reference.py",
+      "language": "python",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run1/environment.json",
+      "language": "json",
+      "sizeLines": 131,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run1/results.jsonl",
+      "language": "jsonl",
+      "sizeLines": 2860,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run1/summary.json",
+      "language": "json",
+      "sizeLines": 6,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run2/environment.json",
+      "language": "json",
+      "sizeLines": 131,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run2/results.jsonl",
+      "language": "jsonl",
+      "sizeLines": 2860,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run2/summary.json",
+      "language": "json",
+      "sizeLines": 6,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run3/environment.json",
+      "language": "json",
+      "sizeLines": 131,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run3/results.jsonl",
+      "language": "jsonl",
+      "sizeLines": 2860,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_2/validation/run3/summary.json",
+      "language": "json",
+      "sizeLines": 6,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/board_stability.sh",
+      "language": "shell",
+      "sizeLines": 32,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/build_board.sh",
+      "language": "shell",
+      "sizeLines": 17,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/build_opencv.sh",
+      "language": "shell",
+      "sizeLines": 19,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/compare_results.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/convert_models.py",
+      "language": "python",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/evidence/host_preparation.json",
+      "language": "json",
+      "sizeLines": 153,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/make_quant_dataset.py",
+      "language": "python",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/prepare_testset.py",
+      "language": "python",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/README.md",
+      "language": "markdown",
+      "sizeLines": 41,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/run_fixed_pc.py",
+      "language": "python",
+      "sizeLines": 58,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/s7_3_board_infer.cpp",
+      "language": "cpp",
+      "sizeLines": 171,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_3/test_s7_3_tools.py",
+      "language": "python",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/build_board.sh",
+      "language": "shell",
+      "sizeLines": 26,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/evidence/live_20260814/live180.jsonl",
+      "language": "jsonl",
+      "sizeLines": 2845,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/evidence/live_20260814/summary.json",
+      "language": "json",
+      "sizeLines": 27,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/evidence/stability_summary.json",
+      "language": "json",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/EXECUTION_GUIDE.md",
+      "language": "markdown",
+      "sizeLines": 112,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/precheck_board.sh",
+      "language": "shell",
+      "sizeLines": 33,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/precheck_wsl.sh",
+      "language": "shell",
+      "sizeLines": 43,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/README.md",
+      "language": "markdown",
+      "sizeLines": 105,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/run_stability.sh",
+      "language": "shell",
+      "sizeLines": 44,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/s7_4_display.cpp",
+      "language": "cpp",
+      "sizeLines": 310,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/s7_4_display.hpp",
+      "language": "cpp",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/s7_4_drm_smoke",
+      "language": "unknown",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_4/s7_4_drm_smoke.cpp",
+      "language": "cpp",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_5/build_board.sh",
+      "language": "shell",
+      "sizeLines": 25,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_5/evaluate_results.py",
+      "language": "python",
+      "sizeLines": 91,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_5/labels.example.csv",
+      "language": "csv",
+      "sizeLines": 5,
+      "fileCategory": "data"
+    },
+    {
+      "path": "Linux/RK3568/s7_5/README.md",
+      "language": "markdown",
+      "sizeLines": 63,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Linux/RK3568/s7_5/s7_5_gesture_test.cpp",
+      "language": "cpp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_5/s7_5_gesture.cpp",
+      "language": "cpp",
+      "sizeLines": 236,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_5/s7_5_gesture.hpp",
+      "language": "cpp",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/build_board.sh",
+      "language": "shell",
+      "sizeLines": 31,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/README.md",
+      "language": "markdown",
+      "sizeLines": 117,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/s7_6_serial_test.cpp",
+      "language": "cpp",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/s7_6_serial.cpp",
+      "language": "cpp",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/s7_6_serial.hpp",
+      "language": "cpp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/s7_6_virtual_rc_test.cpp",
+      "language": "cpp",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/s7_6_virtual_rc.cpp",
+      "language": "cpp",
+      "sizeLines": 240,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Linux/RK3568/s7_6/s7_6_virtual_rc.hpp",
+      "language": "cpp",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h",
+      "language": "c",
+      "sizeLines": 187,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+      "language": "c",
+      "sizeLines": 893,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_core.h",
+      "language": "c",
+      "sizeLines": 175,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h",
+      "language": "c",
+      "sizeLines": 101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h",
+      "language": "c",
+      "sizeLines": 524,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h",
+      "language": "c",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c",
+      "language": "c",
+      "sizeLines": 1221,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c",
+      "language": "c",
+      "sizeLines": 1058,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c",
+      "language": "c",
+      "sizeLines": 226,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/ST/STM32_USB_Device_Library/LICENSE.txt",
+      "language": "txt",
+      "sizeLines": 86,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h",
+      "language": "c",
+      "sizeLines": 846,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c",
+      "language": "c",
+      "sizeLines": 1924,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h",
+      "language": "c",
+      "sizeLines": 734,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/croutine.c",
+      "language": "c",
+      "sizeLines": 353,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/event_groups.c",
+      "language": "c",
+      "sizeLines": 753,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/croutine.h",
+      "language": "c",
+      "sizeLines": 720,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h",
+      "language": "c",
+      "sizeLines": 279,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h",
+      "language": "c",
+      "sizeLines": 757,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h",
+      "language": "c",
+      "sizeLines": 1278,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/list.h",
+      "language": "c",
+      "sizeLines": 412,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/message_buffer.h",
+      "language": "c",
+      "sizeLines": 799,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/mpu_prototypes.h",
+      "language": "c",
+      "sizeLines": 157,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h",
+      "language": "c",
+      "sizeLines": 186,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/portable.h",
+      "language": "c",
+      "sizeLines": 181,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h",
+      "language": "c",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/queue.h",
+      "language": "c",
+      "sizeLines": 1655,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h",
+      "language": "c",
+      "sizeLines": 1140,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/stack_macros.h",
+      "language": "c",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h",
+      "language": "c",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/stream_buffer.h",
+      "language": "c",
+      "sizeLines": 855,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/task.h",
+      "language": "c",
+      "sizeLines": 2421,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/include/timers.h",
+      "language": "c",
+      "sizeLines": 1295,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/list.c",
+      "language": "c",
+      "sizeLines": 198,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/port.c",
+      "language": "c",
+      "sizeLines": 765,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/portmacro.h",
+      "language": "c",
+      "sizeLines": 247,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c",
+      "language": "c",
+      "sizeLines": 436,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/queue.c",
+      "language": "c",
+      "sizeLines": 2941,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c",
+      "language": "c",
+      "sizeLines": 1263,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/tasks.c",
+      "language": "c",
+      "sizeLines": 5214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Middlewares/Third_Party/FreeRTOS/Source/timers.c",
+      "language": "c",
+      "sizeLines": 1102,
+      "fileCategory": "code"
+    },
+    {
+      "path": "move-src.txt",
+      "language": "txt",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 362,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "startup_stm32f722xx.s",
+      "language": "s",
+      "sizeLines": 536,
+      "fileCategory": "code"
+    },
+    {
+      "path": "STM32F722XX_FLASH.ld",
+      "language": "ld",
+      "sizeLines": 267,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/motor_test.ps1",
+      "language": "powershell",
+      "sizeLines": 320,
+      "fileCategory": "script"
+    },
+    {
+      "path": "Tools/verify_angle_control.mjs",
+      "language": "javascript",
+      "sizeLines": 104,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_app_configuration.mjs",
+      "language": "javascript",
+      "sizeLines": 166,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_attitude_estimator.mjs",
+      "language": "javascript",
+      "sizeLines": 458,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_crsf.mjs",
+      "language": "javascript",
+      "sizeLines": 170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_esc_direction.mjs",
+      "language": "javascript",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_flight_arming.mjs",
+      "language": "javascript",
+      "sizeLines": 154,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_flight_motor.mjs",
+      "language": "javascript",
+      "sizeLines": 199,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_imu_filter.mjs",
+      "language": "javascript",
+      "sizeLines": 198,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_imu_timing.mjs",
+      "language": "javascript",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_power_monitor.mjs",
+      "language": "javascript",
+      "sizeLines": 244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_rate_pid_mixer.mjs",
+      "language": "javascript",
+      "sizeLines": 275,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_rc_failsafe.mjs",
+      "language": "javascript",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_rc_setpoint.mjs",
+      "language": "javascript",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_s7_8_e2e.mjs",
+      "language": "javascript",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Tools/verify_s7_8_trace.mjs",
+      "language": "javascript",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "USB_DEVICE/App/usb_device.c",
+      "language": "c",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "USB_DEVICE/App/usb_device.h",
+      "language": "c",
+      "sizeLines": 102,
+      "fileCategory": "code"
+    },
+    {
+      "path": "USB_DEVICE/App/usbd_cdc_if.c",
+      "language": "c",
+      "sizeLines": 333,
+      "fileCategory": "code"
+    },
+    {
+      "path": "USB_DEVICE/App/usbd_cdc_if.h",
+      "language": "c",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "USB_DEVICE/App/usbd_desc.c",
+      "language": "c",
+      "sizeLines": 445,
+      "fileCategory": "code"
+    },
+    {
+      "path": "USB_DEVICE/App/usbd_desc.h",
+      "language": "c",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 300,
+  "filteredByIgnore": 52,
+  "estimatedComplexity": "large",
+  "stats": {
+    "filesScanned": 300,
+    "byCategory": {
+      "code": 262,
+      "config": 11,
+      "docs": 16,
+      "script": 10,
+      "data": 1
+    },
+    "byLanguage": {
+      "unknown": 4,
+      "json": 11,
+      "c": 212,
+      "markdown": 9,
+      "cmake": 2,
+      "txt": 7,
+      "ioc": 1,
+      "python": 9,
+      "jsonl": 4,
+      "shell": 9,
+      "cpp": 13,
+      "csv": 1,
+      "s": 1,
+      "ld": 1,
+      "powershell": 1,
+      "javascript": 15
+    }
+  }
+}

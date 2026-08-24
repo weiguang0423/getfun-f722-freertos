@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GETFUN F722 飞控运行时架构",
+    "output": "runtime_architecture_full.html",
+    "quality_profile": "showcase",
+    "viewBox": [1300, 585],
+    "repository": {
+      "url": "https://github.com/weiguang0423/getfun-f722-freertos",
+      "revision": "c20380f6aba58adfb201f1c9ac419eb382983d97"
+    },
+    "views": [
+      {
+        "id": "flight-core",
+        "label": "飞行核心闭环 (1kHz)",
+        "focus": ["imu_hw", "imu_isr", "imu_task", "app_state", "flight_task", "dshot"],
+        "note": "DRDY门控SPI1+DMA采样→CYCCNT取时→SI/CW90/校准/PT1/Mahony→FlightTask控制→DShot600输出"
+      },
+      {
+        "id": "rc-arbitration",
+        "label": "双源 RC 与仲裁",
+        "focus": ["rc_hw", "crsf_isr", "linux_hw", "linux_isr", "rc_task", "app_state"],
+        "note": "物理CRSF(USART2)与RK3568虚拟RC(USART6)经AUX3授权仲裁后发布有效通道"
+      },
+      {
+        "id": "bf-config",
+        "label": "Betaflight 配置链路",
+        "focus": ["usb_hw", "cdc_isr", "msp_task", "app_state", "param_store"],
+        "note": "USB CDC→MSP逐字节解析→快照读写→EEPROM由ImuTask安全提交Sector 6/7双槽"
+      },
+      {
+        "id": "power-diag",
+        "label": "电源监测与诊断",
+        "focus": ["power_hw", "adc_isr", "battery_task", "app_state", "init_task", "diag_hw"],
+        "note": "ADC3四通道50Hz扫描→电芯/电压/电流/mAh→1Hz UART4维护诊断摘要"
+      }
+    ]
+  },
+  "components": [
+    { "id": "imu_hw", "type": "external", "label": "ICM42688P", "sublabel": "SPI1 + DMA2 S0/S3", "pos": [40, 60], "size": [140, 52], "tag": "1kHz DRDY 门控", "sources": [{ "path": "APP/Src/drivers/icm42688p.c", "label": "寄存器驱动" }, { "path": "APP/Src/bsp/imu_bus.c", "label": "SPI/DMA适配" }] },
+    { "id": "rc_hw", "type": "external", "label": "CRSF 接收机", "sublabel": "USART2 + DMA", "pos": [210, 60], "size": [140, 52], "tag": "ELRS / CRSF" },
+    { "id": "linux_hw", "type": "external", "label": "RK3568 伴随端", "sublabel": "IMX335→RKNN→手势→虚拟RC", "pos": [380, 60], "size": [140, 52], "tag": "USART6 44B帧 20Hz", "sources": [{ "path": "Linux/RK3568/README.md", "label": "Linux侧文档" }] },
+    { "id": "power_hw", "type": "external", "label": "电源监测", "sublabel": "ADC3 + DMA2 S1", "pos": [550, 60], "size": [140, 52], "tag": "PC0~PC3 4通道" },
+    { "id": "usb_hw", "type": "external", "label": "Betaflight 上位机", "sublabel": "USB VCP (CDC)", "pos": [720, 60], "size": [140, 52], "tag": "MSP V1/V2" },
+
+    { "id": "imu_isr", "type": "backend", "label": "IMU DMA 完成 ISR", "sublabel": "imu_bus 回调", "pos": [40, 170], "size": [140, 42], "tag": "CYCCNT+通知" },
+    { "id": "crsf_isr", "type": "backend", "label": "CRSF UART 回调", "sublabel": "crsf_uart 环形区", "pos": [210, 170], "size": [140, 42], "tag": "DMA事件" },
+    { "id": "linux_isr", "type": "backend", "label": "USART6 帧监视器", "sublabel": "linux_rc_monitor", "pos": [380, 170], "size": [140, 42], "tag": "ISR内校验", "sources": [{ "path": "APP/Src/bsp/linux_rc_monitor.c", "label": "44B帧验证" }] },
+    { "id": "adc_isr", "type": "backend", "label": "ADC3 DMA 完成", "sublabel": "power_adc", "pos": [550, 170], "size": [140, 42], "tag": "快照+通知" },
+    { "id": "cdc_isr", "type": "backend", "label": "USB CDC 回调", "sublabel": "usb_cdc_transport", "pos": [720, 170], "size": [140, 42], "tag": "RX环形缓冲" },
+
+    { "id": "imu_task", "type": "backend", "label": "ImuTask", "sublabel": "Idle+4 · 512w · 1kHz", "pos": [40, 280], "size": [140, 56], "tag": "SI/CW90/校准/PT1/Mahony", "sources": [{ "path": "APP/Src/rtos/imu_task.c", "line": 43, "label": "任务定义" }] },
+    { "id": "rc_task", "type": "backend", "label": "RcTask", "sublabel": "Idle+3 · 512w", "pos": [210, 280], "size": [140, 56], "tag": "解析/仲裁/Failsafe", "sources": [{ "path": "APP/Src/rtos/rc_task.c", "line": 23, "label": "任务定义" }, { "path": "APP/Src/algorithms/rc_source_arbiter.c", "label": "S7.7仲裁" }] },
+    { "id": "battery_task", "type": "backend", "label": "BatteryTask", "sublabel": "Idle+1 · 384w · 20ms", "pos": [550, 280], "size": [140, 56], "tag": "滤波/电芯/mAh" },
+    { "id": "msp_task", "type": "backend", "label": "MspTask", "sublabel": "Idle+2 · 1024w", "pos": [720, 280], "size": [140, 56], "tag": "MSP V1/V2 服务", "sources": [{ "path": "APP/Src/rtos/app_task.c", "line": 47, "label": "任务体" }, { "path": "APP/Src/protocol/msp_server.c", "label": "命令派发" }] },
+    { "id": "flight_task", "type": "backend", "label": "FlightTask", "sublabel": "Idle+5 · 768w · 1kHz", "pos": [900, 280], "size": [140, 56], "tag": "PID/混控/ARM链", "sources": [{ "path": "APP/Src/rtos/flight_task.c", "line": 17, "label": "任务定义" }] },
+    { "id": "init_task", "type": "backend", "label": "InitTask", "sublabel": "Idle · 768w · 1Hz", "pos": [1080, 280], "size": [140, 56], "tag": "USB挂载+诊断", "sources": [{ "path": "Core/Src/freertos.c", "line": 55, "label": "任务定义" }] },
+
+    { "id": "param_store", "type": "database", "label": "ParameterStore", "sublabel": "Sector 6/7 双槽 A/B", "pos": [40, 400], "size": [140, 56], "tag": "CRC32 · ImuTask 唯一写者", "sources": [{ "path": "APP/Src/storage/parameter_store.c", "label": "双槽存储" }] },
+    { "id": "app_state", "type": "database", "label": "app_state 全局快照", "sublabel": "PRIMASK 关中断临界区 · 单写者发布", "pos": [380, 400], "size": [460, 56], "tag": "数据总线", "sources": [{ "path": "APP/Inc/app_state.h", "label": "快照接口" }] },
+
+    { "id": "dshot", "type": "backend", "label": "DShot600 驱动", "sublabel": "TIM8 节拍 + DMA2 S2", "pos": [900, 500], "size": [140, 52], "tag": "4×Quad-X 电调", "sources": [{ "path": "APP/Src/bsp/dshot_motor.c", "line": 4, "label": "bitbang输出" }] },
+    { "id": "diag_hw", "type": "external", "label": "UART4 诊断口", "sublabel": "115200 8N1", "pos": [1080, 500], "size": [140, 52], "tag": "1Hz 文本摘要" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "硬件 / 外部系统", "wraps": ["imu_hw", "rc_hw", "linux_hw", "power_hw", "usb_hw"] },
+    { "kind": "region", "label": "中断上下文（ISR · 非阻塞）", "wraps": ["imu_isr", "crsf_isr", "linux_isr", "adc_isr", "cdc_isr"] },
+    { "kind": "region", "label": "FreeRTOS 任务层（静态分配）", "wraps": ["imu_task", "rc_task", "battery_task", "msp_task", "flight_task", "init_task"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "imu_hw", "to": "imu_isr", "label": "DMA2 S0/S3 14B", "variant": "emphasis", "labelDy": 34 },
+    { "id": "c2", "from": "imu_isr", "to": "imu_task", "label": "CYCCNT+通知", "labelDy": 30 },
+    { "id": "c3", "from": "rc_hw", "to": "crsf_isr", "label": "USART2 字节流", "labelDy": 34 },
+    { "id": "c4", "from": "crsf_isr", "to": "rc_task", "label": "CRSF 帧", "labelDy": 30 },
+    { "id": "c5", "from": "linux_hw", "to": "linux_isr", "label": "USART6 44B 帧", "labelDy": 34 },
+    { "id": "c6", "from": "linux_isr", "to": "rc_task", "label": "原子候选快照" },
+    { "id": "c7", "from": "power_hw", "to": "adc_isr", "label": "ADC3 4通道", "labelDy": 34 },
+    { "id": "c8", "from": "adc_isr", "to": "battery_task", "label": "DMA完成通知", "labelDy": 30 },
+    { "id": "c9", "from": "usb_hw", "to": "cdc_isr", "label": "CDC_Receive_FS", "labelDy": 34 },
+    { "id": "c10", "from": "cdc_isr", "to": "msp_task", "label": "环缓冲+通知", "labelDy": 30 },
+
+    { "id": "c11", "from": "imu_task", "to": "param_store", "label": "EEPROM 提交", "variant": "dashed", "labelAt": [70, 352] },
+    { "id": "c12", "from": "imu_task", "to": "app_state", "label": "发布 IMU/姿态", "variant": "emphasis" },
+    { "id": "c13", "from": "rc_task", "to": "app_state", "label": "发布 RC/仲裁" },
+    { "id": "c14", "from": "battery_task", "to": "app_state", "label": "发布电池", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c15", "from": "msp_task", "to": "app_state", "label": "读快照/写配置", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c16", "from": "app_state", "to": "flight_task", "label": "读取快照", "variant": "emphasis" },
+    { "id": "c17", "from": "flight_task", "to": "dshot", "label": "DShot 帧 1kHz", "variant": "emphasis", "labelDy": 30 },
+    { "id": "c18", "from": "init_task", "to": "diag_hw", "label": "1Hz 摘要输出", "variant": "dashed", "labelDy": 30 }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "1 kHz 飞行闭环与并发安全",
+      "items": [
+        "ImuTask (Idle+4, 512w): 1kHz DRDY 门控 SPI1+DMA2 双槽采样，DMA 完成 ISR 捕获 DWT CYCCNT 得真实 dt → SI/CW90/校准/PT1/Mahony，全部单写者发布",
+        "FlightTask (Idle+5, 768w): 角度外环 + Rate PID + Quad-X 混控，四态安全链 ARMED 才把 Mixer 映射到 DShot600 (TIM8+DMA2 S2)",
+        "ISR 一律非阻塞 (环缓冲 + vTaskNotifyGiveFromISR)；app_state 快照用 PRIMASK+DMB 短临界区整体拷贝，无互斥量，每外设单写者"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "双源 RC / Betaflight 伪装 / 持久化",
+      "items": [
+        "物理 CRSF(USART2) 与 RK3568 虚拟 RC(USART6) 由 rc_source_arbiter 仲裁：AUX3 授权、物理优先、150ms 超时/会话重启，退出即禁止自动重入",
+        "MspTask (Idle+2, 1024w): USB CDC 中断唤醒，MSP V1/V2 逐字节状态机；SET 只更新 1s 缓存，EEPROM 由 ImuTask 非 ARMED 且电机 force_safe 后提交 Sector 6/7 双槽",
+        "InitTask (Idle, 768w): 挂载 USB + 1Hz UART4 诊断 (栈水位/校准/参数槽)；RK3568: IMX335→RKNN 21 点→手势≥75%→44B CRC16 帧经 /dev/ttyS9→USART6"
+      ]
+    }
+  ]
+}
