@@ -1,0 +1,11 @@
+# Project-scoped Codex MCP configuration for Serena.
+# The absolute cwd keeps Codex App and CLI behavior consistent on Windows.
+
+[mcp_servers.serena]
+command = "serena"
+args = ["start-mcp-server", "--project-from-cwd", "--context=codex", "--open-web-dashboard=false"]
+cwd = "C:\\Users\\13646\\Desktop\\Study\\getfun-f722-freertos"
+startup_timeout_sec = 120
+tool_timeout_sec = 120
+enabled = true
+default_tools_approval_mode = "writes"
