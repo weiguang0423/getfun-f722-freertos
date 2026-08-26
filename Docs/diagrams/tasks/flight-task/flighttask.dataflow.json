@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "FlightTask 链路 · 1 kHz 控制与安全输出",
+    "output": "Docs/diagrams/tasks/flight-task/flighttask.dataflow.html",
+    "animation": "none",
+    "quality_profile": "showcase",
+    "viewBox": [1080, 480],
+    "views": [
+      { "id": "main-path", "label": "主链路", "focus": ["s0_input", "s1_snapshot", "s2_setpoint", "s3_control", "s4_output"], "note": "沿着输入、快照、设定、控制到电机输出查看主数据流。" },
+      { "id": "control-path", "label": "控制计算", "focus": ["s1_snapshot", "s2_setpoint", "s3_control"], "note": "查看 ANGLE/RATE 设定如何进入 Rate PID 和 Quad-X 混控。" },
+      { "id": "safety-path", "label": "安全输出", "focus": ["s2_setpoint", "s3_control", "s4_output"], "note": "查看输入过期、控制无效和未 ARMED 时的安全边界。" }
+    ]
+  },
+  "stages": [
+    { "label": "输入" },
+    { "label": "快照" },
+    { "label": "设定" },
+    { "label": "控制" },
+    { "label": "门控与输出" }
+  ],
+  "nodes": [
+    { "id": "s0_input", "type": "backend", "label": "IMU / RC 发布", "sublabel": "ImuTask · RcTask", "stage": 0, "row": 0, "width": 150, "height": 60, "tag": "publish" },
+    { "id": "s1_snapshot", "type": "database", "label": "app_state 快照", "sublabel": "IMU · 姿态 · RC · 参数", "stage": 1, "row": 0, "width": 150, "height": 60, "tag": "一致快照" },
+    { "id": "s2_setpoint", "type": "backend", "label": "RC 设定值", "sublabel": "rc_setpoint_compute", "stage": 2, "row": 0, "width": 150, "height": 60, "tag": "ANGLE / RATE" },
+    { "id": "s3_control", "type": "backend", "label": "外环 + Rate PID", "sublabel": "ANGLE → Rate → rate_pid", "stage": 3, "row": 0, "width": 150, "height": 60, "tag": "新 IMU 样本" },
+    { "id": "s4_output", "type": "security", "label": "Quad-X → DShot", "sublabel": "quad_x_mixer → DMA2 S2", "stage": 4, "row": 0, "width": 150, "height": 60, "tag": "ARMED 才放行" }
+  ],
+  "flows": [
+    { "id": "input-snapshot", "from": "s0_input", "to": "s1_snapshot", "label": "发布", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "snapshot-setpoint", "from": "s1_snapshot", "to": "s2_setpoint", "label": "设定", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "setpoint-control", "from": "s2_setpoint", "to": "s3_control", "label": "控制", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
+    { "id": "control-output", "from": "s3_control", "to": "s4_output", "label": "输出", "variant": "security", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "1 ms 消费", "items": ["FlightTask 由 vTaskDelayUntil() 每 1 ms 唤醒", "每轮读取 app_state 一致快照；只有 IMU sample_count 变化才推进 PID / 混控", "FlightTask 计算出的飞行状态再发布回 app_state"] },
+    { "dot": "emerald", "title": "控制计算", "items": ["rc_setpoint_compute() 生成模式、arm_requested、角速度设定和油门", "ANGLE 模式由 angle_outer_loop 生成 Roll/Pitch Rate，Yaw 保持 Rate", "rate_pid_update() → quad_x_mixer_compute() → 四路电机控制量"] },
+    { "dot": "rose", "title": "安全边界", "items": ["IMU / RC 失效或超过新鲜度门限会阻断解锁", "flight_arming 只有 ARMED 才放行正常飞行输出，其他状态提交零值", "DShot 提交或 DMA 出错时调用 dshot_motor_force_safe()"] }
+  ]
+}
