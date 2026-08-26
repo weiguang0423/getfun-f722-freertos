@@ -1,6 +1,7 @@
 # Project-scoped Codex MCP configuration for Serena.
 # The absolute cwd keeps Codex App and CLI behavior consistent on Windows.
 
+model_verbosity = "high"
 [sandbox_workspace_write]
 writable_roots = ["D:\\Obisidian\\obisidian_vault\\05_项目经验\\无人机飞控"]
 
