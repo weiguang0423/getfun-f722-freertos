@@ -35,6 +35,12 @@
 
 static app_state_snapshot_t state;
 
+/**
+ * 为 app_state 的读写提供短临界区，避免状态复制或多字段更新过程中被中断打断，
+ * 从而防止其他执行路径读到不完整或前后不一致的数据。
+ * 函数会保存进入前的中断状态，再关闭可屏蔽中断。
+ * @return 进入临界区前的 PRIMASK 值，供 app_state_unlock() 恢复。
+ */
 static uint32_t app_state_lock(void)
 {
     const uint32_t primask = __get_PRIMASK();
@@ -43,6 +49,11 @@ static uint32_t app_state_lock(void)
     return primask;
 }
 
+/**
+ * 结束 app_state 的临界区保护，使后续代码可以正常响应中断。
+ * 根据进入临界区前的状态恢复中断，避免把调用者原本关闭的中断错误打开。
+ * @param primask 由 app_state_lock() 返回的进入前 PRIMASK 值。
+ */
 static void app_state_unlock(uint32_t primask)
 {
     __DMB();
