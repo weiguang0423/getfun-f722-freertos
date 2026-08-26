@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "IMU 数据生命周期 · 1 kHz 采样到消费与异常恢复",
+    "quality_profile": "showcase",
+    "viewBox": [720, 1024],
+    "views": [
+      {
+        "id": "main-path",
+        "label": "主链路",
+        "focus": ["init", "drdy", "dma", "convert", "gyrocal", "accelcal", "filter_att", "publish", "consumers"],
+        "note": "从器件初始化到 app_state 发布再到消费方的 1 kHz 主链路。"
+      },
+      {
+        "id": "recovery",
+        "label": "异常恢复",
+        "focus": ["not_ready", "timing_reset", "calib_reject", "recover"],
+        "note": "DRDY / 时序 / 校准异常如何回到主链路或触发离线恢复。"
+      },
+      {
+        "id": "consumption",
+        "label": "消费与持久化",
+        "focus": ["publish", "consumers", "store"],
+        "note": "数据进入 app_state 后的只读消费，以及加速度偏置的 Flash 持久化。"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "task", "label": "ImuTask" },
+    { "id": "hw", "label": "硬件 / 总线" },
+    { "id": "algo", "label": "换算 / 校准" },
+    { "id": "exc", "label": "异常 / 恢复", "variant": "exception" },
+    { "id": "att", "label": "滤波 / 姿态" },
+    { "id": "state", "label": "状态 / 存储" },
+    { "id": "consumer", "label": "消费方" }
+  ],
+  "phases": [
+    { "id": "phase-acq", "label": "采集 / 取时", "fromCol": 0, "toCol": 1 },
+    { "id": "phase-cal", "label": "换算 / 校准", "fromCol": 2, "toCol": 3 },
+    { "id": "phase-att", "label": "滤波 / 姿态", "fromCol": 4, "toCol": 4 },
+    { "id": "phase-pub", "label": "发布 / 消费", "fromCol": 5, "toCol": 5 }
+  ],
+  "mainPath": ["init", "drdy", "dma", "convert", "gyrocal", "accelcal", "filter_att", "publish", "consumers"],
+  "nodes": [
+    { "id": "init", "lane": "task", "col": 0, "type": "backend", "label": "初始化与重试", "sublabel": "platform_time · 参数", "tag": "≤3 次", "width": 92, "height": 68 },
+    { "id": "recover", "lane": "task", "col": 5, "type": "messagebus", "label": "离线恢复", "sublabel": "3 次连续错误", "tag": "1 s 后重试", "width": 108, "height": 68 },
+    { "id": "drdy", "lane": "hw", "col": 0, "type": "backend", "label": "DRDY 门控", "sublabel": "INT_STATUS 轮询", "tag": "1 kHz", "width": 92, "height": 68 },
+    { "id": "dma", "lane": "hw", "col": 1, "type": "backend", "label": "SPI1 DMA 采样", "sublabel": "14 B 突发", "tag": "双槽缓冲", "width": 92, "height": 68 },
+    { "id": "isr", "lane": "hw", "col": 3, "type": "backend", "label": "DMA 完成 ISR", "sublabel": "DWT CYCCNT", "tag": "只唤醒", "width": 92, "height": 68 },
+    { "id": "convert", "lane": "algo", "col": 1, "type": "backend", "label": "SI + CW90", "sublabel": "counts→物理量", "tag": "机体系", "width": 92, "height": 68 },
+    { "id": "gyrocal", "lane": "algo", "col": 3, "type": "backend", "label": "陀螺零偏", "sublabel": "250+2000 Welford", "tag": "上电重校", "width": 92, "height": 68 },
+    { "id": "accelcal", "lane": "algo", "col": 5, "type": "backend", "label": "加速度零偏", "sublabel": "水平单面候选", "tag": "持久化后切换", "width": 108, "height": 68 },
+    { "id": "not_ready", "lane": "exc", "col": 0, "type": "messagebus", "label": "DRDY 未就绪", "sublabel": "保留上次样本", "tag": "继续轮询", "width": 92, "height": 68 },
+    { "id": "timing_reset", "lane": "exc", "col": 1, "type": "security", "label": "时序重置", "sublabel": "dt 越界 · 非有限", "tag": "抑制置位", "width": 92, "height": 68 },
+    { "id": "calib_reject", "lane": "exc", "col": 3, "type": "security", "label": "校准窗口拒绝", "sublabel": "运动 / 非水平", "tag": "重启窗口", "width": 92, "height": 68 },
+    { "id": "filter_att", "lane": "att", "col": 5, "type": "backend", "label": "滤波 + 姿态", "sublabel": "PT1 低通 → Mahony", "tag": "真实 dt", "width": 108, "height": 68 },
+    { "id": "store", "lane": "state", "col": 4, "type": "database", "label": "参数 Flash", "sublabel": "Sector 6/7 A/B", "tag": "偏置持久化", "width": 92, "height": 68 },
+    { "id": "publish", "lane": "state", "col": 5, "type": "database", "label": "app_state 发布", "sublabel": "IMU · 姿态 · 抑制位", "tag": "单写者", "width": 108, "height": 68 },
+    { "id": "consumers", "lane": "consumer", "col": 5, "type": "backend", "label": "消费方", "sublabel": "MSP / FlightTask / 诊断", "tag": "RAW_IMU · ATTITUDE", "width": 108, "height": 68 }
+  ],
+  "edges": [
+    { "id": "e-init-drdy", "from": "init", "to": "drdy", "label": "器件就绪", "variant": "emphasis", "role": "main", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [88, 167] },
+    { "id": "e-drdy-dma", "from": "drdy", "to": "dma", "label": "DRDY 置位", "variant": "emphasis", "role": "main", "route": "straight", "fromSide": "right", "toSide": "left", "labelAt": [154, 291] },
+    { "id": "e-dma-isr", "from": "dma", "to": "isr", "label": "完成中断", "variant": "dashed", "role": "async", "route": "straight", "fromSide": "right", "toSide": "left", "labelAt": [325, 243] },
+    { "id": "e-isr-convert", "from": "isr", "to": "convert", "label": "DWT 取时", "variant": "dashed", "role": "branch", "labelAt": [325, 320] },
+    { "id": "e-dma-convert", "from": "dma", "to": "convert", "label": "原始字节", "variant": "emphasis", "role": "main", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [220, 291] },
+    { "id": "e-convert-gyro", "from": "convert", "to": "gyrocal", "label": "机体系 SI", "variant": "emphasis", "role": "main", "route": "straight", "fromSide": "right", "toSide": "left", "labelAt": [325, 367] },
+    { "id": "e-gyro-accel", "from": "gyrocal", "to": "accelcal", "label": "扣零偏", "variant": "emphasis", "role": "main", "route": "straight", "fromSide": "right", "toSide": "left", "labelAt": [527, 367] },
+    { "id": "e-accel-filter", "from": "accelcal", "to": "filter_att", "label": "扣偏后", "variant": "emphasis", "role": "main", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [625, 433] },
+    { "id": "e-filter-publish", "from": "filter_att", "to": "publish", "label": "姿态+数据", "variant": "emphasis", "role": "main", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [660, 553] },
+    { "id": "e-publish-consumers", "from": "publish", "to": "consumers", "label": "快照读取", "variant": "default", "role": "branch", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [660, 677] },
+    { "id": "e-accel-store", "from": "accelcal", "to": "store", "label": "候选持久化", "variant": "default", "role": "branch", "labelAt": [560, 470] },
+    { "id": "e-store-init", "from": "store", "to": "init", "label": "上电恢复偏置", "variant": "dashed", "role": "return", "fromSide": "left", "toSide": "left", "route": "return-left", "labelSegment": 1, "labelAt": [-20, 380] },
+    { "id": "e-drdy-wait", "from": "drdy", "to": "not_ready", "label": "未置位", "variant": "default", "role": "branch", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [40, 350] },
+    { "id": "e-wait-loop", "from": "not_ready", "to": "drdy", "label": "继续轮询", "variant": "dashed", "role": "return", "route": "straight", "fromSide": "top", "toSide": "bottom", "labelAt": [125, 374] },
+    { "id": "e-convert-reset", "from": "convert", "to": "timing_reset", "label": "dt 越界 / 非有限", "variant": "security", "role": "error", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [220, 433] },
+    { "id": "e-gyro-reject", "from": "gyrocal", "to": "calib_reject", "label": "运动 / 方差超限", "variant": "security", "role": "error", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [360, 423] },
+    { "id": "e-calib-loop", "from": "calib_reject", "to": "gyrocal", "label": "重启窗口", "variant": "dashed", "role": "return", "route": "straight", "fromSide": "top", "toSide": "bottom", "labelAt": [437, 539] },
+    { "id": "e-init-fail", "from": "init", "to": "recover", "label": "初始化失败 3 次", "variant": "security", "role": "error", "labelAt": [356, 100] },
+    { "id": "e-recover-init", "from": "recover", "to": "init", "label": "1 s 后重新初始化", "variant": "dashed", "role": "return", "fromSide": "top", "toSide": "top", "route": "up-channel", "labelAt": [356, 40] },
+    { "id": "e-dma-fail", "from": "dma", "to": "recover", "label": "连续 3 次错误", "variant": "security", "role": "error", "fromSide": "right", "toSide": "right", "route": "up-channel", "labelAt": [660, 210] }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "主链路",
+      "items": [
+        "DRDY 置位 → SPI DMA 14 B 突发 → 原始字节 + DWT 取时",
+        "SI 换算 + CW90 机体系 → 陀螺/加速度扣偏 → PT1 低通 → Mahony 姿态",
+        "未滤波校准数据专供 MSP_RAW_IMU；滤波数据供姿态与 FlightTask"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "采样与时间",
+      "items": [
+        "ImuTask 1 kHz 轮询 DRDY；ISR 只捕获 CYCCNT 并唤醒，不阻塞",
+        "DWT 微秒扩展仅 ImuTask 维护；真实 dt 要求 500–2000 µs",
+        "首样本 / dt 越界 / 非有限 → timing_valid=false 并重置管道"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "校准与持久化",
+      "items": [
+        "陀螺零偏：250 预热 + 2000 Welford，上电重校，不持久化",
+        "加速度：水平单面候选，持久化验证成功后才切换；失败保留旧偏置",
+        "参数 Flash 仅 ImuTask 在安全态写；ARMED 拒绝擦写 Sector 6/7"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "异常与安全",
+      "items": [
+        "DMA 超时 abort；连续 3 次错误 → 离线 1 s 后重新初始化",
+        "校准窗口被运动 / 非水平 / 方差超限拒绝 → 重启窗口",
+        "IMU / 校准 / 时序 / 滤波 / 姿态无效 → arming_inhibit 保持；FlightTask >5 ms 判 stale"
+      ]
+    }
+  ]
+}

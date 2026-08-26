@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "GETFUN_F722 FreeRTOS 任务调度与运行",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "sched-spine",
+        "label": "调度主线",
+        "focus": ["boot", "tick", "dispatch", "flight", "motor"],
+        "note": "从启动到 SysTick 节拍、PendSV 抢占，再到 FlightTask 1 kHz 控制与 DShot 电机输出。"
+      },
+      {
+        "id": "isr-wakeup",
+        "label": "中断唤醒",
+        "focus": ["dma_isr", "uart_isr", "usb_isr", "imu", "rc", "msp"],
+        "note": "三个硬件 ISR 通过 vTaskNotifyGiveFromISR 唤醒各自绑定的任务。"
+      },
+      {
+        "id": "state-exchange",
+        "label": "状态发布",
+        "focus": ["imu", "rc", "state"],
+        "note": "ImuTask 与 RcTask 把结果发布到 app_state 共享快照。"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "kernel", "label": "FreeRTOS 调度内核" },
+    { "id": "flight", "label": "FlightTask · idle+5" },
+    { "id": "imu", "label": "ImuTask · idle+4" },
+    { "id": "state", "label": "app_state 共享快照" },
+    { "id": "rc", "label": "RcTask · idle+3" },
+    { "id": "msp", "label": "MspTask · idle+2" }
+  ],
+  "phases": [
+    { "id": "startup", "label": "启动与唤醒", "fromCol": 0, "toCol": 1 },
+    { "id": "sched", "label": "调度", "fromCol": 2, "toCol": 3 },
+    { "id": "run", "label": "运行与发布", "fromCol": 4, "toCol": 5 }
+  ],
+  "mainPath": ["boot", "tick", "dispatch", "flight", "motor"],
+  "nodes": [
+    { "id": "boot", "lane": "kernel", "col": 0, "type": "backend", "label": "main() 初始化", "sublabel": "MPU→HAL→216MHz", "width": 90 },
+    { "id": "tick", "lane": "kernel", "col": 1, "type": "messagebus", "label": "SysTick 1 kHz", "sublabel": "tick=1000 Hz", "width": 88 },
+    { "id": "dispatch", "lane": "kernel", "col": 3, "type": "backend", "label": "PendSV 抢占", "sublabel": "56 级·抢占使能", "width": 92, "tag": "最高就绪" },
+    { "id": "flight", "lane": "flight", "col": 4, "type": "backend", "label": "FlightTask", "sublabel": "1 kHz 控制·读快照", "width": 88, "tag": "768w" },
+    { "id": "motor", "lane": "flight", "col": 5, "type": "external", "label": "DShot 电机", "sublabel": "8 路安全链", "width": 76 },
+    { "id": "dma_isr", "lane": "imu", "col": 1, "type": "messagebus", "label": "DMA2 完成 ISR", "sublabel": "捕获 DWT CYCCNT", "width": 96 },
+    { "id": "imu", "lane": "imu", "col": 4, "type": "backend", "label": "ImuTask", "sublabel": "DRDY 门控 DMA", "width": 76, "tag": "512w" },
+    { "id": "uart_isr", "lane": "rc", "col": 1, "type": "messagebus", "label": "USART6 CRSF ISR", "sublabel": "帧字节入队", "width": 110 },
+    { "id": "rc", "lane": "rc", "col": 4, "type": "backend", "label": "RcTask", "sublabel": "CRSF 解析", "width": 76, "tag": "512w" },
+    { "id": "usb_isr", "lane": "msp", "col": 1, "type": "messagebus", "label": "USB CDC 接收 ISR", "sublabel": "写 1024B 环缓冲", "width": 116 },
+    { "id": "msp", "lane": "msp", "col": 4, "type": "backend", "label": "MspTask", "sublabel": "MSP 派发", "width": 76, "tag": "1024w" },
+    { "id": "state", "lane": "state", "col": 5, "type": "database", "label": "app_state 快照", "sublabel": "PRIMASK+DMB", "width": 92 }
+  ],
+  "edges": [
+    { "id": "boot-tick", "from": "boot", "to": "tick", "label": "osKernelStart()", "role": "main", "labelAt": [155, 159] },
+    { "id": "tick-dispatch", "from": "tick", "to": "dispatch", "label": "tick 评估", "role": "main" },
+    { "id": "dispatch-flight", "from": "dispatch", "to": "flight", "label": "最高就绪优先级", "role": "main", "variant": "emphasis", "labelAt": [466, 167] },
+    { "id": "flight-motor", "from": "flight", "to": "motor", "label": "DShot 输出", "role": "main", "labelAt": [566, 291] },
+    { "id": "dma-imu", "from": "dma_isr", "to": "imu", "label": "vTaskNotifyGiveFromISR", "role": "async", "variant": "dashed" },
+    { "id": "uart-rc", "from": "uart_isr", "to": "rc", "label": "vTaskNotifyGiveFromISR", "role": "async", "variant": "dashed" },
+    { "id": "usb-msp", "from": "usb_isr", "to": "msp", "label": "vTaskNotifyGiveFromISR", "role": "async", "variant": "dashed" },
+    { "id": "imu-state", "from": "imu", "to": "state", "label": "发布 IMU/姿态", "role": "branch", "labelAt": [559, 415] },
+    { "id": "rc-state", "from": "rc", "to": "state", "label": "发布 RC", "role": "branch" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "任务优先级阶梯",
+      "items": [
+        "FlightTask (idle+5) > ImuTask (idle+4) > RcTask (idle+3) > MspTask (idle+2) > BatteryTask (idle+1) > InitTask/Idle (idle)",
+        "configUSE_PREEMPTION=1：数字越大越先运行，可抢占低优先级任务",
+        "configMAX_PRIORITIES=56，tick=1000 Hz，栈溢出检测方法 2，heap_4 15 KB"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "唤醒与同步机制",
+      "items": [
+        "直接任务通知唤醒：DMA2→ImuTask、USB CDC→MspTask、USART6→RcTask",
+        "周期任务：FlightTask/ImuTask 用 vTaskDelayUntil 1 ms；BatteryTask 20 ms；InitTask 1 s",
+        "共享状态用关中断 PRIMASK+DMB 临界区而非互斥量，发布者不阻塞"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "关键约束",
+      "items": [
+        "ImuTask 是 SPI/DWT/Flash 参数唯一写者，ISR 只捕获 CYCCNT 并发通知",
+        "IMU/校准/参数无效时 arming_inhibit_flags 保持置位，FlightTask 拒绝电机输出",
+        "FlightTask 与 MspTask 消费 app_state 快照，DShot 仅 ARMED 后映射 motor_idle"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "GETFUN_F722 FreeRTOS 任务调度运行时序",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [920, 540]
+  },
+  "participants": [
+    { "id": "sched", "type": "backend", "label": "调度器", "sublabel": "SysTick+PendSV" },
+    { "id": "isr", "type": "messagebus", "label": "硬件中断 ISR", "sublabel": "DMA2·USB·USART6" },
+    { "id": "flight", "type": "backend", "label": "FlightTask", "sublabel": "idle+5" },
+    { "id": "imu", "type": "backend", "label": "ImuTask", "sublabel": "idle+4" },
+    { "id": "rc", "type": "backend", "label": "RcTask", "sublabel": "idle+3" },
+    { "id": "msp", "type": "backend", "label": "MspTask", "sublabel": "idle+2" },
+    { "id": "state", "type": "database", "label": "app_state 快照", "sublabel": "PRIMASK+DMB" }
+  ],
+  "segments": [
+    { "from": 150, "to": 248, "label": "调度主线" },
+    { "from": 250, "to": 346, "label": "中断唤醒" },
+    { "from": 348, "to": 458, "label": "发布与消费" }
+  ],
+  "messages": [
+    { "id": "dispatch-flight", "from": "sched", "to": "flight", "y": 170, "label": "PendSV 抢占·idle+5 最高就绪", "variant": "emphasis" },
+    { "id": "flight-read", "from": "flight", "to": "state", "y": 204, "label": "读快照", "variant": "default" },
+    { "id": "state-reply", "from": "state", "to": "flight", "y": 238, "label": "IMU/RC 快照", "variant": "return" },
+    { "id": "dma-notify", "from": "isr", "to": "imu", "y": 272, "label": "DMA2 完成·任务通知", "variant": "dashed" },
+    { "id": "imu-publish", "from": "imu", "to": "state", "y": 306, "label": "发布 IMU/姿态", "variant": "dashed" },
+    { "id": "uart-notify", "from": "isr", "to": "rc", "y": 340, "label": "USART6 CRSF·任务通知", "variant": "dashed" },
+    { "id": "rc-publish", "from": "rc", "to": "state", "y": 374, "label": "发布 RC", "variant": "dashed" },
+    { "id": "usb-notify", "from": "isr", "to": "msp", "y": 408, "label": "USB CDC 接收·任务通知", "variant": "dashed" },
+    { "id": "msp-read", "from": "msp", "to": "state", "y": 442, "label": "读快照·MSP 回包", "variant": "dashed" }
+  ],
+  "activations": [
+    { "participant": "flight", "from": 165, "to": 243, "type": "backend" },
+    { "participant": "imu", "from": 267, "to": 311, "type": "backend" },
+    { "participant": "rc", "from": 335, "to": 379, "type": "backend" },
+    { "participant": "msp", "from": 403, "to": 447, "type": "backend" },
+    { "participant": "state", "from": 199, "to": 447, "type": "database" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "任务优先级阶梯",
+      "items": [
+        "FlightTask idle+5 > ImuTask idle+4 > RcTask idle+3 > MspTask idle+2 > BatteryTask idle+1 > InitTask/Idle",
+        "configUSE_PREEMPTION=1，tick=1000 Hz，56 级优先级"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "唤醒与同步",
+      "items": [
+        "ISR 通过 vTaskNotifyGiveFromISR 直接唤醒绑定的任务",
+        "app_state 用关中断 PRIMASK+DMB 临界区保护，发布者不阻塞"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "关键约束",
+      "items": [
+        "ImuTask 是 SPI/DWT/Flash 唯一写者；ISR 只捕获 CYCCNT 并发通知",
+        "IMU/校准无效时 arming_inhibit 置位，FlightTask 拒绝 DShot 电机输出"
+      ]
+    }
+  ]
+}
