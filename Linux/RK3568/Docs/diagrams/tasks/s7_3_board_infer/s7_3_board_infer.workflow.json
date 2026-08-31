@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "s7_3_board_infer.cpp 流程图",
+    "output": "s7_3_board_infer.workflow.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "command", "label": "命令入口" },
+    { "id": "flow", "label": "离线/实时与推理" }
+  ],
+  "mainPath": [
+    "start",
+    "dispatch_mode",
+    "camera_setup",
+    "prepare_detect",
+    "landmark_output"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "command",
+      "col": 0,
+      "type": "external",
+      "label": "main()",
+      "sublabel": "入口/捕获异常"
+    },
+    {
+      "id": "dispatch_mode",
+      "lane": "command",
+      "col": 1,
+      "type": "backend",
+      "label": "模式分流",
+      "sublabel": "self-test|camera|离线"
+    },
+    {
+      "id": "self_test",
+      "lane": "command",
+      "col": 3,
+      "type": "backend",
+      "label": "--self-test",
+      "sublabel": "anchors + IoU"
+    },
+    {
+      "id": "batch_loop",
+      "lane": "flow",
+      "col": 0,
+      "type": "backend",
+      "label": "离线循环",
+      "sublabel": "Model×2 + JPG",
+      "tag": "for JPG"
+    },
+    {
+      "id": "camera_setup",
+      "lane": "flow",
+      "col": 2,
+      "type": "external",
+      "label": "初始化/取帧",
+      "sublabel": "Model×2 + V4L2",
+      "tag": "Camera::latest"
+    },
+    {
+      "id": "prepare_detect",
+      "lane": "flow",
+      "col": 4,
+      "type": "backend",
+      "label": "输入+检测",
+      "sublabel": "NV12/JPG→RGB",
+      "tag": "detector"
+    },
+    {
+      "id": "landmark_output",
+      "lane": "flow",
+      "col": 5,
+      "type": "messagebus",
+      "label": "关键点+输出",
+      "sublabel": "ROI→JSONL",
+      "tag": "gesture/RC·清理"
+    }
+  ],
+  "edges": [
+    { "from": "start", "to": "dispatch_mode" },
+    { "from": "dispatch_mode", "to": "self_test", "role": "branch", "route": "straight", "fromSide": "right", "toSide": "left" },
+    { "from": "dispatch_mode", "to": "camera_setup", "variant": "emphasis", "role": "main" },
+    { "from": "dispatch_mode", "to": "batch_loop", "role": "branch" },
+    { "from": "batch_loop", "to": "prepare_detect", "label": "JPG", "role": "main", "route": "bottom-channel", "fromSide": "bottom", "toSide": "bottom" },
+    { "from": "camera_setup", "to": "prepare_detect", "role": "main" },
+    { "from": "prepare_detect", "to": "landmark_output", "variant": "emphasis", "role": "main" }
+  ]
+}
