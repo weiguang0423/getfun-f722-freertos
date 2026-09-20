@@ -4,7 +4,7 @@
 
 ## 保存位置
 
-根目录：`D:\Obisidian\obisidian_vault\05_项目经验\无人机飞控`
+根目录：`C:\Users\13646\Documents\obisidian_vault\05_项目经验\无人机飞控`
 
 按问题的主要内容只选择一个现有子目录：
 

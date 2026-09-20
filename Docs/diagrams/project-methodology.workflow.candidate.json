@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "项目开发全流程",
+    "locale": "zh-CN",
+    "output": "project-methodology.workflow.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    { "id": "main", "label": "主流程" },
+    { "id": "retry", "label": "问题闭环", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "plan_phase", "label": "规划", "fromCol": 0, "toCol": 1 },
+    { "id": "build_phase", "label": "设计与开发", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "verify_phase", "label": "测试与交付", "fromCol": 4, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": [
+    "goal",
+    "plan",
+    "design",
+    "implement",
+    "test",
+    "freeze"
+  ],
+  "semanticChecks": {
+    "allowedRoots": ["goal"],
+    "requiredPaths": [
+      { "from": "goal", "to": "freeze" },
+      { "from": "test", "to": "fix" },
+      { "from": "fix", "to": "design" },
+      { "from": "freeze", "to": "plan" }
+    ]
+  },
+  "nodes": [
+    { "id": "goal", "lane": "main", "col": 0, "type": "external", "label": "明确目标", "width": 120, "height": 56 },
+    { "id": "plan", "lane": "main", "col": 1, "type": "database", "label": "拆分计划", "width": 120, "height": 56 },
+    { "id": "design", "lane": "main", "col": 2, "type": "frontend", "label": "方案设计", "width": 120, "height": 56 },
+    { "id": "implement", "lane": "main", "col": 3, "type": "backend", "label": "开发实现", "width": 120, "height": 56 },
+    { "id": "test", "lane": "main", "col": 4, "type": "security", "label": "测试验证", "width": 120, "height": 56 },
+    { "id": "freeze", "lane": "main", "col": 5, "type": "messagebus", "label": "验收冻结", "width": 120, "height": 56 },
+    { "id": "fix", "lane": "retry", "col": 3, "type": "security", "label": "分析修正", "width": 120, "height": 56 }
+  ],
+  "edges": [
+    { "id": "e_goal_plan", "from": "goal", "to": "plan", "role": "main" },
+    { "id": "e_plan_design", "from": "plan", "to": "design", "role": "main" },
+    { "id": "e_design_implement", "from": "design", "to": "implement", "role": "main" },
+    { "id": "e_implement_test", "from": "implement", "to": "test", "role": "main" },
+    { "id": "e_test_freeze", "from": "test", "to": "freeze", "label": "通过", "variant": "emphasis", "role": "main" },
+    { "id": "e_test_fix", "from": "test", "to": "fix", "label": "未通过", "variant": "security", "role": "error" },
+    { "id": "e_fix_design", "from": "fix", "to": "design", "label": "重新调整", "variant": "dashed", "role": "return" },
+    { "id": "e_freeze_plan", "from": "freeze", "to": "plan", "label": "下一阶段", "variant": "dashed", "role": "return" }
+  ]
+}

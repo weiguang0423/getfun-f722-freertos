@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "IMU 数据生命周期 · 从 ICM42688P 采样到消费者",
+    "locale": "zh-CN",
+    "output": "Docs/diagrams/dataflow/imu-data-lifecycle/imu-data-lifecycle.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [1080, 640],
+    "views": [
+      { "id": "sample-path", "label": "采样与搬运", "focus": ["sensor", "bus", "isr", "task"], "note": "器件寄存器到任务内机体系样本的搬运与唤醒路径。" },
+      { "id": "calibration-path", "label": "零偏校准链", "focus": ["task", "gyrocal", "accelcal"], "note": "上电陀螺零偏统计与加速度零偏持久化的先后关系。" },
+      { "id": "decode-path", "label": "滤波与姿态", "focus": ["accelcal", "estimate", "snapshot"], "note": "PT1 低通与 Mahony 把样本变成滤波值与姿态。" },
+      { "id": "consumer-path", "label": "消费与时效", "focus": ["snapshot", "msp", "flight", "diag"], "note": "三类消费者各自读取哪一路数据以及时效门限。" }
+    ]
+  },
+  "stages": [
+    { "label": "① 采样" },
+    { "label": "② 搬运与唤醒" },
+    { "label": "③ 重建与校准" },
+    { "label": "④ 滤波、解算与发布" },
+    { "label": "⑤ 消费" }
+  ],
+  "nodes": [
+    { "id": "sensor", "type": "external", "label": "ICM42688P 传感元件", "sublabel": "1 kHz · ±2000 dps · ±16 g", "stage": 0, "row": 0, "width": 150, "height": 66, "tag": "14 B 突发样本" },
+    { "id": "bus", "type": "messagebus", "label": "SPI1 + DMA2 双槽搬运", "sublabel": "1.6875 MHz · PA4 CS · 32 B 对齐", "stage": 1, "row": 0, "width": 180, "height": 66, "tag": "CPU 只发起事务" },
+    { "id": "isr", "type": "backend", "label": "DMA 完成中断", "sublabel": "imu_bus → 注册回调", "stage": 1, "row": 1, "width": 180, "height": 60, "tag": "只取时并唤醒" },
+    { "id": "task", "type": "backend", "label": "ImuTask 采样事务", "sublabel": "解码 → dt 门限 → SI/CW90", "stage": 2, "row": 0, "width": 180, "height": 66, "tag": "1 kHz · 唯一写者" },
+    { "id": "gyrocal", "type": "backend", "label": "陀螺零偏校准", "sublabel": "250 预热 + 2000 Welford", "stage": 2, "row": 1, "width": 180, "height": 60, "tag": "READY 后冻结扣偏" },
+    { "id": "accelcal", "type": "backend", "label": "加速度零偏校准", "sublabel": "水平/运动门限 + Welford", "stage": 2, "row": 2, "width": 180, "height": 60, "tag": "Sector 6/7 持久化" },
+    { "id": "estimate", "type": "backend", "label": "PT1 低通 + Mahony", "sublabel": "100/30 Hz → 四元数", "stage": 2, "row": 3, "width": 180, "height": 60, "tag": "先滤波再积分" },
+    { "id": "snapshot", "type": "database", "label": "app_state 快照", "sublabel": "关中断短临界区整体拷贝", "stage": 3, "row": 2, "width": 180, "height": 60, "tag": "单写者发布" },
+    { "id": "msp", "type": "backend", "label": "MspTask · MSP_RAW_IMU", "sublabel": "USB CDC 虚拟串口回包", "stage": 4, "row": 0, "width": 180, "height": 66, "tag": "Configurator 触发" },
+    { "id": "flight", "type": "backend", "label": "FlightTask 控制环", "sublabel": "ANGLE 外环 → Rate PID", "stage": 4, "row": 1, "width": 180, "height": 60, "tag": "1 kHz · 5 ms 时效门" },
+    { "id": "diag", "type": "backend", "label": "InitTask 诊断", "sublabel": "UART4 1 Hz 摘要", "stage": 4, "row": 2, "width": 180, "height": 60, "tag": "只读一致快照" }
+  ],
+  "flows": [
+    { "id": "sensor-bus", "from": "sensor", "to": "bus", "label": "14 B 样本", "classification": "SPI Mode 0", "variant": "emphasis", "labelAt": [200, 110] },
+    { "id": "bus-isr", "from": "bus", "to": "isr", "label": "DMA 完成", "classification": "HAL 回调链", "variant": "dashed", "labelAt": [315, 218] },
+    { "id": "isr-task", "from": "isr", "to": "task", "label": "任务通知", "classification": "ISR 只唤醒", "variant": "dashed", "labelAt": [422, 218] },
+    { "id": "task-gyrocal", "from": "task", "to": "gyrocal", "label": "机体系 SI 样本", "classification": "校准前未滤波", "variant": "emphasis", "labelAt": [530, 218] },
+    { "id": "gyrocal-accelcal", "from": "gyrocal", "to": "accelcal", "label": "扣陀螺零偏", "classification": "三轴角速度", "variant": "emphasis", "labelAt": [530, 329] },
+    { "id": "accelcal-estimate", "from": "accelcal", "to": "estimate", "label": "扣加速度零偏", "classification": "校准输出", "variant": "emphasis", "labelAt": [530, 443] },
+    { "id": "estimate-snapshot", "from": "estimate", "to": "snapshot", "label": "滤波值 + 姿态", "classification": "PT1 与 Mahony 输出", "variant": "emphasis", "fromSide": "right", "toSide": "bottom", "via": [[637.5, 500], [637.5, 440], [745, 440]], "labelAt": [690, 440] },
+    { "id": "accelcal-snapshot", "from": "accelcal", "to": "snapshot", "label": "校准后未滤波", "classification": "MSP_RAW_IMU 支路", "variant": "default", "labelAt": [637.5, 329] },
+    { "id": "snapshot-msp", "from": "snapshot", "to": "msp", "label": "未滤波字段", "classification": "MSP_RAW_IMU 回包", "variant": "default", "labelAt": [852.5, 218] },
+    { "id": "snapshot-flight", "from": "snapshot", "to": "flight", "label": "滤波角速度 + 姿态", "classification": "1 kHz 控制输入", "variant": "emphasis", "labelAt": [930, 329] },
+    { "id": "snapshot-diag", "from": "snapshot", "to": "diag", "label": "两路数值 + 计数", "classification": "UART4 1 Hz 摘要", "variant": "default", "labelAt": [852.5, 443] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "采样主链", "items": [
+      "ICM42688P 固定 1 kHz、±2000 dps、±16 g，DRDY 由 INT_STATUS 寄存器轮询确认",
+      "样本经 SPI1 加 DMA2 双槽搬运，CPU 只发起事务、不搬字节",
+      "DMA 完成 ISR 只捕获 DWT 周期并用 vTaskNotifyGiveFromISR 唤醒，解码与浮点运算全在任务上下文"
+    ] },
+    { "dot": "emerald", "title": "校准与滤波次序", "items": [
+      "必须先完成 SI 换算与 CW90 机体系对准，再做陀螺与加速度零偏校准",
+      "陀螺零偏每次上电重做且不持久化；加速度零偏写入 Sector 6/7 双槽成功后才生效",
+      "PT1 低通按真实 dt 更新，dt 超出 500–2000 µs 或出现非有限值即重置，姿态只在滤波就绪后积分"
+    ] },
+    { "dot": "rose", "title": "两条支路与时效边界", "items": [
+      "MSP_RAW_IMU 取校准后未滤波数据，滤波结果与姿态角不参与该回包",
+      "FlightTask 取 filtered_angular_rate_rad_s 与姿态角，样本超过 5 ms 即判 IMU 过期",
+      "诊断链路同时输出未滤波与滤波两路数值，只读一致快照，不反向写状态"
+    ] }
+  ]
+}

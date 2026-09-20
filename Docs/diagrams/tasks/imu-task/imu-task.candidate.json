@@ -2,53 +2,51 @@
   "schema_version": 1,
   "diagram_type": "dataflow",
   "meta": {
-    "title": "ImuTask 链路 · 1 kHz 传感器采集与姿态",
+    "title": "ImuTask 生命周期 · 1 kHz 采集、处理与恢复",
+    "locale": "zh-CN",
     "quality_profile": "showcase",
-    "viewBox": [1120, 520]
+    "viewBox": [1080, 620]
   },
   "stages": [
-    { "label": "采集" },
-    { "label": "换算" },
-    { "label": "校准" },
-    { "label": "滤波 / 姿态" },
-    { "label": "发布" }
+    { "label": "启动" },
+    { "label": "周期门控" },
+    { "label": "DMA 采样" },
+    { "label": "数据处理" },
+    { "label": "发布 / 恢复" }
   ],
   "nodes": [
-    { "id": "s0_sample", "type": "backend", "label": "SPI1 DMA 采样", "sublabel": "DRDY 门控 · 14B", "stage": 0, "row": 0, "width": 148, "height": 60, "tag": "实时读取" },
-    { "id": "s0_isr", "type": "backend", "label": "DMA 完成 ISR", "sublabel": "DWT 取时", "stage": 0, "row": 1, "width": 148, "height": 60, "tag": "不阻塞" },
-    { "id": "s1_convert", "type": "backend", "label": "SI + CW90", "sublabel": "机体系 · 真实 dt", "stage": 1, "row": 0, "width": 148, "height": 60, "tag": "convert_sample" },
-    { "id": "s2_calibrate", "type": "backend", "label": "陀螺零偏 / 加速度校准", "sublabel": "Welford · 扣偏", "stage": 2, "row": 0, "width": 148, "height": 60, "tag": "校准" },
-    { "id": "s3_filter", "type": "backend", "label": "PT1 低通 + Mahony", "sublabel": "Gyro100/Accel30 → 姿态", "stage": 3, "row": 0, "width": 148, "height": 60, "tag": "姿态估计" },
-    { "id": "s4_publish", "type": "database", "label": "app_state 发布", "sublabel": "IMU / 姿态 / 参数", "stage": 4, "row": 0, "width": 148, "height": 60, "tag": "单写者" }
+    { "id": "init", "type": "backend", "label": "参数加载 / IMU 初始化", "sublabel": "时间 · 滤波 · 姿态 · DMA 回调", "stage": 0, "row": 0, "width": 150, "height": 66, "tag": "任务启动" },
+    { "id": "gate", "type": "backend", "label": "1 ms 周期 / DRDY？", "sublabel": "未就绪则保留上一样本", "stage": 1, "row": 0, "width": 156, "height": 66, "tag": "寄存器轮询" },
+    { "id": "dma", "type": "backend", "label": "DMA 启动 / 等待 / 解码", "sublabel": "2 ms 超时 · 14 B 读取", "stage": 2, "row": 0, "width": 160, "height": 66, "tag": "任务上下文" },
+    { "id": "isr", "type": "messagebus", "label": "DMA 完成 ISR", "sublabel": "DWT 取时 + 通知任务", "stage": 1, "row": 1, "width": 156, "height": 60, "tag": "只唤醒" },
+    { "id": "pipeline", "type": "backend", "label": "换算 → 扣偏 → 滤波 → 姿态", "sublabel": "SI/CW90 · PT1 · Mahony", "stage": 3, "row": 0, "width": 168, "height": 66, "tag": "有效性门控" },
+    { "id": "publish", "type": "database", "label": "app_state 发布", "sublabel": "IMU · 姿态 · 有效性与诊断", "stage": 4, "row": 0, "width": 160, "height": 66, "tag": "原子快照" },
+    { "id": "recover", "type": "security", "label": "离线恢复", "sublabel": "采集 3 连错 · 初始化失败", "stage": 2, "row": 2, "width": 160, "height": 66, "tag": "1 s 后重试" }
   ],
   "flows": [
-    { "id": "sample-convert", "from": "s0_sample", "to": "s1_convert", "label": "原始样本", "classification": "寄存器数据", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -16 },
-    { "id": "sample-isr", "from": "s0_sample", "to": "s0_isr", "label": "完成中断", "classification": "通知任务", "variant": "dashed", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [150, 205] },
-    { "id": "isr-convert", "from": "s0_isr", "to": "s1_convert", "label": "DWT 取时", "classification": "platform_time", "variant": "dashed", "fromSide": "right", "toSide": "bottom", "via": [[315, 272]], "labelAt": [265, 204] },
-    { "id": "convert-calibrate", "from": "s1_convert", "to": "s2_calibrate", "label": "机体系", "classification": "SI 物理量", "variant": "emphasis", "labelDy": -16 },
-    { "id": "calibrate-filter", "from": "s2_calibrate", "to": "s3_filter", "label": "扣偏后", "classification": "滤波输入", "variant": "emphasis", "labelDy": -16 },
-    { "id": "filter-publish", "from": "s3_filter", "to": "s4_publish", "label": "姿态", "classification": "app_state", "variant": "emphasis", "labelDy": -16 }
+    { "id": "init-gate", "from": "init", "to": "gate", "label": "初始化成功", "classification": "传感器在线", "variant": "emphasis", "labelDy": -24 },
+    { "id": "gate-dma", "from": "gate", "to": "dma", "label": "DRDY 就绪", "classification": "开始采样", "variant": "emphasis", "route": "straight", "fromSide": "right", "toSide": "left", "labelDy": -24 },
+    { "id": "isr-dma", "from": "isr", "to": "dma", "label": "取时 + 通知", "classification": "ISR 通知", "variant": "dashed" },
+    { "id": "dma-pipeline", "from": "dma", "to": "pipeline", "label": "样本 + dt", "classification": "解码结果", "variant": "emphasis", "labelAt": [636, 208] },
+    { "id": "pipeline-publish", "from": "pipeline", "to": "publish", "label": "IMU + 姿态", "classification": "app_state", "variant": "emphasis", "labelAt": [855, 208] },
+    { "id": "dma-recover", "from": "dma", "to": "recover", "label": "连续 3 次错误", "classification": "离线", "variant": "security", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [530, 218] },
+    { "id": "recover-init", "from": "recover", "to": "init", "label": "1 s 后重新初始化", "classification": "恢复闭环", "variant": "security", "route": "bottom-channel", "fromSide": "bottom", "toSide": "bottom", "channelY": 500 }
   ],
   "cards": [
-    { "dot": "cyan", "title": "1 kHz 单写者", "items": [
-      "ImuTask 是 SPI1/ICM42688P 唯一所有者，禁止他处直接访问",
-      "DRDY 就绪才启动 DMA；DMA 完成 ISR 只捕获 DWT 并唤醒",
-      "静态栈 512 words · 优先级 idle+4"
+    { "dot": "cyan", "title": "正常采样主链", "items": [
+      "ImuTask 每 1 ms 轮询 DRDY；就绪后才启动 SPI1 DMA",
+      "DMA 完成 ISR 只捕获 DWT 周期并通知，解码和计算留在任务中",
+      "首帧或 dt 超出 500–2000 μs 时重置滤波与姿态有效性"
     ] },
-    { "dot": "emerald", "title": "校准分支", "items": [
-      "陀螺零偏: 250 预热 + 2000 Welford · 上电重校 · 不持久化",
-      "加速度: 水平单面 · 候选持久化验证成功后才切换",
-      "IMU / 校准 / 参数无效时对应 arming_inhibit 保持置位"
+    { "dot": "emerald", "title": "校准状态", "items": [
+      "陀螺初始化后进行 250 样本预热 + 2000 样本 Welford 统计",
+      "加速度从参数恢复；仅在安全态接受水平校准请求并保存候选值",
+      "主链逐帧应用已生效零偏，校准未就绪时仍发布无效状态"
     ] },
-    { "dot": "amber", "title": "姿态输入", "items": [
-      "PT1 低通按真实 dt 更新 (Gyro 100Hz / Accel 30Hz)",
-      "Mahony 六轴融合输出四元数 + 欧拉角",
-      "未就绪 / dt 越界则不积分 · 保持抑制"
-    ] },
-    { "dot": "rose", "title": "存储边界", "items": [
-      "参数 Flash 仅 ImuTask 安全态写入 (Sector 6/7 A/B)",
-      "ARMED 或事务入口拒绝擦写；保存失败不覆盖活动槽",
-      "兼容 v1 参数迁移"
+    { "dot": "rose", "title": "失败与输出边界", "items": [
+      "DRDY 未就绪只跳过本轮；读、DMA 启动、超时或完成错误才累计失败",
+      "连续 3 次采集错误进入离线；初始化每轮尝试 3 次，失败后等待 1 s",
+      "app_state 同时发布 IMU、姿态、时间、校准和诊断状态"
     ] }
   ]
 }

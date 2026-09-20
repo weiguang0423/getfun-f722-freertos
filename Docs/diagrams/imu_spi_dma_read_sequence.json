@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ICM42688P：SPI1 + DMA 单帧读取流程",
+    "locale": "zh-CN",
+    "viewBox": [1080, 980],
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "views": [
+      {
+        "id": "ready-gate",
+        "label": "1. DRDY 门控",
+        "focus": ["imu_task", "icm"],
+        "note": "仅当 INT_STATUS 的 DATA_READY 位置位时才开始一笔 SPI DMA 事务。"
+      },
+      {
+        "id": "spi-dma-transfer",
+        "label": "2. 全双工搬运",
+        "focus": ["imu_bus", "tx_dma", "spi1", "icm", "rx_dma"],
+        "note": "TX DMA 提供读命令和 dummy 字节来产生 SCK；RX DMA 接收同一笔 SPI 事务的返回字节。"
+      },
+      {
+        "id": "complete-and-consume",
+        "label": "3. 完成与解析",
+        "focus": ["rx_dma", "imu_bus", "imu_task"],
+        "note": "完成中断拉高 CS、维护 Cache 并通知任务；数据解析留在任务上下文。"
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "imu_task",
+      "type": "backend",
+      "label": "ImuTask",
+      "sublabel": "1 kHz 唯一任务侧所有者"
+    },
+    {
+      "id": "imu_bus",
+      "type": "backend",
+      "label": "imu_bus",
+      "sublabel": "SPI 事务、CS、Cache"
+    },
+    {
+      "id": "tx_dma",
+      "type": "messagebus",
+      "label": "DMA2 Stream3",
+      "sublabel": "SPI1_TX · M→P · Normal"
+    },
+    {
+      "id": "spi1",
+      "type": "backend",
+      "label": "SPI1",
+      "sublabel": "全双工时钟与移位"
+    },
+    {
+      "id": "rx_dma",
+      "type": "messagebus",
+      "label": "DMA2 Stream0",
+      "sublabel": "SPI1_RX · P→M · Normal"
+    },
+    {
+      "id": "icm",
+      "type": "external",
+      "label": "ICM42688P",
+      "sublabel": "寄存器数据源"
+    }
+  ],
+  "segments": [
+    { "from": 150, "to": 290, "label": "DRDY 门控" },
+    { "from": 306, "to": 634, "label": "一笔 SPI 全双工 DMA 事务" },
+    { "from": 650, "to": 826, "label": "完成、中断与解析" }
+  ],
+  "messages": [
+    {
+      "id": "poll-ready",
+      "from": "imu_task",
+      "to": "icm",
+      "y": 180,
+      "label": "轮询 INT_STATUS（阻塞 SPI 读）",
+      "variant": "default"
+    },
+    {
+      "id": "ready-return",
+      "from": "icm",
+      "to": "imu_task",
+      "y": 230,
+      "label": "DATA_READY = 1",
+      "variant": "return"
+    },
+    {
+      "id": "start-dma",
+      "from": "imu_task",
+      "to": "imu_bus",
+      "y": 340,
+      "label": "start_sample_dma()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prepare-transaction",
+      "from": "imu_bus",
+      "to": "tx_dma",
+      "y": 392,
+      "label": "CS↓；TX[0] = 0x1D | 0x80；配置 15 B",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prepare-rx",
+      "from": "imu_bus",
+      "to": "rx_dma",
+      "y": 444,
+      "label": "准备接收槽位与 D-Cache",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tx-dr",
+      "from": "tx_dma",
+      "to": "spi1",
+      "y": 496,
+      "label": "M→P：命令 + dummy 字节写入 TXDR",
+      "variant": "default"
+    },
+    {
+      "id": "spi-wire",
+      "from": "spi1",
+      "to": "icm",
+      "y": 548,
+      "label": "MOSI + SCK：读取 TEMP_DATA1 起的连续寄存器",
+      "variant": "emphasis"
+    },
+    {
+      "id": "spi-response",
+      "from": "icm",
+      "to": "spi1",
+      "y": 600,
+      "label": "MISO：1 B 无效 + 14 B 温度/加速度/陀螺数据",
+      "variant": "return"
+    },
+    {
+      "id": "rx-move",
+      "from": "spi1",
+      "to": "rx_dma",
+      "y": 652,
+      "label": "P→M：RXNE 请求驱动写入接收槽位",
+      "variant": "default"
+    },
+    {
+      "id": "complete-isr",
+      "from": "rx_dma",
+      "to": "imu_bus",
+      "y": 710,
+      "label": "DMA 完成 → HAL_SPI_TxRxCpltCallback()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "notify-task",
+      "from": "imu_bus",
+      "to": "imu_task",
+      "y": 762,
+      "label": "CS↑；失效 RX Cache；ISR 任务通知",
+      "variant": "emphasis"
+    },
+    {
+      "id": "finish-sample",
+      "from": "imu_task",
+      "to": "imu_bus",
+      "y": 814,
+      "label": "finish_sample_dma()：取得本帧",
+      "variant": "default"
+    },
+    {
+      "id": "raw-sample",
+      "from": "imu_bus",
+      "to": "imu_task",
+      "y": 866,
+      "label": "返回 14 B 原始采样，任务上下文解析/滤波/发布",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    { "participant": "imu_task", "from": 166, "to": 248, "type": "backend" },
+    { "participant": "imu_task", "from": 326, "to": 886, "type": "backend" },
+    { "participant": "imu_bus", "from": 334, "to": 770, "type": "backend" },
+    { "participant": "tx_dma", "from": 382, "to": 506, "type": "messagebus" },
+    { "participant": "spi1", "from": 486, "to": 660, "type": "backend" },
+    { "participant": "rx_dma", "from": 434, "to": 720, "type": "messagebus" },
+    { "participant": "icm", "from": 538, "to": 610, "type": "external" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "为什么是普通 DMA",
+      "items": [
+        "RX/TX 都是 DMA_NORMAL：一笔确定长度的 SPI 事务结束后停止",
+        "SPI 主机必须先发命令和时钟，IMU 不会自行连续推送字节",
+        "循环模式会重复命令、覆盖接收槽位，并破坏当前 CS 事务边界"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "异常边界",
+      "items": [
+        "ImuTask 等待 DMA 任务通知的上限为 2 ms",
+        "超时调用 HAL_SPI_Abort()，并让 CS 恢复高电平",
+        "回调仅通知任务；解码、滤波和状态发布不在 ISR 中执行"
+      ]
+    }
+  ]
+}

@@ -8,20 +8,20 @@
       "url": "https://github.com/weiguang0423/getfun-f722-freertos",
       "revision": "a504227765e8c80120e29ac75c7e5148d47239ba"
     },
-    "viewBox": [1720, 700]
+    "viewBox": [1260, 630]
   },
   "components": [
-    { "id": "rk3568", "type": "external", "label": "RK3568 Linux 伴随机", "sublabel": "手势虚拟 RC · USART6", "pos": [480, 60], "size": [160, 56], "sources": [{ "path": "Linux/RK3568/s7_6/s7_6_virtual_rc.cpp", "line": 1, "label": "s7_6_virtual_rc" }] },
-    { "id": "crsf-rx", "type": "external", "label": "CRSF 遥控接收机", "sublabel": "物理 RC · USART2", "pos": [780, 60], "size": [160, 56] },
-    { "id": "spi-imu", "type": "backend", "label": "SPI1 · ICM42688P", "sublabel": "DMA2 S0/S3 ISR · 1 kHz", "pos": [180, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/imu_bus.c", "line": 351, "label": "SPI TxRxCpltCallback" }] },
-    { "id": "usart6-linux", "type": "backend", "label": "USART6 RX 监视", "sublabel": "linux_rc_monitor · ISR", "pos": [480, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/linux_rc_monitor.c", "line": 209, "label": "linux_rc_monitor_init" }] },
-    { "id": "crsf-uart", "type": "backend", "label": "USART2 CRSF 输入", "sublabel": "DMA+IDLE ISR · 环缓冲", "pos": [780, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/crsf_uart.c", "line": 155, "label": "RxEventCallback" }] },
-    { "id": "dshot", "type": "backend", "label": "DShot 电机输出", "sublabel": "DMA2 S2 · 4 电机", "pos": [1380, 210], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/dshot_motor.c", "line": 294, "label": "dma_irq_handler" }] },
-    { "id": "imutask", "type": "backend", "label": "ImuTask", "sublabel": "idle+4 · 1 kHz 采样所有者", "pos": [180, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/imu_task.c", "line": 645, "label": "imu_task()" }] },
-    { "id": "rctask", "type": "backend", "label": "RcTask", "sublabel": "idle+3 · 解析 + 源仲裁", "pos": [480, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/rc_task.c", "line": 130, "label": "rc_task()" }] },
-    { "id": "batterytask", "type": "backend", "label": "BatteryTask", "sublabel": "idle+1 · 50 Hz · ADC3 DMA", "pos": [1080, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/battery_task.c", "line": 69, "label": "battery_task()" }] },
-    { "id": "flighttask", "type": "backend", "label": "FlightTask", "sublabel": "idle+5 · 1 kHz 控制 + 安全链", "pos": [1380, 360], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/flight_task.c", "line": 225, "label": "flight_task()" }] },
-    { "id": "app_state", "type": "database", "label": "app_state 快照中心", "sublabel": "PRIMASK+DMB 临界区 · 单写者", "pos": [540, 500], "size": [300, 72], "sources": [{ "path": "APP/Inc/app_state.h", "line": 336, "label": "app_state_snapshot_t" }] }
+    { "id": "rk3568", "type": "external", "label": "RK3568 Linux 伴随机", "sublabel": "手势虚拟 RC · USART6", "pos": [430, 60], "size": [160, 56], "sources": [{ "path": "Linux/RK3568/s7_6/s7_6_virtual_rc.cpp", "line": 1, "label": "s7_6_virtual_rc" }] },
+    { "id": "crsf-rx", "type": "external", "label": "CRSF 遥控接收机", "sublabel": "物理 RC · USART2", "pos": [680, 60], "size": [160, 56] },
+    { "id": "spi-imu", "type": "backend", "label": "SPI1 · ICM42688P", "sublabel": "DMA2 S0/S3 ISR · 1 kHz", "pos": [180, 200], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/imu_bus.c", "line": 351, "label": "SPI TxRxCpltCallback" }] },
+    { "id": "usart6-linux", "type": "backend", "label": "USART6 RX 监视", "sublabel": "linux_rc_monitor · ISR", "pos": [430, 200], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/linux_rc_monitor.c", "line": 209, "label": "linux_rc_monitor_init" }] },
+    { "id": "crsf-uart", "type": "backend", "label": "USART2 CRSF 输入", "sublabel": "DMA+IDLE ISR · 环缓冲", "pos": [680, 200], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/crsf_uart.c", "line": 155, "label": "RxEventCallback" }] },
+    { "id": "dshot", "type": "backend", "label": "DShot 电机输出", "sublabel": "DMA2 S2 · 4 电机", "pos": [930, 200], "size": [160, 56], "sources": [{ "path": "APP/Src/bsp/dshot_motor.c", "line": 294, "label": "dma_irq_handler" }] },
+    { "id": "imutask", "type": "backend", "label": "ImuTask", "sublabel": "idle+4 · 1 kHz 采样所有者", "pos": [180, 340], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/imu_task.c", "line": 645, "label": "imu_task()" }] },
+    { "id": "rctask", "type": "backend", "label": "RcTask", "sublabel": "idle+3 · 解析 + 源仲裁", "pos": [430, 340], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/rc_task.c", "line": 130, "label": "rc_task()" }] },
+    { "id": "batterytask", "type": "backend", "label": "BatteryTask", "sublabel": "idle+1 · 50 Hz · ADC3 DMA", "pos": [680, 340], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/battery_task.c", "line": 69, "label": "battery_task()" }] },
+    { "id": "flighttask", "type": "backend", "label": "FlightTask", "sublabel": "idle+5 · 1 kHz 控制 + 安全链", "pos": [930, 340], "size": [160, 56], "sources": [{ "path": "APP/Src/rtos/flight_task.c", "line": 225, "label": "flight_task()" }] },
+    { "id": "app_state", "type": "database", "label": "app_state 快照中心", "sublabel": "PRIMASK+DMB 临界区 · 单写者", "pos": [480, 470], "size": [300, 72], "sources": [{ "path": "APP/Inc/app_state.h", "line": 336, "label": "app_state_snapshot_t" }] }
   ],
   "boundaries": [
     { "kind": "region", "label": "外部参与者", "wraps": ["rk3568", "crsf-rx"] },

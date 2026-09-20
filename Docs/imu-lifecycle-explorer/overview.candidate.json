@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "一帧 IMU 数据的旅程",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      860,
+      510
+    ]
+  },
+  "stages": [
+    {
+      "label": "器件与消费端"
+    },
+    {
+      "label": "传输与共享"
+    },
+    {
+      "label": "中断与算法"
+    },
+    {
+      "label": "任务内处理"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "sensor-frame",
+      "type": "external",
+      "label": "ICM42688P",
+      "sublabel": "1 ms 查询 DRDY",
+      "stage": 0,
+      "row": 0,
+      "width": 150,
+      "tag": "新样本就绪"
+    },
+    {
+      "id": "dma-transfer",
+      "type": "messagebus",
+      "label": "SPI1 + DMA2",
+      "sublabel": "1 命令字节 + 14 B 数据",
+      "stage": 1,
+      "row": 0,
+      "width": 160,
+      "tag": "普通模式单次事务"
+    },
+    {
+      "id": "completion-isr",
+      "type": "backend",
+      "label": "中断收尾与通知",
+      "sublabel": "释放 CS · Cache · DWT",
+      "stage": 2,
+      "row": 0,
+      "width": 160,
+      "tag": "唤醒 ImuTask"
+    },
+    {
+      "id": "task-decode",
+      "type": "backend",
+      "label": "解码与坐标转换",
+      "sublabel": "真实 dt · SI · CW90",
+      "stage": 3,
+      "row": 0,
+      "width": 160,
+      "tag": "任务上下文"
+    },
+    {
+      "id": "bias-filter",
+      "type": "backend",
+      "label": "校准与 PT1",
+      "sublabel": "扣除零偏 · 低通滤波",
+      "stage": 3,
+      "row": 2,
+      "width": 160,
+      "tag": "保留未滤波支路"
+    },
+    {
+      "id": "attitude-fusion",
+      "type": "backend",
+      "label": "Mahony 六轴姿态",
+      "sublabel": "有效输入 → 四元数与角度",
+      "stage": 2,
+      "row": 2,
+      "width": 160,
+      "tag": "IMU 先发布再解算"
+    },
+    {
+      "id": "state-publish",
+      "type": "database",
+      "label": "app_state",
+      "sublabel": "IMU 与姿态分别发布",
+      "stage": 1,
+      "row": 2,
+      "width": 160,
+      "tag": "最新状态 · 非队列"
+    },
+    {
+      "id": "flight-consume",
+      "type": "backend",
+      "label": "FlightTask",
+      "sublabel": "新 sample_count 驱动控制",
+      "stage": 0,
+      "row": 2,
+      "width": 150,
+      "tag": "样本年龄 > 5 ms 过期"
+    }
+  ],
+  "flows": [
+    {
+      "from": "sensor-frame",
+      "to": "dma-transfer",
+      "label": "样本字节",
+      "variant": "emphasis",
+      "labelDy": 53
+    },
+    {
+      "from": "dma-transfer",
+      "to": "completion-isr",
+      "label": "传输完成",
+      "variant": "emphasis",
+      "labelDy": 53
+    },
+    {
+      "from": "completion-isr",
+      "to": "task-decode",
+      "label": "任务通知",
+      "variant": "dashed",
+      "labelDy": 53
+    },
+    {
+      "from": "task-decode",
+      "to": "bias-filter",
+      "label": "机体系数据",
+      "variant": "emphasis",
+      "labelDy": 53
+    },
+    {
+      "from": "bias-filter",
+      "to": "attitude-fusion",
+      "label": "滤波数据",
+      "variant": "emphasis",
+      "labelDy": 53
+    },
+    {
+      "from": "attitude-fusion",
+      "to": "state-publish",
+      "label": "姿态状态",
+      "variant": "emphasis",
+      "labelDy": 53
+    },
+    {
+      "from": "state-publish",
+      "to": "flight-consume",
+      "label": "读取快照",
+      "variant": "emphasis",
+      "labelDy": 53
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "主链路阅读顺序",
+      "items": [
+        "上排从左向右，下排从右向左。",
+        "图中虚线表示通知，不携带完整样本。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "恢复与时效",
+      "items": [
+        "DRDY 未就绪：保留上一帧，等待下一周期。",
+        "DMA 等待超时 2 ms；连续 3 次采集错误进入恢复。"
+      ]
+    }
+  ]
+}
